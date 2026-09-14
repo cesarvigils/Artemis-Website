@@ -1,0 +1,65 @@
+[
+  {
+    "car_id": 43,
+    "car_name": "Mercedes-AMG GT3 2020",
+    "car_name_abbreviated": "AMG GT3",
+    "car_dirpath": "mercedesamggt3",
+    "categories": ["sports_car"],
+    "free_with_subscription": false,
+    "package_id": 297
+  },
+  {
+    "car_id": 76,
+    "car_name": "Dallara P217 LMP2",
+    "car_name_abbreviated": "P217",
+    "car_dirpath": "dallarap217",
+    "categories": ["sports_car"],
+    "free_with_subscription": false,
+    "package_id": 315
+  },
+  {
+    "car_id": 88,
+    "car_name": "NASCAR Truck Chevrolet Silverado",
+    "car_name_abbreviated": "Silverado",
+    "car_dirpath": "trucksilverado2019",
+    "categories": ["oval"],
+    "free_with_subscription": false,
+    "package_id": 268
+  },
+  {
+    "car_id": 91,
+    "car_name": "NASCAR Xfinity Ford Mustang",
+    "car_name_abbreviated": "Xfinity Mustang",
+    "car_dirpath": "fordmustangnascarxfinity",
+    "categories": ["oval"],
+    "free_with_subscription": false,
+    "package_id": 271
+  },
+  {
+    "car_id": 127,
+    "car_name": "Porsche 911 GT3 R (992)",
+    "car_name_abbreviated": "992 GT3 R",
+    "car_dirpath": "porsche992gt3r",
+    "categories": ["sports_car"],
+    "free_with_subscription": false,
+    "package_id": 401
+  },
+  {
+    "car_id": 144,
+    "car_name": "Ferrari 296 GT3",
+    "car_name_abbreviated": "296 GT3",
+    "car_dirpath": "ferrari296gt3",
+    "categories": ["sports_car"],
+    "free_with_subscription": false,
+    "package_id": 412
+  },
+  {
+    "car_id": 173,
+    "car_name": "BMW M4 GT3",
+    "car_name_abbreviated": "M4 GT3",
+    "car_dirpath": "bmwm4gt3",
+    "categories": ["sports_car"],
+    "free_with_subscription": false,
+    "package_id": 380
+  }
+]

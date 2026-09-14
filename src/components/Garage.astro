@@ -124,7 +124,7 @@ const altFor = (i: number) => {
     width: 44px;
     height: 44px;
     border: 1px solid var(--line-strong);
-    color: var(--ink);
+    color: var(--mist);
     cursor: pointer;
     transition: border-color var(--dur-2) var(--ease-out-quart),
       color var(--dur-2) var(--ease-out-quart),
@@ -156,14 +156,14 @@ const altFor = (i: number) => {
 
   @media (hover: hover) and (pointer: fine) {
     .garage-btn:hover:not(:disabled) {
-      border-color: var(--teal);
-      color: var(--teal);
+      border-color: var(--signal);
+      color: var(--signal);
     }
   }
 
   .garage-btn:focus-visible:not(:disabled) {
-    border-color: var(--teal);
-    color: var(--teal);
+    border-color: var(--signal);
+    color: var(--signal);
   }
 
   /* Native horizontal scroll on every device. No pinning, no hijack. */
@@ -202,7 +202,7 @@ const altFor = (i: number) => {
     display: block;
     height: 100%;
     width: 0;
-    background: var(--teal);
+    background: var(--muted);
   }
 
   @media (prefers-reduced-motion: reduce) {

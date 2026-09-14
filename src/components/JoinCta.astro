@@ -1,39 +1,44 @@
 ---
-import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import site from '../data/site.json';
-import { discordInvite } from '../lib/links';
-import texture from '../assets/hunt-texture.jpg';
+import { CTA_INTENTS } from '../lib/links';
 
 interface Props {
+  /** Defaults to the motto, which is the one place on the site it appears. */
   heading?: string;
   lead?: string;
   /** Show the three-step explainer. Off on pages that already explain it. */
   steps?: boolean;
+  /** Which wording of the same Discord action this page uses. */
+  intent?: 'join' | 'apply';
 }
 
-const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.props;
+const {
+  heading = site.motto,
+  lead = site.join.lead,
+  steps = true,
+  intent = 'join',
+} = Astro.props;
+const cta = CTA_INTENTS[intent];
 ---
 
-<section class="join rule-top" aria-labelledby="join-heading" id="join">
-  <div class="join-texture" aria-hidden="true">
-    <Image
-      src={texture}
-      alt=""
-      widths={[400, 800, 1280, 1920]}
-      sizes="100vw"
-      format="webp"
-      quality={55}
-      loading="lazy"
-      decoding="async"
-    />
-  </div>
-
+{/* The band's ground is material grain at 4% (see `.grain` in global.css),
+    which is what replaced the graffiti texture: an inline feTurbulence tile,
+    no raster asset, no request, and nothing that reads as vandalism. */}
+<section class="join grain rule-top" aria-labelledby="join-heading" id="join">
   <div class="container join-inner">
     <h2 class="display-xl join-heading" id="join-heading">{heading}</h2>
     <p class="lead join-lead">{lead}</p>
-    <a class="btn btn-solid join-btn" href={discordInvite} target="_blank" rel="noopener">
-      Join the team
+    <a
+      class="btn btn-solid join-btn"
+      href={cta.href}
+      target="_blank"
+      rel="noopener"
+      data-umami-event="cta"
+      data-umami-event-placement="join"
+      data-umami-event-audience={cta.audience}
+    >
+      {cta.label}
       <Icon name="arrow-up-right" size={16} />
       <span class="sr-only"> (opens in a new tab)</span>
     </a>
@@ -62,31 +67,10 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     isolation: isolate;
   }
 
-  /* The brand's own spray texture, not a decorative gradient. */
-  .join-texture {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-  }
-
-  /* :global: the <img> comes from Astro's Image component. */
-  .join-texture :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.55;
-  }
-
-  .join-texture::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to right,
-      var(--bg) 12%,
-      rgb(var(--bg-rgb) / 0.86) 46%,
-      rgb(var(--bg-rgb) / 0.72)
-    );
+  /* The band's own ground, a step up from Night so the grain has something
+     to sit on. The grain itself is `.grain::before` in global.css. */
+  .join {
+    background: var(--surface-1);
   }
 
   /* The band runs the full width: heading, then the sentence, then the
@@ -98,7 +82,7 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
   .join-lead {
     margin-top: var(--space-m);
     max-width: var(--measure-lead);
-    color: var(--ink);
+    color: var(--mist);
   }
 
   .join-btn {
@@ -129,9 +113,9 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
 
   .step-index {
     font-size: var(--text-2xl);
-    font-weight: 700;
+    font-weight: var(--weight-display);
     line-height: 1;
-    color: var(--teal);
+    color: var(--muted);
   }
 
   /* Explicit: inheriting the body's leading made this title lead looser than
@@ -139,7 +123,8 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
   .step-title {
     margin-top: var(--space-2xs);
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-base);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-title);
@@ -147,21 +132,13 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
   }
 
   .step-line {
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
     max-width: 32ch;
   }
 
   @media (max-width: 900px) {
-    .join-texture::after {
-      background: linear-gradient(
-        to top,
-        var(--bg) 10%,
-        rgb(var(--bg-rgb) / 0.82) 55%,
-        rgb(var(--bg-rgb) / 0.7)
-      );
-    }
     .join-steps {
       grid-template-columns: 1fr;
       margin-top: var(--space-xl);
@@ -195,14 +172,6 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
   @media (max-width: 560px) {
     .join-btn {
       width: 100%;
-    }
-  }
-
-  /* The scrim over the HUNT texture is a background-image, so high contrast
-     strips it and the copy lands on the spray. The texture is decorative. */
-  @media (forced-colors: active) {
-    .join-texture {
-      display: none;
     }
   }
 </style>

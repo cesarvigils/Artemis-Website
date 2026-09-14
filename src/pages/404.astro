@@ -4,20 +4,22 @@ import Mark from '../components/Mark.astro';
 import Icon from '../components/Icon.astro';
 import nav from '../data/nav.json';
 
-/* The Results entry is an anchor into the home page and is already the
-   secondary action above, so the page list below stays the three real pages. */
+/* The Scoreboard entry is an anchor into the home page and is already the
+   secondary action above, so the page list below stays the real pages. */
 const pages = nav.primary.filter((link) => !link.href.includes('#'));
 ---
 
 <Base
   title="Page not found | Artemis Esports"
-  description="That page does not exist. Head back to the Artemis Esports home page or join the team on Discord."
-  monoBold
+  description="That page does not exist. Head back to the Artemis home page or open the Scoreboard."
   noindex
+  cta="none"
 >
-  <section class="notfound">
+  <section class="notfound grain">
     <div class="container notfound-inner">
-      <span class="notfound-mark"><Mark variant="mark" /></span>
+      {/* Tier 2 of the logo system: the icon, which is the mark every size
+          under 96px uses and the one the 404 is specified to carry. */}
+      <span class="notfound-mark"><Mark variant="icon" /></span>
 
       {/* The same `[data-enter]` grammar the other four pages use. This was
           the one page on the site with no motion of any kind, which made it
@@ -36,11 +38,11 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
 
         <div class="notfound-actions" data-enter style="--enter-delay: 120ms">
           <a class="btn btn-solid" href="/">
-            Back to the paddock
+            Back to home
             <Icon name="arrow-right" size={16} />
           </a>
-          <a class="btn btn-ghost" href="/#results">
-            See results
+          <a class="btn btn-ghost" href="/#scoreboard">
+            See the Scoreboard
             <Icon name="arrow-right" size={16} />
           </a>
         </div>
@@ -55,6 +57,8 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
 
 <style>
   .notfound {
+    position: relative;
+    isolation: isolate;
     display: flex;
     align-items: center;
     min-height: calc(100dvh - var(--nav-h));
@@ -74,7 +78,7 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
   .notfound-mark {
     display: block;
     --mark-size: min(18rem, 40vw);
-    color: var(--line-teal);
+    color: var(--muted-deep);
   }
 
   /* Sized by width, not height. `Mark` sets `height: var(--mark-size);
@@ -87,7 +91,7 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
   }
 
   .notfound-code {
-    color: var(--teal);
+    color: var(--muted);
     letter-spacing: var(--track-label);
     margin-bottom: var(--space-s);
   }
@@ -119,23 +123,24 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
     min-width: 44px;
     min-height: 44px;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     transition: color var(--dur-2) var(--ease-out-quart),
       opacity var(--dur-1) var(--ease-out-quart);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .notfound-links a:hover {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
   .notfound-links a:focus-visible {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   /* 860, not 760: at 768 the split survived into a 193px left column holding

@@ -2,7 +2,7 @@
 import Icon from './Icon.astro';
 import { raceDate } from '../lib/format';
 import { socialLabel } from '../lib/links';
-import type { Driver, RaceResult } from '../lib/data';
+import type { Driver, RaceResult, ResolvedStats } from '../lib/data';
 
 interface Props {
   driver: Driver;
@@ -11,6 +11,8 @@ interface Props {
   href?: string;
   /** Their most recent race, matched on name in results.json. */
   lastResult?: RaceResult;
+  /** This driver's slice of the generated stats.json, when the sync has run. */
+  stats?: ResolvedStats;
   class?: string;
   style?: string;
 }
@@ -20,19 +22,32 @@ const {
   variant = 'compact',
   href,
   lastResult,
+  stats: live,
   class: className,
   style,
 } = Astro.props;
 
 const socials = Object.entries(driver.socials ?? {}).filter(([, url]) => url);
-/* `null` used to pass this filter, so `"stats": {"irating": null}` from the
+
+/* Two sources for the same two numbers, and the synced one wins.
+   `null` used to pass this filter, so `"stats": {"irating": null}` from the
    bot rendered a <dt>iRating</dt> above an empty <dd>. iRating is typed as an
    integer, so 0 is not a rating either - it is a missing value that would read
    on the page as a real one. */
-const stats = [
-  { label: 'iRating', value: Number.isFinite(driver.stats?.irating) && (driver.stats?.irating ?? 0) > 0 ? driver.stats?.irating : undefined },
-  { label: 'Licence', value: driver.stats?.licence },
+const manualRating =
+  Number.isFinite(driver.stats?.irating) && (driver.stats?.irating ?? 0) > 0
+    ? driver.stats?.irating
+    : undefined;
+
+const irating = live?.irating ?? manualRating;
+const licence = live?.safety ?? driver.stats?.licence;
+
+const figures = [
+  { label: 'iRating', value: irating },
+  { label: 'Licence', value: licence },
 ].filter((stat) => stat.value !== undefined && stat.value !== null && stat.value !== '');
+
+const recent = live?.recent ?? [];
 ---
 
 {
@@ -48,6 +63,12 @@ const stats = [
         }
         <span class="driver-name">{driver.name}</span>
         <span class="driver-focus">{driver.focus}</span>
+        {/* The teaser carries the iRating and nothing else: one number is a
+            reason to open the roster, four is the roster. Nothing renders at
+            all when the sync has not run for this driver. */}
+        {irating !== undefined && (
+          <span class="driver-rating data">iRating {irating}</span>
+        )}
         <span class="driver-country data">{driver.country}</span>
       </a>
     </li>
@@ -85,15 +106,47 @@ const stats = [
             <span class="nowrap">{raceDate(lastResult.date)}</span>
           </p>
         )}
-        {stats.length > 0 && (
+        {figures.length > 0 && (
           <dl class="driver-stats">
-            {stats.map((stat) => (
+            {figures.map((stat) => (
               <div>
                 <dt class="field-label">{stat.label}</dt>
                 <dd class="data">{stat.value}</dd>
               </div>
             ))}
           </dl>
+        )}
+        {/* The three newest official races from the nightly sync. A real
+            table, because it is one: four columns, tabular figures, and a
+            caption a screen reader can use. Absent entirely when the sync
+            has nothing for this driver - no heading over an empty box. */}
+        {recent.length > 0 && (
+          <table class="driver-recent">
+            <caption class="sr-only">{`${driver.name}: the three most recent official races`}</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="field-label">Date</th>
+                <th scope="col" class="field-label">Series</th>
+                <th scope="col" class="field-label">Start to finish</th>
+                <th scope="col" class="field-label">SOF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((row) => (
+                <tr>
+                  <td class="data recent-date">{raceDate(row.date)}</td>
+                  <td class="recent-series">{row.series}</td>
+                  {/* "to", not an arrow glyph: every arrow on this site is an
+                      inline SVG affordance that means "go somewhere", and the
+                      subset faces carry no arrow characters. */}
+                  <td class="data recent-move">
+                    P{row.start} <span class="recent-to">to</span> P{row.finish}
+                  </td>
+                  <td class="data recent-sof">{row.sof ?? ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
         {/* Same two things every other text link that leaves the site
             carries: the channel's own spelling, and the up-right glyph. A
@@ -134,9 +187,9 @@ const stats = [
   }
 
   .driver-compact .driver-number {
-    font-family: var(--font-mono);
+    font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
+    font-weight: var(--weight-display);
     /* Same cascade trap as `--compact-inset`: the page's
        `.roster-teaser > li:first-child .driver-number` is (0,3,0) against this
        scoped rule's (0,4,0), so the lead cell's larger number never applied
@@ -144,7 +197,7 @@ const stats = [
     font-size: var(--compact-number-size, var(--number-md));
     line-height: 1;
     color: transparent;
-    -webkit-text-stroke: 1px var(--teal-soft);
+    -webkit-text-stroke: 1px var(--muted);
     margin-bottom: var(--space-2xs);
     /* All three properties one hover moves are on one clock. They used to run
        on three: the fill eased over 240ms, the stroke colour snapped because
@@ -156,7 +209,8 @@ const stats = [
 
   .driver-compact .driver-name {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-base);
     letter-spacing: var(--track-title);
     text-transform: uppercase;
@@ -168,15 +222,23 @@ const stats = [
 
   .driver-compact .driver-focus {
     font-size: var(--text-sm);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     line-height: var(--leading-snug);
     overflow-wrap: anywhere;
+  }
+
+  .driver-compact .driver-rating {
+    margin-top: var(--space-2xs);
+    color: var(--muted);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
   }
 
   .driver-compact .driver-country {
     margin-top: auto;
     padding-top: var(--space-s);
-    color: var(--ink-faint);
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: var(--track-label);
     font-size: var(--text-2xs);
@@ -184,21 +246,21 @@ const stats = [
 
   @media (hover: hover) and (pointer: fine) {
     .driver-compact > a:hover .driver-number {
-      color: var(--teal);
-      -webkit-text-stroke-color: var(--teal);
+      color: var(--signal);
+      -webkit-text-stroke-color: var(--signal);
     }
     .driver-compact > a:hover .driver-name {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
   .driver-compact > a:focus-visible .driver-number {
-    color: var(--teal);
-    -webkit-text-stroke-color: var(--teal);
+    color: var(--signal);
+    -webkit-text-stroke-color: var(--signal);
   }
 
   .driver-compact > a:focus-visible .driver-name {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   /* Row: the full roster entry, laid out like a timing sheet line. */
@@ -221,13 +283,13 @@ const stats = [
   }
 
   .driver-row .driver-number {
-    font-family: var(--font-mono);
+    font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
+    font-weight: var(--weight-display);
     font-size: var(--number-md);
     line-height: 1;
     color: transparent;
-    -webkit-text-stroke: 1px var(--teal-soft);
+    -webkit-text-stroke: 1px var(--muted);
   }
 
   .driver-row .driver-name {
@@ -240,13 +302,13 @@ const stats = [
      transparent glyph in an empty slot, so the fallback is a solid fill. */
   @supports not (-webkit-text-stroke: 1px currentColor) {
     .driver-number {
-      color: var(--teal-soft);
+      color: var(--muted);
     }
   }
 
   .driver-last {
     margin-top: var(--space-s);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-2xs);
     letter-spacing: var(--track-data);
     line-height: var(--leading-body);
@@ -259,7 +321,7 @@ const stats = [
 
   .driver-meta {
     margin-top: 0.35rem;
-    color: var(--ink-faint);
+    color: var(--muted);
     font-size: var(--text-2xs);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
@@ -267,18 +329,19 @@ const stats = [
 
   .driver-row .driver-focus {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--teal);
+    color: var(--mist);
     /* "Trucks / Superspeedway" is 243px of tracked caps at a 200% root. */
     overflow-wrap: anywhere;
   }
 
   .driver-bio {
     margin-top: 0.5rem;
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
   }
@@ -291,8 +354,66 @@ const stats = [
 
   .driver-stats dd {
     margin-top: 0.2rem;
-    color: var(--ink);
+    color: var(--mist);
     font-size: var(--text-sm);
+  }
+
+  /* The synced form book. Hairline rows, a top rule that opens the block and
+     a light rule between rows, which is the same grammar the results sheet
+     uses - one table vocabulary on the site, not two. */
+  .driver-recent {
+    width: 100%;
+    margin-top: var(--space-s);
+    border-collapse: collapse;
+    text-align: left;
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .driver-recent th {
+    padding-block: 0.45rem 0.35rem;
+    font-weight: var(--weight-small);
+  }
+
+  .driver-recent td {
+    padding-block: 0.45rem;
+    border-top: 1px solid var(--line);
+    color: var(--mist-dim);
+    font-size: var(--text-2xs);
+    vertical-align: baseline;
+  }
+
+  .driver-recent th,
+  .driver-recent td {
+    padding-inline-end: var(--space-s);
+  }
+
+  .driver-recent th:last-child,
+  .driver-recent td:last-child {
+    padding-inline-end: 0;
+    text-align: right;
+  }
+
+  .recent-date {
+    white-space: nowrap;
+    color: var(--muted);
+  }
+
+  .recent-series {
+    font-size: var(--text-2xs);
+    overflow-wrap: anywhere;
+  }
+
+  .recent-move {
+    white-space: nowrap;
+    color: var(--mist);
+  }
+
+  .recent-to {
+    color: var(--muted);
+  }
+
+  .recent-sof {
+    color: var(--muted);
   }
 
   .driver-socials {
@@ -310,11 +431,12 @@ const stats = [
     gap: 0.35rem;
     min-height: 44px;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     transition: color var(--dur-2) var(--ease-out-quart),
       opacity var(--dur-1) var(--ease-out-quart);
   }
@@ -326,19 +448,19 @@ const stats = [
 
   @media (hover: hover) and (pointer: fine) {
     .driver-socials a:hover {
-      color: var(--teal);
+      color: var(--signal);
     }
     .driver-socials a:hover > span:first-child {
-      border-color: var(--teal);
+      border-color: var(--signal);
     }
   }
 
   .driver-socials a:focus-visible {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   .driver-socials a:focus-visible > span:first-child {
-    border-color: var(--teal);
+    border-color: var(--signal);
   }
 
   /* The whole 761-1200px band - most tablets and small laptops - gave the

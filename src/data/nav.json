@@ -1,8 +1,8 @@
 {
   "primary": [
-    { "href": "/#results", "label": "Results" },
+    { "href": "/#scoreboard", "label": "Scoreboard" },
     { "href": "/team", "label": "Team" },
-    { "href": "/about", "label": "About" },
+    { "href": "/join", "label": "Join" },
     { "href": "/partners", "label": "Partners" }
   ],
   "cta": {
@@ -11,9 +11,10 @@
   "ctaOverrides": [{ "path": "/partners", "intent": "partnership" }],
   "footer": [
     { "href": "/", "label": "Home" },
-    { "href": "/#results", "label": "Results" },
+    { "href": "/#scoreboard", "label": "Scoreboard" },
     { "href": "/team", "label": "Team" },
-    { "href": "/about", "label": "About" },
-    { "href": "/partners", "label": "Partners" }
+    { "href": "/join", "label": "Join" },
+    { "href": "/partners", "label": "Partners" },
+    { "href": "/about", "label": "About" }
   ]
 }

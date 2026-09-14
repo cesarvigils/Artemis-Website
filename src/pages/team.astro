@@ -7,11 +7,13 @@ import drivers from '../data/drivers.json';
 import results from '../data/results.json';
 import {
   activeDrivers,
+  driverStats,
   driversInGroup,
   latestFinish,
   type Driver,
   type RaceResult,
 } from '../lib/data';
+import { stats } from '../lib/stats';
 
 const GROUPS = [
   {
@@ -46,7 +48,6 @@ const crewCount = roster.length - racingDrivers.length;
 <Base
   title="Team | Artemis Esports"
   description="The Artemis Esports roster: road drivers, oval drivers and the pitwall behind the endurance and GT program on iRacing."
-  monoBold
 >
   <PageHead
     title="The crew"
@@ -82,8 +83,8 @@ const crewCount = roster.length - racingDrivers.length;
             Roster in transition
           </h2>
           <p class="lead roster-empty-lead">
-            No drivers are published right now. The seats are open, and the three
-            steps to one are on the home page.
+            No drivers are published right now. The open seats and what a season
+            asks of you are on the join page.
           </p>
         </div>
       </section>
@@ -115,6 +116,7 @@ const crewCount = roster.length - racingDrivers.length;
                 driver={driver}
                 variant="row"
                 lastResult={latestFinish(races, driver.name)}
+                stats={driverStats(stats, driver)}
                 class="reveal"
                 style={`--reveal-delay: ${i * 60}ms`}
               />
@@ -127,7 +129,7 @@ const crewCount = roster.length - racingDrivers.length;
 
   <JoinCta
     heading="Race with us."
-    lead="We are open to drivers in both programs. Bring consistency and a working microphone. The three steps are on the home page."
+    lead="We are open to drivers in both programs. Bring consistency and a working microphone. The open seats and what a season asks of you are on the join page."
     steps={false}
   />
 </Base>
@@ -163,29 +165,30 @@ const crewCount = roster.length - racingDrivers.length;
   }
 
   .entry-number {
-    font-family: var(--font-mono);
+    font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
+    font-weight: var(--weight-display);
     font-size: var(--number-md);
     line-height: 1;
     color: transparent;
-    -webkit-text-stroke: 1px var(--teal-soft);
+    -webkit-text-stroke: 1px var(--muted);
   }
 
   @supports not (-webkit-text-stroke: 1px currentColor) {
     .entry-number {
-      color: var(--teal-soft);
+      color: var(--muted);
     }
   }
 
   .entry-name {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     overflow-wrap: anywhere;
   }
 
@@ -202,19 +205,19 @@ const crewCount = roster.length - racingDrivers.length;
 
   @media (hover: hover) and (pointer: fine) {
     .entry-strip a:hover .entry-name {
-      color: var(--teal);
+      color: var(--signal);
     }
     .entry-strip a:hover .entry-number {
-      -webkit-text-stroke-color: var(--teal);
+      -webkit-text-stroke-color: var(--signal);
     }
   }
 
   .entry-strip a:focus-visible .entry-name {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   .entry-strip a:focus-visible .entry-number {
-    -webkit-text-stroke-color: var(--teal);
+    -webkit-text-stroke-color: var(--signal);
   }
 
   .entry-strip a:active {
@@ -235,7 +238,7 @@ const crewCount = roster.length - racingDrivers.length;
 
   .roster-blurb {
     margin-top: var(--space-s);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
     max-width: 30ch;
@@ -245,7 +248,7 @@ const crewCount = roster.length - racingDrivers.length;
     margin-top: var(--space-s);
     padding-top: var(--space-s);
     border-top: 1px solid var(--line);
-    color: var(--ink-faint);
+    color: var(--muted);
     text-transform: uppercase;
     letter-spacing: var(--track-label);
     font-size: var(--text-2xs);

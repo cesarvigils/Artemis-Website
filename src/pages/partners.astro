@@ -1,4 +1,6 @@
 ---
+import { existsSync } from 'node:fs';
+
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import ResultsTable from '../components/ResultsTable.astro';
@@ -61,23 +63,36 @@ const roster = activeDrivers(drivers as Driver[]).filter(
    places, so an empty site.store can never ship an href="" opening in a new
    tab. */
 const channels = channelLinks(site.socials, site.store);
+
+/* Build-time slot. The media kit is a file the owner drops into public/; when
+   it is not there the link is not there either, which is better than a 404
+   behind a sponsor-facing promise. */
+const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta.url));
 ---
 
 <Base
   title="Partners | Artemis Esports"
-  description="What a partner gets from Artemis Esports: livery placement, result posts, roster exposure and the Discord community. Recent results, roster and contact."
+  description="What a partner gets from Artemis: livery placement, result posts, roster exposure and the Discord community. Recent results, roster and contact."
+  cta="partnership"
 >
   {/* A heading that speaks (an imperative or a statement) takes a full stop;
       a heading that names a page or a section does not. "Talk to us." below
-      and "Built in silence." on /about with one, "The crew" and "Recent
-      results" without. */}
+      and "Race for us." on /join with one; "The crew", "About Artemis" and
+      "Recent results" without. */}
   <PageHead
     title="Partner with Artemis."
     lead="Everything a sponsor needs to decide is on this page: what you get, what we have finished recently, who drives, and where the audience is."
     meta="2026 season / endurance, GT and oval"
   >
     {/* The action is in the first screen, not 3,600px down at the end. */}
-    <a class="btn btn-solid" slot="action" href={partnershipMailto}>
+    <a
+      class="btn btn-solid"
+      slot="action"
+      href={partnershipMailto}
+      data-umami-event="cta"
+      data-umami-event-placement="hero"
+      data-umami-event-audience="partner"
+    >
       Partner with us
       <Icon name="arrow-right" size={16} />
     </a>
@@ -123,7 +138,8 @@ const channels = channelLinks(site.socials, site.store);
       <div class="section-head section-head-stack">
         <h2 class="display-md" id="offer-heading">What a partner gets</h2>
         <p class="lead">
-          One package. We would rather do a small number of partnerships properly.
+          One package: the cars, the result posts, the roster graphics and the
+          Discord.
         </p>
       </div>
       <ul class="offer-grid">
@@ -142,9 +158,12 @@ const channels = channelLinks(site.socials, site.store);
   <section class="section rule-top" aria-labelledby="snapshot-heading">
     <div class="container">
       <div class="section-head">
+        {/* Named for what it is - three rows out of the season - with the
+            link carrying the name of the thing it goes to. One label per
+            destination: "The Scoreboard" is always /#scoreboard. */}
         <h2 class="display-md" id="snapshot-heading">Recent results</h2>
-        <a class="text-link" href="/#results">
-          All results
+        <a class="text-link" href="/#scoreboard">
+          The Scoreboard
           <Icon name="arrow-right" size={16} />
         </a>
       </div>
@@ -159,7 +178,7 @@ const channels = channelLinks(site.socials, site.store);
         ) : (
           <p class="lead">
             No finishes published for this season yet. The calendar and the full
-            results module are on the home page.
+            Scoreboard are on the home page.
           </p>
         )
       }
@@ -191,9 +210,19 @@ const channels = channelLinks(site.socials, site.store);
       <div class="reach-copy">
         <h2 class="display-md" id="reach-heading">Where the audience is</h2>
         <p class="lead">
-          We do not publish follower counts on a marketing page. Ask and we will send
-          current numbers from each dashboard, with the screenshots.
+          Ask and we will send the current numbers from each dashboard, with the
+          screenshots.
         </p>
+        {/* Rendered only when public/media-kit.pdf is actually in the build.
+            See CONTENT.md: dropping the file in is the whole publishing step. */}
+        {
+          hasMediaKit && (
+            <a class="text-link media-kit" href="/media-kit.pdf">
+              Media kit (PDF)
+              <Icon name="arrow-right" size={16} />
+            </a>
+          )
+        }
       </div>
       <ul class="channel-list">
         {
@@ -213,7 +242,7 @@ const channels = channelLinks(site.socials, site.store);
 
   <PartnerBand
     heading="Current partners"
-    lead="The list is short because we only sign what we can service."
+    lead="Who carries a mark on the cars, and since when."
     variant="stack"
   />
 
@@ -229,7 +258,13 @@ const channels = channelLinks(site.socials, site.store);
       <div class="contact-card">
         <p class="field-label">Partnerships and general enquiries</p>
         <a class="contact-email" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
-        <a class="btn btn-solid contact-btn" href={partnershipMailto}>
+        <a
+          class="btn btn-solid contact-btn"
+          href={partnershipMailto}
+          data-umami-event="cta"
+          data-umami-event-placement="footer"
+          data-umami-event-audience="partner"
+        >
           Partner with us
           <Icon name="arrow-right" size={16} />
         </a>
@@ -256,7 +291,7 @@ const channels = channelLinks(site.socials, site.store);
   }
 
   .dossier dd {
-    color: var(--ink);
+    color: var(--mist);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
   }
@@ -264,7 +299,7 @@ const channels = channelLinks(site.socials, site.store);
   .dossier-empty {
     padding-top: var(--space-s);
     border-top: 1px solid var(--line-strong);
-    color: var(--ink-faint);
+    color: var(--muted);
     line-height: var(--leading-body);
     max-width: var(--measure-lead);
   }
@@ -297,7 +332,7 @@ const channels = channelLinks(site.socials, site.store);
 
   .offer-line {
     margin-top: var(--space-2xs);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
     max-width: 40ch;
@@ -329,11 +364,12 @@ const channels = channelLinks(site.socials, site.store);
     gap: 0.5rem;
     min-height: 44px;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     transition: color var(--dur-2) var(--ease-out-quart);
   }
 
@@ -342,18 +378,18 @@ const channels = channelLinks(site.socials, site.store);
   }
 
   .roster-number {
-    color: var(--teal-soft);
+    color: var(--muted);
     font-size: var(--text-2xs);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .roster-line a:hover {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
   .roster-line a:focus-visible {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   .roster-line a:active {
@@ -374,6 +410,10 @@ const channels = channelLinks(site.socials, site.store);
   .reach-copy .lead {
     margin-top: var(--space-s);
     max-width: var(--measure-lead);
+  }
+
+  .media-kit {
+    margin-top: var(--space-s);
   }
 
   /* Seven channels in a two-column grid left a visible hole in the last
@@ -398,22 +438,23 @@ const channels = channelLinks(site.socials, site.store);
     padding-block: var(--space-s);
     border-bottom: 1px solid var(--line);
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-sm);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     transition: color var(--dur-2) var(--ease-out-quart);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .channel-list a:hover {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
   .channel-list a:focus-visible {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   .channel-list a:active {
@@ -442,8 +483,8 @@ const channels = channelLinks(site.socials, site.store);
     align-items: flex-start;
     gap: var(--space-s);
     padding: var(--space-l);
-    border: 1px solid var(--line-teal);
-    background: var(--bg-raise);
+    border: 1px solid var(--line-strong);
+    background: var(--surface-1);
   }
 
   .contact-email {
@@ -451,7 +492,8 @@ const channels = channelLinks(site.socials, site.store);
     min-height: 44px;
     padding-block: 0.55rem;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xl);
     letter-spacing: var(--track-title);
     line-height: var(--leading-tight);
@@ -467,14 +509,14 @@ const channels = channelLinks(site.socials, site.store);
 
   @media (hover: hover) and (pointer: fine) {
     .contact-email:hover {
-      color: var(--teal);
-      border-color: var(--teal);
+      color: var(--signal);
+      border-color: var(--signal);
     }
   }
 
   .contact-email:focus-visible {
-    color: var(--teal);
-    border-color: var(--teal);
+    color: var(--signal);
+    border-color: var(--signal);
   }
 
   .contact-email:active {

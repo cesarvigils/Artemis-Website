@@ -1,9 +1,11 @@
 {
   "name": "Artemis Esports",
-  "tagline": "Quiet. Precise. On the hunt.",
+  "team": "Artemis",
+  "tagline": "Every shot on the record.",
+  "motto": "Take the shot.",
   "shortDescription": "An iRacing endurance, GT and NASCAR oval team.",
   "heroLead": "An iRacing endurance, GT and NASCAR oval team. We run the long races, the short tracks, and we bring the car home.",
-  "mission": "Artemis builds in silence, improves with intention, and competes with precision. We put people first, chase real progress, and let our results speak louder than the noise.",
+  "mission": "Artemis fields an iRacing endurance crew, develops drivers who do not have a team yet, and publishes what we achieve.",
   "focus": "Endurance and GT racing on iRacing",
   "founded": 2017,
   "simRacingSince": 2023,
@@ -17,27 +19,22 @@
     "youtube": "https://youtube.com/channel/UCE6v3WL651IvusgiD3dJzxg",
     "twitch": "https://twitch.tv/esportsartemis"
   },
-  "hashtags": ["#OnTheHunt", "#CalledByTheHunt", "#ArtemisPitwall", "#FollowersOfTheHunt"],
+  "hashtags": [],
   "pillars": [
     {
-      "title": "Work over words",
-      "line": "Actions echo. Words don't.",
-      "detail": "An entry is announced when the car is on the grid, not when somebody has the idea."
+      "title": "Publish the result",
+      "line": "Every race we enter as a team goes public within 48 hours, win or loss.",
+      "test": "Test: can a stranger find our last five results without asking?"
     },
     {
-      "title": "Progress over pride",
-      "line": "Improvement is the standard, not the reward.",
-      "detail": "A clean sixth that fixed last week's mistake is worth more here than a lucky podium."
+      "title": "Debrief in the open",
+      "line": "Every race gets a short written debrief and the Garage 61 data is shared.",
+      "test": "Test: does the crew have a doc of what it is fixing before the next round?"
     },
     {
-      "title": "Precision over flash",
-      "line": "Accuracy over chaos. Every lap.",
-      "detail": "Stint plan, fuel number and pit window are agreed before the green flag, not argued over during it."
-    },
-    {
-      "title": "Culture over clout",
-      "line": "Built for our people, not the noise.",
-      "detail": "The roster stays small so everyone gets seat time. Nobody is signed to sit out a season."
+      "title": "The driver is the point",
+      "line": "Time and money go to seat time and coaching before merch and graphics.",
+      "test": "Test: name the last thing we did for a driver that nobody saw."
     }
   ],
   "join": {
@@ -54,6 +51,24 @@
       {
         "title": "Get in a car",
         "line": "Run a practice session with the crew. Most drivers are placed within two weeks."
+      }
+    ],
+    "expectations": [
+      {
+        "title": "Practice",
+        "line": "One team practice a week, plus your own laps before a round."
+      },
+      {
+        "title": "Commitment",
+        "line": "One endurance entry a month for road, or the weekly league night for oval."
+      },
+      {
+        "title": "Conduct",
+        "line": "Clean racing, a working microphone, and the debrief answered honestly."
+      },
+      {
+        "title": "Minimum age",
+        "line": "16, because that is the floor for the leagues we enter."
       }
     ]
   }

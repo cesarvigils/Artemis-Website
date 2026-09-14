@@ -160,7 +160,7 @@ function initMenu() {
 
 /* In-page anchors ---------------------------------------------------
    Smooth scrolling is applied per click rather than globally, so a link
-   arriving from another page (/#results) jumps straight there instead of
+   arriving from another page (/#scoreboard) jumps straight there instead of
    animating across several thousand pixels.
 ------------------------------------------------------------------- */
 function initAnchors() {
@@ -168,7 +168,7 @@ function initAnchors() {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
     const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href*="#"]');
     if (!link || link.target === '_blank') return;
-    // Same document only: /#results from /team is a real navigation.
+    // Same document only: /#scoreboard from /team is a real navigation.
     if (link.pathname.replace(/\/+$/, '') !== location.pathname.replace(/\/+$/, '')) return;
 
     const id = link.hash.slice(1);
@@ -202,6 +202,15 @@ function initAnchors() {
      each new value fades up from 0.55, so the change is legible as a
      change without the text popping.
 ------------------------------------------------------------------- */
+function inWords(diff: number): string {
+  const minutes = Math.floor(diff / 60000);
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const mins = minutes % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `In ${days}d ${pad(hours)}h ${pad(mins)}m`;
+}
+
 function initCountdown() {
   const el = document.querySelector<HTMLElement>('[data-countdown]');
   if (!el) return;
@@ -214,22 +223,24 @@ function initCountdown() {
 
   const DAY = 86400000;
 
-  /* Zero state. The contract carries dates, not times, so the target is
-     midnight on the start date in the team's timezone - which means "Under
-     way" at 6am on race morning would be a claim the clock cannot support.
-     On the start date itself the line says "Race day"; only once that date
-     has passed (the strip keeps an event until its end date does) does it say
-     the race is running. */
+  /* Zero state, and it depends on what the record knows.
+
+     With a `startTime` the target IS the green flag, so the moment the
+     countdown reaches zero the race is running and the line says so.
+
+     Without one the target is midnight on the start date in the team's
+     timezone, which means "Under way" at 6am on race morning would be a
+     claim the clock cannot support. On the start date itself the line says
+     "Race day"; only once that date has passed (the strip keeps an event
+     until its end date does) does it say the race is running. */
+  const exact = el.dataset.exact === 'true';
+
   const text = () => {
     const diff = target - Date.now();
+    if (exact) return diff <= 0 ? 'Under way' : inWords(diff);
     if (diff <= -DAY) return 'Under way';
     if (diff <= 0) return 'Race day';
-    const minutes = Math.floor(diff / 60000);
-    const days = Math.floor(minutes / 1440);
-    const hours = Math.floor((minutes % 1440) / 60);
-    const mins = minutes % 60;
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `In ${days}d ${pad(hours)}h ${pad(mins)}m`;
+    return inWords(diff);
   };
 
   const fade = (from: number) => {
@@ -267,6 +278,93 @@ function initCountdown() {
   });
 
   tick();
+}
+
+/* Green-flag time, in the reader's own zone ---------------------------
+   The markup carries the time in UTC, which is true everywhere and needs
+   no clock. This rewrites it in the visitor's zone with the zone's short
+   name, and prints the local date as well whenever the conversion lands
+   on a different day from the one the strip is showing - otherwise a
+   reader in Auckland sees "25 SEP" beside an 03:15 that is really the
+   26th.
+------------------------------------------------------------------- */
+function initLocalTime() {
+  const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-local-time]'));
+  if (!nodes.length || typeof Intl?.DateTimeFormat !== 'function') return;
+
+  for (const el of nodes) {
+    const iso = el.dataset.localTime ?? '';
+    const when = new Date(iso);
+    if (Number.isNaN(when.getTime())) continue;
+
+    try {
+      const localDay = new Intl.DateTimeFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(when);
+      const sameDay = localDay === iso.slice(0, 10);
+
+      const text = new Intl.DateTimeFormat(undefined, {
+        ...(sameDay ? {} : { day: '2-digit', month: 'short' }),
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      }).format(when);
+
+      if (text) el.textContent = text;
+    } catch {
+      /* A locale Intl cannot resolve leaves the UTC statement in place,
+         which is the whole reason it is the thing in the markup. */
+    }
+  }
+}
+
+/* Sticky action bar, phones only --------------------------------------
+   Shown once the first screen has scrolled away, hidden again when the
+   footer is in view (it carries the same links) and while the menu is
+   open (CSS handles that one, because the panel's own class is the
+   condition). Two observers, no scroll listener, and the bar is
+   `position: fixed` from the first frame, so it can never move the
+   document: measured CLS 0.
+------------------------------------------------------------------- */
+function initStickyCta() {
+  const bar = document.querySelector<HTMLElement>('[data-sticky-cta]');
+  if (!bar || !('IntersectionObserver' in window)) return;
+
+  const firstScreen = document.querySelector('.hero, .page-head');
+  const footer = document.querySelector('.site-footer');
+  if (!firstScreen || !footer) return;
+
+  let firstScreenGone = false;
+  let footerInView = false;
+
+  /* The bar and the compact header CTA are the same action, so exactly one
+     of them is on screen at a time: two Signal-filled buttons in one phone
+     viewport spends the colour budget twice on one intent. Hiding the header
+     copy costs no layout - the hamburger is already flush right and the
+     wordmark is already flush left - so nothing moves when it goes. */
+  const apply = () => {
+    const shown = firstScreenGone && !footerInView;
+    bar.classList.toggle('is-shown', shown);
+    document.documentElement.classList.toggle('sticky-shown', shown);
+  };
+
+  new IntersectionObserver(
+    ([entry]) => {
+      firstScreenGone = !entry.isIntersecting;
+      apply();
+    },
+    { threshold: 0 }
+  ).observe(firstScreen);
+
+  new IntersectionObserver(
+    ([entry]) => {
+      footerInView = entry.isIntersecting;
+      apply();
+    },
+    { threshold: 0 }
+  ).observe(footer);
 }
 
 /* Hero position marker ------------------------------------------------
@@ -437,9 +535,11 @@ function init() {
   initNavState();
   initMenu();
   initAnchors();
+  initLocalTime();
   initCountdown();
   initHeroCount();
   initGarage();
+  initStickyCta();
   initYear();
 }
 

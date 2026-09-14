@@ -1,0 +1,241 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import JoinCta from '../components/JoinCta.astro';
+import Icon from '../components/Icon.astro';
+
+import site from '../data/site.json';
+import seats from '../data/seats.json';
+import { openSeats, type Seat } from '../lib/data';
+import { CTA_INTENTS } from '../lib/links';
+
+const PROGRAM_LABELS: Record<string, string> = {
+  road: 'Road',
+  oval: 'Oval',
+  crew: 'Pitwall',
+};
+
+const open = openSeats(seats as Seat[]);
+const cta = CTA_INTENTS.apply;
+
+const meta =
+  open.length > 0
+    ? `${open.length} ${open.length === 1 ? 'seat' : 'seats'} open / road and oval`
+    : 'No seats open right now';
+---
+
+<Base
+  title="Join | Artemis Esports"
+  description="Open seats on the Artemis iRacing roster, what a season asks of you, and the one step to apply. Every shot on the record."
+  cta="apply"
+>
+  <PageHead
+    title="Race for us."
+    lead="What is open, what we expect, and the one step to apply. No form, no tryout weekend."
+    meta={meta}
+  >
+    <a
+      class="btn btn-solid"
+      slot="action"
+      href={cta.href}
+      target="_blank"
+      rel="noopener"
+      data-umami-event="cta"
+      data-umami-event-placement="join"
+      data-umami-event-audience={cta.audience}
+    >
+      {cta.label}
+      <Icon name="arrow-up-right" size={16} />
+      <span class="sr-only"> (opens in a new tab)</span>
+    </a>
+  </PageHead>
+
+  <section class="section seats rule-top" aria-labelledby="seats-heading">
+    <div class="container">
+      <div class="section-head section-head-stack">
+        <h2 class="display-md" id="seats-heading">Open seats</h2>
+        <p class="lead">
+          A seat is open when there is a car and a calendar behind it. When there
+          is not, this list is empty and says so.
+        </p>
+      </div>
+
+      {/* Empty is a real state, not a bug: seats.json is hand-edited and the
+          honest answer between recruitment rounds is that nothing is open. */}
+      {
+        open.length > 0 ? (
+          <ul class="seat-list">
+            {open.map((seat) => (
+              <li class="seat reveal">
+                <div class="seat-head">
+                  <h3 class="seat-role">{seat.role}</h3>
+                  <p class="seat-program field-label">
+                    {PROGRAM_LABELS[seat.program] ?? seat.program}
+                  </p>
+                </div>
+                <div class="seat-body">
+                  <p class="field-label seat-label">What the seat asks</p>
+                  <ul class="seat-requirements">
+                    {seat.requirements.map((line) => (
+                      <li>{line}</li>
+                    ))}
+                  </ul>
+                  {seat.note && <p class="seat-note">{seat.note}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="lead seats-empty">
+            No seats open right now. The Discord is still the place to ask: we
+            keep a list and go to it first when a car frees up.
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="section expects rule-top" aria-labelledby="expects-heading">
+    <div class="container">
+      <div class="section-head section-head-stack">
+        <h2 class="display-md" id="expects-heading">What a season asks of you</h2>
+        <p class="lead">
+          Four things, and all four are the same for every seat. Confirm them
+          against your own week before you open a ticket.
+        </p>
+      </div>
+      <dl class="expect-list">
+        {
+          site.join.expectations.map((item, i) => (
+            <div class="expect reveal" style={`--reveal-delay: ${i * 60}ms`}>
+              <dt>{item.title}</dt>
+              <dd>{item.line}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <JoinCta
+    heading="How to apply."
+    lead="One ticket in the Discord. Tell us your iRacing name, your ratings and the classes you run, and somebody will put you in a practice session that week."
+    intent="apply"
+  />
+</Base>
+
+<style>
+  /* One seat per row, opened by a strong rule, separated by light ones: the
+     same hairline grammar as the results sheet and the roster. No cards. */
+  .seat-list {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .seat {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.8fr);
+    gap: var(--space-m) var(--space-xl);
+    align-items: start;
+    padding-block: var(--space-m);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .seat-role {
+    font-size: var(--text-xl);
+    letter-spacing: var(--track-title);
+  }
+
+  .seat-program {
+    margin-top: 0.4rem;
+  }
+
+  .seat-label {
+    margin-bottom: var(--space-2xs);
+  }
+
+  .seat-requirements {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 52ch;
+  }
+
+  /* A leading rule per requirement rather than a bullet glyph: the site has
+     one decorative vocabulary and it is hairlines. */
+  .seat-requirements li {
+    position: relative;
+    padding-left: var(--space-m);
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    color: var(--mist-dim);
+  }
+
+  .seat-requirements li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: var(--space-s);
+    height: 1px;
+    background: var(--line-strong);
+  }
+
+  .seat-note {
+    margin-top: var(--space-s);
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line);
+    max-width: 52ch;
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    color: var(--muted);
+  }
+
+  .seats-empty {
+    max-width: var(--measure-lead);
+  }
+
+  .expects {
+    background: var(--surface-1);
+  }
+
+  .expect-list {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .expect {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.8fr);
+    gap: var(--space-2xs) var(--space-xl);
+    align-items: baseline;
+    padding-block: var(--space-s);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .expect dt {
+    font-family: var(--font-display);
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
+    font-size: var(--text-sm);
+    letter-spacing: var(--track-link);
+    text-transform: uppercase;
+    color: var(--mist);
+  }
+
+  .expect dd {
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+    color: var(--mist-dim);
+    max-width: var(--measure-lead);
+  }
+
+  @media (max-width: 900px) {
+    .seat,
+    .expect {
+      grid-template-columns: 1fr;
+      gap: var(--space-s);
+    }
+    .expect {
+      gap: 0.25rem;
+    }
+  }
+</style>

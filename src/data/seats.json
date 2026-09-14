@@ -1,0 +1,28 @@
+[
+  {
+    "id": "road-endurance-driver",
+    "program": "road",
+    "role": "Endurance driver",
+    "requirements": [
+      "iRating 2000 or above in sports car",
+      "Safety rating B 3.00 or above",
+      "One endurance round a month, stints of 60 to 90 minutes"
+    ],
+    "status": "open",
+    "note": "Placeholder seat. Confirm the rating floor and the stint length before go-live.",
+    "_placeholder": true
+  },
+  {
+    "id": "oval-truck-driver",
+    "program": "oval",
+    "role": "Truck and Xfinity driver",
+    "requirements": [
+      "iRating 1500 or above on oval",
+      "Safety rating C 3.00 or above",
+      "Friday league night, most weeks"
+    ],
+    "status": "open",
+    "note": "Placeholder seat. Confirm the rating floor and which league night before go-live.",
+    "_placeholder": true
+  }
+]

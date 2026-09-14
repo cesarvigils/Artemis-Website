@@ -42,14 +42,54 @@ navigations), and every non-`self` connection. If inline script ever becomes
 unacceptable, the fix is a build step that writes the hashes, not a hand-kept
 list.
 
+**Two external origins are allowed, and only two**, both Umami's:
+`script-src` gains `https://cloud.umami.is` (where the tag is served from) and
+`connect-src` gains **both** `https://cloud.umami.is` and
+`https://gateway.umami.is` (where the tag posts events to). Umami Cloud serves
+the script from one host and receives from another, which is easy to miss: with
+only `cloud.umami.is` in `connect-src` the script loads, the page looks fine,
+and every single event is blocked with a CSP violation in the console and
+nothing in the dashboard. That was measured, not guessed.
+
+The tag itself is injected **only** when `PUBLIC_UMAMI_WEBSITE_ID` is set (see
+§0c). With the variable unset the two origins are still named in the policy and
+nothing ever reaches them, which is harmless and means turning analytics on is
+an environment change rather than an environment change plus a header change.
+If the team moves to a self-hosted Umami, `PUBLIC_UMAMI_SRC` and both CSP
+directives have to name the new origin.
+
+## 0c. Analytics environment variables
+
+Two variables on the Vercel project, both read at **build** time, both
+`PUBLIC_`-prefixed so Astro exposes them to the client bundle.
+
+| Variable | Environment | What it does |
+|---|---|---|
+| `PUBLIC_UMAMI_WEBSITE_ID` | Production (and Preview, if you want preview traffic separated) | The website id from the Umami dashboard. **Setting it is the on switch.** Unset, the `<script>` tag is not in the HTML at all and the footer says "We run no analytics and set no cookies". Set, the tag ships and the footer says "Cookieless analytics, no consent banner". |
+| `PUBLIC_UMAMI_SRC` | Optional | The script URL. Defaults to `https://cloud.umami.is/script.js`. Only change it for a self-hosted or proxied instance, and change the CSP with it. |
+
+Because they are build-time, changing either needs a redeploy to take effect -
+Vercel does that automatically when you save an environment variable, but the
+change is not live until that build finishes.
+
+There is no consent banner and that is deliberate: Umami sets no cookies and
+stores no personal data, so there is nothing to consent to. If the team ever
+adds a tool that does, the banner comes with it and this paragraph is wrong.
+
+Every Discord button and the partner mailto carry `data-umami-event="cta"` plus
+`data-umami-event-placement` (`header`, `hero`, `sticky`, `join`, `footer`)
+and `data-umami-event-audience` (`driver`, `partner`), so the dashboard answers
+"which audience pressed which button, where" with no further setup.
+
 **Cache headers.** `/_astro/*` and `/fonts/*` get a year with `immutable`.
 `/_astro` filenames carry a content hash, so that is free. **`/fonts/*` does
 not** - if a font file is ever replaced, give the new file a new name, or
-browsers will keep the old one for a year. That is what the `.v2` in
-`nexa-bold.latin.v2.woff2` is for: the four faces are subset builds, and a
-re-subset ships as `.v3` with the `@font-face` block in
-`src/styles/global.css` and the preloads in `src/layouts/Base.astro` updated to
-match. The icons and the OG card get a day.
+browsers will keep the old one for a year. That is what the `.v3` in
+`archivo-core.latin.v3.woff2` is for: four files, two variable families split by
+`unicode-range`, and a re-subset ships as `.v4` with the four `@font-face` rules
+in `src/styles/global.css` and the two preloads in `src/layouts/Base.astro`
+updated to match. `public/fonts/OFL.txt` ships beside them because the licence
+requires it. The icons and the OG card get a day.
 The HTML deliberately keeps Vercel's default (`max-age=0, must-revalidate`), so
 a bot-driven data push is live the moment the build finishes.
 
@@ -79,7 +119,7 @@ npm run build
 This produces a `dist/` folder containing the whole site (`index.html`,
 `team/index.html`, etc.).
 
-**Expected output:** about **2.6 MB** total, 78 files, and it should finish in
+**Expected output:** about **2.5 MB** total, 76 files, and it should finish in
 under 10 seconds. If `dist/` comes out at tens of megabytes, something started
 copying full-size original photos again; see `DESIGN.md` section 8 before
 shipping.
@@ -112,18 +152,17 @@ Keep a copy of the old site somewhere until you're happy with the new one.
 
 ## 3. URLs that carry over
 
-The new site keeps `/team`, `/about` and `/partners`. These old pages no longer
-exist:
+The new site keeps `/team`, `/about`, `/partners` and `/join` (now a real page
+again). These old pages no longer exist:
 
-- `/legacy`, `/calendar`, `/results`, `/media`, `/join`, `/team.html`
+- `/legacy`, `/calendar`, `/results`, `/media`, `/team.html`
 
 **On Vercel these are already handled** - the `redirects` block in `vercel.json`
 sends each of them on with a 301:
 
 | Old URL | Goes to | Why |
 |---|---|---|
-| `/join` | `/#join` | The join band is a home-page module |
-| `/results` | `/#results` | So is the results table |
+| `/results` | `/#scoreboard` | The Scoreboard is a home-page module |
 | `/calendar` | `/` | The next-race strip is the first thing under the hero |
 | `/media` | `/about` | The photos live in the origin story |
 | `/legacy` | `/about` | Same |
@@ -137,8 +176,7 @@ Partners page kept its `id="contact"`.
 served from the fallback host instead, put the same mapping there by hand:
 
 ```apacheconf
-Redirect 301 /join /#join
-Redirect 301 /results /#results
+Redirect 301 /results /#scoreboard
 Redirect 301 /calendar /
 Redirect 301 /media /about
 Redirect 301 /legacy /about
@@ -166,6 +204,6 @@ cache policy and the slash rule in `vercel.json` all have to be re-created in
   `vercel.json` needs the matching directive loosened - fix the header, never
   the page.
 - Check one legacy URL (`/results` is the one most likely to be in an old
-  Discord pin) and confirm it 301s to `/#results`.
+  Discord pin) and confirm it 301s to `/#scoreboard`.
 - Check `https://artemisesports.com/team/` (with the slash) redirects to
   `/team` (without), and that the canonical tag on the page agrees.

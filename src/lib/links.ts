@@ -1,6 +1,6 @@
 import site from '../data/site.json';
 
-/** The one Discord invite every "Join the team" button points at. */
+/** The one Discord invite every driver-facing action points at. */
 export const discordInvite = site.socials.discord;
 
 /**
@@ -10,23 +10,57 @@ export const discordInvite = site.socials.discord;
  */
 export const partnershipMailto = `mailto:${site.contactEmail}?subject=Partnership%20enquiry`;
 
+export interface CtaIntent {
+  href: string;
+  /** The visible label. */
+  label: string;
+  /**
+   * The phone header's label. The compact CTA sits in a 320px bar beside a
+   * 44px hamburger, and a 16-character label is wider than the space that is
+   * left once the wordmark and the toggle have taken theirs. The anchor keeps
+   * the full label as its accessible name, so nothing is lost to a screen
+   * reader.
+   */
+  short: string;
+  external: boolean;
+  /**
+   * Who the action is for. Sent to analytics as
+   * `data-umami-event-audience` so "which audience presses which button"
+   * is answerable without a second event name per placement.
+   */
+  audience: 'driver' | 'partner';
+}
+
 /**
- * `short` is the phone header's label. The compact CTA sits in a 320px bar
- * beside a 44px hamburger, and a 13-character label is wider than the space
- * that is left once the lockup and the toggle have taken theirs. The anchor
- * keeps the full label as its accessible name, so nothing is lost to a screen
- * reader.
+ * One label per audience, and the label says what the next screen is.
+ *
+ * `join` is the chrome action on every driver-facing page: the header, the
+ * mobile panel, the sticky bar, the home band. `apply` is the same
+ * destination worded for the one page where the reader has already decided -
+ * /join, where "Join the Discord" would be telling them to do the thing they
+ * are already doing. `partnership` is the sponsor's action on /partners.
  */
-export const CTA_INTENTS: Record<
-  string,
-  { href: string; label: string; short: string; external: boolean }
-> = {
-  join: { href: discordInvite, label: 'Join the team', short: 'Join', external: true },
+export const CTA_INTENTS: Record<string, CtaIntent> = {
+  join: {
+    href: discordInvite,
+    label: 'Join the Discord',
+    short: 'Discord',
+    external: true,
+    audience: 'driver',
+  },
+  apply: {
+    href: discordInvite,
+    label: 'Apply in the Discord',
+    short: 'Apply',
+    external: true,
+    audience: 'driver',
+  },
   partnership: {
     href: partnershipMailto,
     label: 'Partner with us',
     short: 'Partner',
     external: false,
+    audience: 'partner',
   },
 };
 
@@ -38,7 +72,7 @@ export const CTA_INTENTS: Record<
  * home page a marker.
  *
  * An href carrying a fragment is never "the current page": it is a place
- * inside one, and `/#results` marked as `aria-current="page"` would be a
+ * inside one, and `/#scoreboard` marked as `aria-current="page"` would be a
  * claim the reader can disprove by scrolling.
  */
 export function isCurrent(href: string, pathname: string): boolean {
@@ -68,9 +102,9 @@ export function socialLabel(key: string): string {
 
 /**
  * The public channel list, built once. The footer guarded `site.store` and
- * `/partners` did not, so an empty store URL gave the sponsor page a
- * `href=""` link with `target="_blank"` - a new tab that reloads the page it
- * was opened from. One builder, one guard, two consumers.
+ * /partners did not, so an empty store URL gave the sponsor page a `href=""`
+ * link with `target="_blank"` - a new tab that reloads the page it was opened
+ * from. One builder, one guard, two consumers.
  */
 export function channelLinks(
   socials: Record<string, string>,

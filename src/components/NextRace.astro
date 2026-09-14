@@ -1,6 +1,6 @@
 ---
-import { raceDate, raceDateRange } from '../lib/format';
-import { countdownTarget, type RaceEvent } from '../lib/data';
+import { raceDate, raceDateRange, raceTimeUtc } from '../lib/format';
+import { eventTarget, type RaceEvent } from '../lib/data';
 
 interface Props {
   /** Upcoming entries, soonest first. The first one is the next race. */
@@ -40,13 +40,23 @@ const when = next ? raceDateRange(next.start, next.end) : '';
               <dt class="field-label">Track</dt>
               <dd>{next.track}</dd>
             </div>
-            <div class="race-cell race-cell-when">
+            <div class:list={['race-cell', 'race-cell-when', { 'has-time': !!next.startTime }]}>
               <dt class="field-label">Date</dt>
               <dd>
                 <span class="data">{when}</span>
+                {/* The green flag, in UTC, as static text. The browser
+                    rewrites it in the reader's own zone with the zone's
+                    short name; without JS the UTC statement is still true,
+                    and it occupies the same line either way. */}
+                {next.startTime && (
+                  <span class="race-time data" data-local-time={next.startTime}>
+                    {raceTimeUtc(next.startTime)}
+                  </span>
+                )}
                 <span
                   class="race-countdown data"
-                  data-countdown={countdownTarget(next.start)}
+                  data-countdown={eventTarget(next)}
+                  data-exact={next.startTime ? 'true' : undefined}
                   hidden
                 />
               </dd>
@@ -88,7 +98,7 @@ const when = next ? raceDateRange(next.start, next.end) : '';
 
 <style>
   .next-race {
-    background: var(--bg-raise);
+    background: var(--surface-1);
     padding-block: var(--space-m);
   }
 
@@ -104,7 +114,7 @@ const when = next ? raceDateRange(next.start, next.end) : '';
     font-size: var(--text-xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
-    color: var(--teal);
+    color: var(--mist);
   }
 
   .next-race-data {
@@ -123,7 +133,8 @@ const when = next ? raceDateRange(next.start, next.end) : '';
 
   .race-cell dd {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-sm);
     letter-spacing: var(--track-title);
     text-transform: uppercase;
@@ -133,19 +144,29 @@ const when = next ? raceDateRange(next.start, next.end) : '';
 
   .race-cell .data {
     display: block;
-    font-family: var(--font-mono);
-    font-weight: 400;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
     letter-spacing: var(--track-data);
     text-transform: none;
   }
 
-  /* Reserve the countdown line so filling it in shifts nothing. */
+  /* Reserve the countdown line so filling it in shifts nothing. A record
+     with a start time reserves one line more, because the time is printed
+     above the countdown. */
   .race-cell-when dd {
     min-height: 2.6em;
   }
 
+  .race-cell-when.has-time dd {
+    min-height: 3.9em;
+  }
+
+  .race-time {
+    color: var(--muted);
+  }
+
   .race-countdown {
-    color: var(--teal);
+    color: var(--mist);
   }
 
   .race-countdown[hidden] {
@@ -157,18 +178,19 @@ const when = next ? raceDateRange(next.start, next.end) : '';
   .race-cell dd .race-status {
     display: inline-block;
     margin-left: 0.55rem;
-    font-family: var(--font-mono);
-    font-weight: 400;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
     font-size: var(--text-2xs);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--muted);
     white-space: nowrap;
   }
 
   .race-empty {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-sm);
     letter-spacing: var(--track-title);
     line-height: var(--leading-snug);
@@ -178,10 +200,10 @@ const when = next ? raceDateRange(next.start, next.end) : '';
   .race-empty-sub {
     display: block;
     margin-top: 0.3rem;
-    font-weight: 400;
+    font-weight: var(--weight-small);
     text-transform: none;
     letter-spacing: var(--track-data);
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   /* The rest of the calendar: the reason to come back, one hairline each. */
@@ -206,12 +228,13 @@ const when = next ? raceDateRange(next.start, next.end) : '';
   .also-date {
     flex: 0 0 7rem;
     font-size: var(--text-2xs);
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   .also-name {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-link);
@@ -221,7 +244,7 @@ const when = next ? raceDateRange(next.start, next.end) : '';
 
   .also-track {
     font-size: var(--text-sm);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     overflow-wrap: anywhere;
   }
 
@@ -230,7 +253,7 @@ const when = next ? raceDateRange(next.start, next.end) : '';
     font-size: var(--text-2xs);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   @media (max-width: 900px) {

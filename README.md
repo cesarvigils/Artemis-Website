@@ -1,9 +1,15 @@
-# Artemis Esports website
+# Artemis website
 
-The website for Artemis Esports, an iRacing endurance, GT and NASCAR oval team:
+The website for Artemis, an iRacing endurance, GT and NASCAR oval team:
 <https://artemisesports.com>
 
-Five pages, no database, no logins, no forms that submit anywhere. The build
+The team is called **Artemis**; "Artemis Esports" is the org and appears only
+where the org is named. The promise the site is built around is **"Every shot on
+the record."** Both come from `docs/brand-core.md`, which is the authority for
+every naming, colour, type and wording question on this site - read it before
+changing any copy.
+
+Six pages, no database, no logins, no forms that submit anywhere. The build
 turns the source in this folder into plain HTML, CSS and images, and a host
 serves those files. Race results, the roster and the calendar come from three
 JSON files that a Discord bot writes for you, so nobody has to touch code to
@@ -15,22 +21,25 @@ Lead developer: Cesar Vigil.
 
 | Page | What is on it |
 |---|---|
-| `/` | The team, the next race, the last six results, the cars, the drivers, how we race, the partner, and how to join |
+| `/` | The team, the next race, where to go next, the Scoreboard, the cars, the drivers, what we stand for, the partner, and how to join |
 | `/team` | The full roster, grouped road, oval and pitwall |
-| `/about` | Where the org came from, the photos, the four values, how to join |
+| `/join` | The open seats, what a season asks of a driver, and the one step to apply |
 | `/partners` | What a partner gets, the results and roster as evidence, the channels, the contact |
+| `/about` | Where the org came from, the photos, what we stand for, how to join |
 | a bad URL | A branded not-found page that points home |
+
+The header carries Scoreboard, Team, Join and Partners plus one button;
+`/about` is in the footer only.
 
 ## The branches
 
-There are four, and they do different jobs. Check which one you are on before
+There are three, and they do different jobs. Check which one you are on before
 you change anything: `git branch --show-current`.
 
 | Branch | What it is |
 |---|---|
-| `master` | Cesar's original site, kept as the record of what came before. Nothing new goes here. |
-| `maintenance` | **Production.** This is the branch Vercel deploys to artemisesports.com, and the branch the Discord bot writes to. |
-| `redesign` | The 2026 redesign, built over five passes. This is where the current design work lives, and it is what gets merged into `maintenance` at go-live. |
+| `master` | **Production.** The branch Vercel deploys to artemisesports.com, and the branch the Discord bot writes to in normal operation. |
+| `preview` | **Pre-production.** Where the 2026 redesign was built, over six passes, and where any change goes first. It is what gets merged into `master` at go-live, and it is the branch the bot points at when someone is testing. |
 | `bot` | The Artemis data bot. It is a separate Node program that runs on a server or a laptop, not part of the website build, so it lives on its own branch. |
 
 `docs/redesign-summary.md` says what changed in the redesign and what is still
@@ -72,7 +81,9 @@ for any of it.
 | `src/data/results.json` | Race results. Written by the bot. |
 | `src/data/drivers.json` | The roster. Written by the bot. |
 | `src/data/events.json` | The calendar. Written by the bot. |
-| `src/data/site.json` | The tagline, the mission, the founding dates, the contact address, the socials, the four values, the three join steps |
+| `src/data/site.json` | The promise, the motto, the mission, the founding dates, the contact address, the socials, the three commitments, the join steps and the join expectations |
+| `src/data/seats.json` | The open seats on `/join`. Hand-edited; the bot does not write it |
+| `src/data/stats.json` | iRating, safety rating and recent races per driver. Written by the nightly iRacing sync; optional, and the site shows nothing when it is absent |
 | `src/data/nav.json` | The navigation links and which button the header carries |
 | `src/data/cars.json` | The five garage captions |
 | `src/data/partners.json` | The partner list |
@@ -101,10 +112,30 @@ every write, so it will not overwrite your change. The rules a hand edit has to
 follow are in `docs/data-contract.md`, and `npm run check:data` tells you if you
 broke one.
 
+## Analytics
+
+The site ships **no analytics and no cookies** unless you switch them on. When
+you do, it is Umami Cloud, which is cookieless and stores nothing personal,
+which is why there is no consent banner.
+
+Two environment variables on the Vercel project, both read at **build** time:
+
+| Variable | What it does |
+|---|---|
+| `PUBLIC_UMAMI_WEBSITE_ID` | The website id from the Umami dashboard. **Setting it is the switch.** With it unset, no third-party script is in the HTML at all and the footer says "We run no analytics and set no cookies". |
+| `PUBLIC_UMAMI_SRC` | Optional. The script URL, for a self-hosted or proxied Umami. Defaults to `https://cloud.umami.is/script.js`. |
+
+Both have to be set before the build that should carry them; changing them means
+a redeploy. `DEPLOY.md` has the Content-Security-Policy note that goes with
+them. Every Discord button and the partner mailto already carry
+`data-umami-event="cta"` with a `placement` (`header`, `hero`, `sticky`,
+`join`, `footer`) and an `audience` (`driver`, `partner`), so the dashboard can
+answer "which audience pressed which button, where" without any further setup.
+
 ## Deploying
 
 Vercel builds this repository on every push to the production branch. Push to
-`maintenance` and the site updates itself; there is nothing to upload.
+`master` and the site updates itself; there is nothing to upload.
 
 `vercel.json` in this folder is the whole hosting configuration: the security
 headers, the cache policy, the redirects from the old site's URLs, and the
@@ -122,6 +153,7 @@ has to be re-created by hand on a plain cPanel host.
 | `DESIGN.md` | The visual system: colours, type, spacing, motion, components, accessibility, and why each decision was made |
 | `CONTENT.md` | How to change any piece of content, and what is still placeholder |
 | `DEPLOY.md` | How the site gets published, the headers, the redirects, and what to check afterwards |
+| `docs/brand-core.md` | The brand: positioning, promise, motto, the three commitments, naming, the colour and logo and type system, the voice, and the triggers that change any of it. The authority over every other document here. |
 | `docs/data-contract.md` | The exact shape of the three bot-owned JSON files. The bot and the site implement this identically; changing it changes both. |
 | `docs/redesign-summary.md` | What the 2026 redesign changed, what it measured, and what the owner still has to decide |
 

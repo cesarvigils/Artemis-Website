@@ -50,7 +50,7 @@ const { car, track, caption, shape = 'standard' } = Astro.props;
     height: var(--frame-h);
     overflow: hidden;
     border: 1px solid var(--line);
-    background: var(--bg-raise);
+    background: var(--surface-1);
   }
 
   /* No hover zoom. The slide is a figure, not a link: there is nothing to
@@ -74,16 +74,17 @@ const { car, track, caption, shape = 'standard' } = Astro.props;
 
   .slide-car {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-sm);
     letter-spacing: var(--track-title);
     text-transform: uppercase;
-    color: var(--teal);
+    color: var(--mist);
     overflow-wrap: anywhere;
   }
 
   .slide-track {
-    color: var(--ink-faint);
+    color: var(--muted);
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     text-transform: uppercase;
@@ -98,7 +99,7 @@ const { car, track, caption, shape = 'standard' } = Astro.props;
     margin-top: 0.15rem;
     max-width: 40ch;
     font-size: var(--text-sm);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     line-height: var(--leading-body);
     text-wrap: pretty;
   }

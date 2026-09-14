@@ -2,8 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "trailingSlash": false,
   "redirects": [
-    { "source": "/join", "destination": "/#join", "statusCode": 301 },
-    { "source": "/results", "destination": "/#results", "statusCode": 301 },
+    { "source": "/results", "destination": "/#scoreboard", "statusCode": 301 },
     { "source": "/calendar", "destination": "/", "statusCode": 301 },
     { "source": "/media", "destination": "/about", "statusCode": 301 },
     { "source": "/legacy", "destination": "/about", "statusCode": 301 },
@@ -27,7 +26,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'unsafe-inline' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloud.umami.is https://gateway.umami.is; manifest-src 'self'; upgrade-insecure-requests"
         }
       ]
     },

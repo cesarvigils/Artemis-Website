@@ -1,0 +1,66 @@
+# Nightly iRacing statistics sync.
+#
+# Runs scripts/fetch-iracing.mjs, which rewrites src/data/stats.json only when a
+# driver's numbers actually changed, and commits it when it did. Setup, secrets
+# and failure handling: docs/iracing-sync.md.
+#
+# About the push: this job commits with the built-in GITHUB_TOKEN. GitHub does
+# NOT re-trigger its own workflows for a push made with that token (that is the
+# loop guard, and it is what we want here - the sync must not restart itself or
+# re-run CI every night). Vercel is not GitHub: it deploys from its own Git
+# integration webhook, which fires for this push like any other, so the site
+# does rebuild with the new stats. That asymmetry is deliberate.
+name: update-stats
+
+on:
+  schedule:
+    # 09:17 UTC: off the hour, so this is not queued behind everyone else's
+    # midnight cron, and late enough that a US evening of racing is in the data.
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+
+# Needed to push the committed stats.json back to the branch.
+permissions:
+  contents: write
+
+# One sync at a time; a manual run waits for the nightly one rather than racing it.
+concurrency:
+  group: iracing-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out ${{ github.ref_name }}
+        uses: actions/checkout@v4
+
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch iRacing statistics
+        env:
+          IRACING_EMAIL: ${{ secrets.IRACING_EMAIL }}
+          IRACING_PASSWORD: ${{ secrets.IRACING_PASSWORD }}
+        run: node scripts/fetch-iracing.mjs
+
+      - name: Commit stats.json if it changed
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain src/data/stats.json)" ]; then
+            echo "stats.json unchanged; nothing to commit."
+            exit 0
+          fi
+          git config user.name 'artemis-sync[bot]'
+          git config user.email 'sync@artemisesports.com'
+          git add src/data/stats.json
+          git commit -m 'data(stats): nightly iRacing sync'
+          git push origin HEAD:${{ github.ref_name }}

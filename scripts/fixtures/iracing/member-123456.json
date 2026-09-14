@@ -1,0 +1,110 @@
+{
+  "success": true,
+  "cust_ids": [123456],
+  "members": [
+    {
+      "cust_id": 123456,
+      "display_name": "Mateo Ferreira",
+      "helmet": {
+        "pattern": 32,
+        "color1": "d62828",
+        "color2": "0b0b0b",
+        "color3": "f1f1f1",
+        "face_type": 4,
+        "helmet_type": 0
+      },
+      "last_login": "2026-09-13T22:41:09Z",
+      "member_since": "2019-04-02",
+      "club_id": 38,
+      "club_name": "Brazil",
+      "ai": false,
+      "licenses": [
+        {
+          "category_id": 1,
+          "category": "oval",
+          "category_name": "Oval",
+          "license_level": 14,
+          "safety_rating": 3.1,
+          "cpi": 42.15,
+          "irating": 3400,
+          "tt_rating": 1543,
+          "mpr_num_races": 8,
+          "color": "0153db",
+          "group_name": "Class B",
+          "group_id": 3,
+          "pro_promotable": false,
+          "seq": 3,
+          "mpr_num_tts": 0
+        },
+        {
+          "category_id": 3,
+          "category": "dirt_oval",
+          "category_name": "Dirt Oval",
+          "license_level": 7,
+          "safety_rating": 2.84,
+          "cpi": 11.02,
+          "irating": 1350,
+          "tt_rating": 1109,
+          "mpr_num_races": 4,
+          "color": "feec04",
+          "group_name": "Class D",
+          "group_id": 1,
+          "pro_promotable": false,
+          "seq": 5,
+          "mpr_num_tts": 0
+        },
+        {
+          "category_id": 4,
+          "category": "dirt_road",
+          "category_name": "Dirt Road",
+          "license_level": 5,
+          "safety_rating": 2.06,
+          "cpi": 8.44,
+          "irating": 1290,
+          "tt_rating": 1043,
+          "mpr_num_races": 2,
+          "color": "feec04",
+          "group_name": "Class D",
+          "group_id": 1,
+          "pro_promotable": false,
+          "seq": 6,
+          "mpr_num_tts": 0
+        },
+        {
+          "category_id": 5,
+          "category": "sports_car",
+          "category_name": "Sports Car",
+          "license_level": 18,
+          "safety_rating": 4.2,
+          "cpi": 96.73,
+          "irating": 5012,
+          "tt_rating": 2210,
+          "mpr_num_races": 27,
+          "color": "0269c1",
+          "group_name": "Class A",
+          "group_id": 4,
+          "pro_promotable": false,
+          "seq": 1,
+          "mpr_num_tts": 0
+        },
+        {
+          "category_id": 6,
+          "category": "formula_car",
+          "category_name": "Formula Car",
+          "license_level": 11,
+          "safety_rating": 3.47,
+          "cpi": 31.58,
+          "irating": 2100,
+          "tt_rating": 1622,
+          "mpr_num_races": 6,
+          "color": "fc8a27",
+          "group_name": "Class C",
+          "group_id": 2,
+          "pro_promotable": false,
+          "seq": 2,
+          "mpr_num_tts": 0
+        }
+      ]
+    }
+  ]
+}

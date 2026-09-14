@@ -1,0 +1,37 @@
+[
+  {
+    "id": "mateo-ferreira",
+    "name": "Mateo Ferreira",
+    "role": "driver",
+    "group": "road",
+    "number": "7",
+    "country": "BRA",
+    "focus": "GT3 / Endurance",
+    "bio": "Fixture driver: has every licence category.",
+    "iracingId": 123456,
+    "active": true
+  },
+  {
+    "id": "colt-vandermeer",
+    "name": "Colt Vandermeer",
+    "role": "driver",
+    "group": "oval",
+    "number": "58",
+    "country": "USA",
+    "focus": "NASCAR ovals",
+    "bio": "Fixture driver: two licence categories missing.",
+    "iracingId": 654321,
+    "active": true
+  },
+  {
+    "id": "tomas-ek",
+    "name": "Tomas Ek",
+    "role": "staff",
+    "group": "crew",
+    "number": "",
+    "country": "SWE",
+    "focus": "Team manager",
+    "bio": "Fixture record with no iracingId: the sync must ignore it.",
+    "active": true
+  }
+]

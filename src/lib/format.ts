@@ -29,6 +29,18 @@ export function raceDate(iso: string): string {
   return `${String(day).padStart(2, '0')} ${MONTHS[month - 1]} ${year}`;
 }
 
+/**
+ * "15:15 UTC" - the green-flag time with no clock and no locale, which is
+ * what the markup carries. The browser replaces it with the reader's own
+ * local time in scripts/site.ts; without JS this is still a true statement.
+ */
+export function raceTimeUtc(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(parsed.getUTCHours())}:${pad(parsed.getUTCMinutes())} UTC`;
+}
+
 /** "25 - 27 SEP 2026", or a single date when there is no range. */
 export function raceDateRange(startIso: string, endIso?: string): string {
   if (!endIso || endIso === startIso) return raceDate(startIso);

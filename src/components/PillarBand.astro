@@ -5,17 +5,18 @@ interface Props {
   heading: string;
   lead?: string;
   /**
-   * "row"  - four short rules across one band (home).
-   * "long" - the same four with a sentence each about a race weekend (about).
+   * "row"  - the three commitments across one band (home).
+   * "long" - the same three, one per row, with more room for the test.
    */
   variant?: 'row' | 'long';
-  /** Print the team hashtags along the foot of the band. */
-  hashtags?: boolean;
 }
 
-const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
+const { heading, lead, variant = 'row' } = Astro.props;
 ---
 
+{/* Three commitments, each with the test anyone can run against it. The test
+    is the point: a value with no test is a slogan, and the brand core writes
+    all three as behaviours. */}
 <section class:list={['pillars', `is-${variant}`]} aria-labelledby="pillars-heading">
   <div class="container">
     <div class="pillars-head">
@@ -30,28 +31,18 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
         site.pillars.map((pillar, i) => (
           <div class="pillar reveal" style={`--reveal-delay: ${i * 60}ms`}>
             <dt>{pillar.title}</dt>
-            <dd>{pillar.line}</dd>
-            {variant === 'long' && pillar.detail && <dd class="pillar-detail">{pillar.detail}</dd>}
+            <dd class="pillar-line">{pillar.line}</dd>
+            <dd class="pillar-test">{pillar.test}</dd>
           </div>
         ))
       }
     </dl>
-
-    {
-      hashtags && (
-        <ul class="pillar-tags">
-          {site.hashtags.map((tag) => (
-            <li class="data">{tag}</li>
-          ))}
-        </ul>
-      )
-    }
   </div>
 </section>
 
 <style>
   .pillars {
-    background: var(--bg-raise);
+    background: var(--surface-1);
     padding-block: var(--space-2xl);
   }
 
@@ -62,33 +53,49 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
 
   .pillar dt {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     letter-spacing: var(--track-title);
     text-transform: uppercase;
     line-height: var(--leading-tight);
     overflow-wrap: anywhere;
   }
 
-  .pillar dd {
-    color: var(--ink-dim);
+  .pillar-line {
+    color: var(--mist-dim);
     line-height: var(--leading-body);
   }
 
-  /* Row variant: the heading sits on its own line and the four rules run
-     across the band as one horizontal register. No narrow copy column,
-     no tall empty gutter beside a short list. */
+  /* The test sits below the commitment in the caption colour, because it is
+     metadata about the claim rather than the claim. */
+  .pillar-test {
+    margin-top: var(--space-2xs);
+    padding-top: var(--space-2xs);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+
+  /* Row variant: the heading sits on its own line and the three commitments
+     run across the band as one horizontal register. Three across rather than
+     the old four is also why no title reserve is needed any more: the titles
+     are one line each in a third of the band at every width it is
+     horizontal. */
   .is-row .pillars-head h2 {
     max-width: 16em;
   }
 
   .is-row .pillars-list {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-top: var(--space-xl);
     border-top: 1px solid var(--line-strong);
   }
 
   .is-row .pillar {
+    display: flex;
+    flex-direction: column;
     padding: var(--space-m) var(--space-m) 0 0;
   }
 
@@ -101,26 +108,22 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
     font-size: var(--text-lg);
   }
 
-  /* Four across, one of the four titles wraps ("Precision over flash" at a
-     320px cell), and the register's four sentences then started at three
-     different heights with full-height hairlines between them to make it
-     obvious. Two lines are reserved for the title in the four-across band, so
-     the four `dd` lines share a baseline whether a title wraps or not. Below
-     1025px the band is two across and the pairs wrap together, so nothing is
-     reserved and no space is spent. */
-  @media (min-width: 1025px) {
-    .is-row .pillar dt {
-      min-height: calc(2 * var(--leading-tight) * 1em);
-    }
-  }
-
-  .is-row .pillar dd {
+  .is-row .pillar-line {
     margin-top: var(--space-2xs);
     font-size: var(--text-sm);
   }
 
-  /* Long variant: one entry per row, the title held against the sentence
-     that explains what it costs on a race weekend. */
+  /* `margin-top: auto` on the test: three commitments of different sentence
+     length would otherwise start their test lines at three different
+     heights, with full-height hairlines between the columns to make it
+     obvious. The tests share a baseline instead. */
+  .is-row .pillar-test {
+    margin-top: auto;
+    padding-top: var(--space-s);
+  }
+
+  /* Long variant: one entry per row, the title held against the commitment
+     and its test. */
   .is-long .pillars-head h2 {
     max-width: 11em;
   }
@@ -146,52 +149,28 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
     font-size: var(--text-xl);
   }
 
-  .is-long .pillar dd {
+  .is-long .pillar-line {
     font-size: var(--text-base);
-    color: var(--ink);
+    color: var(--mist);
   }
 
-  .is-long .pillar-detail {
+  .is-long .pillar-test {
     grid-column: 2;
     margin-top: 0.4rem;
-    font-size: var(--text-sm);
-    color: var(--ink-dim);
-  }
-
-  /* The tags belong to the values, so they run along the foot of the band
-     rather than filling a section of their own. */
-  .pillar-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs) var(--space-l);
-    margin-top: var(--space-l);
-    padding-top: var(--space-s);
-    border-top: 1px solid var(--line);
-  }
-
-  .pillar-tags li {
-    color: var(--teal-soft);
-    font-size: var(--text-xs);
-    line-height: var(--leading-tight);
-    letter-spacing: var(--track-label);
-    /* "#FOLLOWERSOFTHEHUNT" is one unbreakable 19-character token and at a
-       200% root font it is wider than a 390px phone. */
-    overflow-wrap: anywhere;
   }
 
   @media (max-width: 1024px) {
     .is-row .pillars-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .is-row .pillar:nth-child(3),
-    .is-row .pillar:nth-child(4) {
+    .is-row .pillar:nth-child(3) {
       margin-top: var(--space-m);
       border-top: 1px solid var(--line);
     }
     /* Same selector shape as the rule it overrides, so source order decides.
        Written as `.is-row .pillar:nth-child(3)` it was (0,4,0) against the
-       four-across rule's (0,5,0) and never applied: row two of the register
-       kept a 24px indent and a vertical hairline with nothing to its left. */
+       across-the-band rule's (0,5,0) and never applied: the second row kept a
+       24px indent and a vertical hairline with nothing to its left. */
     .is-row .pillar + .pillar:nth-child(3) {
       padding-left: 0;
       border-left: none;
@@ -206,7 +185,7 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
       grid-template-columns: 1fr;
       gap: 0.35rem;
     }
-    .is-long .pillar-detail {
+    .is-long .pillar-test {
       grid-column: 1;
     }
   }
@@ -220,6 +199,10 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
       margin-top: 0;
       border-left: none;
       border-top: 1px solid var(--line);
+    }
+    .is-row .pillar-test {
+      margin-top: var(--space-2xs);
+      padding-top: var(--space-2xs);
     }
   }
 </style>

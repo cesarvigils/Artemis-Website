@@ -79,7 +79,7 @@ const driverList = (names: string[]) =>
   .results th {
     padding-block: 0 0.7rem;
     border-bottom: 1px solid var(--line-strong);
-    font-weight: 400;
+    font-weight: var(--weight-small);
   }
 
   /* `baseline`, not `top`: the position marker is 28px and the event name is
@@ -127,35 +127,36 @@ const driverList = (names: string[]) =>
 
   .pos {
     display: inline-block;
-    font-family: var(--font-mono);
+    font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
+    font-weight: var(--weight-display);
     font-size: var(--text-xl);
     line-height: var(--leading-snug);
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   .pos.is-podium {
-    color: var(--teal);
+    color: var(--mist);
     border-bottom: 2px solid currentColor;
   }
 
   .pos-field {
     display: block;
     margin-top: 0.35rem;
-    font-family: var(--font-mono);
-    font-weight: 400;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
     font-variant-numeric: tabular-nums;
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-data);
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   .event-name {
     display: block;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-base);
     letter-spacing: var(--track-title);
     text-transform: uppercase;
@@ -171,13 +172,13 @@ const driverList = (names: string[]) =>
   .event-series {
     display: block;
     margin-top: 0.3rem;
-    font-family: var(--font-mono);
-    font-weight: 400;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   /* The track and the one-line story of the race: this is why the module
@@ -188,44 +189,44 @@ const driverList = (names: string[]) =>
     max-width: 56ch;
     font-size: var(--text-sm);
     line-height: var(--leading-body);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     text-wrap: pretty;
   }
 
   .chip {
     display: inline-block;
     white-space: nowrap;
-    font-family: var(--font-mono);
-    font-weight: 400;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--muted);
     padding: 0.3rem 0.5rem;
     border: 1px solid var(--line);
   }
 
   /* `td`, not the bare class. The column classes sit on the `<th>` as well,
      and a scoped `.col-driver` is (0,2,0) against `.field-label`'s (0,1,0) in
-     global.css - so the Drivers header was rendering at 15px `--ink-dim` body
+     global.css - so the Drivers header was rendering at 15px `--mist-dim` body
      type and the Date header at `--track-data` beside three 11px tracked mono
      labels. One row of column headers, one style. */
   td.col-driver {
     font-size: var(--text-sm);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     line-height: var(--leading-body);
     overflow-wrap: anywhere;
   }
 
   td.col-date {
-    font-family: var(--font-mono);
-    font-weight: 400;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
     font-variant-numeric: tabular-nums;
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-data);
-    color: var(--ink-faint);
+    color: var(--muted);
   }
 
   /* The date keeps itself on one line; the cell around it (which carries a
@@ -300,12 +301,12 @@ const driverList = (names: string[]) =>
     td.col-driver::before,
     td.col-date::before {
       content: attr(data-label) ': ';
-      font-family: var(--font-mono);
-      font-weight: 400;
+      font-family: var(--font-data);
+      font-weight: var(--weight-small);
       font-size: var(--text-2xs);
       letter-spacing: var(--track-label);
       text-transform: uppercase;
-      color: var(--ink-faint);
+      color: var(--muted);
     }
 
     .col-class {

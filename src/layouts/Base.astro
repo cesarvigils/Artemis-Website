@@ -2,7 +2,9 @@
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import StickyCta from '../components/StickyCta.astro';
 import site from '../data/site.json';
+import { analyticsEnabled, umamiSrc, umamiWebsiteId } from '../lib/analytics';
 
 interface Props {
   title: string;
@@ -12,12 +14,11 @@ interface Props {
   /** LCP image to preload: pass the getImage() result fields for the hero */
   preload?: { href: string; srcset?: string; sizes?: string };
   /**
-   * Set on pages that set tabular figures above the fold (the hero position
-   * marker, the roster numbers). The face is fetched on every route anyway,
-   * but preloading it where it is *not* above the fold only competes with
-   * the LCP image.
+   * The page's primary action, for the sticky phone bar. Same keys as
+   * CTA_INTENTS. `none` on the 404, which has no primary action worth
+   * pinning to the bottom of a page that is already short.
    */
-  monoBold?: boolean;
+  cta?: 'join' | 'apply' | 'partnership' | 'none';
   /**
    * A document that is not a page. `dist/404.html` is both Vercel's
    * not-found document and a real file at `/404`, which a host serves with a
@@ -33,29 +34,28 @@ const {
   description,
   ogImage = '/og.png',
   preload,
-  monoBold = false,
+  cta = 'join',
   noindex = false,
 } = Astro.props;
 
 /* One slash policy, everywhere. Astro emits `/team/` as the page's own
    pathname while every internal link, the sitemap and vercel.json use the
    bare form; served as-is that left two live URLs for one page with only the
-   canonical tag to de-duplicate them. The canonical is normalised to the
-   form the host actually serves. */
+   canonical tag to de-duplicate them. */
 const canonical = new URL(Astro.url.pathname.replace(/\/+$/, '') || '/', Astro.site);
 
 /* One structured-data block, built from the same data the page renders, so a
    search result can show the team and its real channels rather than guessing.
-   The `@id` matters: without it the four copies are four anonymous nodes
-   instead of one entity described four times. Deliberately not here: the
-   roster (the names are flagged as placeholders and must not be published as
-   structured claims), the calendar, and any rating. */
+   The `@id` matters: without it the copies are anonymous nodes instead of one
+   entity described several times. Deliberately not here: the roster (the
+   names are flagged as placeholders and must not be published as structured
+   claims), the calendar, and any rating. */
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'SportsTeam',
   '@id': new URL('/#organization', Astro.site).href,
   name: site.name,
-  alternateName: 'Artemis',
+  alternateName: site.team,
   url: Astro.site?.href,
   description: site.shortDescription,
   sport: ['Sim racing', 'Esports'],
@@ -90,45 +90,23 @@ const structuredData = {
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    {/* These four filenames also appear in the @font-face block at the top of
-        global.css. `/fonts/*` is cached immutable for a year, so a new face
-        means a new filename; keep the two lists in step. */}
-    <link
-      rel="preload"
-      href="/fonts/nexa-bold.latin.v2.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/nexa-light.latin.v2.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <!-- Mono 400 sets the hero proof row and the field labels above the fold
-         on every route. Mono 700 sets the position marker and the roster
-         numbers, which is above the fold on three routes and below it on two,
-         so it is preloaded per page rather than everywhere. -->
-    <link
-      rel="preload"
-      href="/fonts/jetbrains-mono-400.latin.v2.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    {
-      monoBold && (
-        <link
-          rel="preload"
-          href="/fonts/jetbrains-mono-700.latin.v2.woff2"
-          as="font"
-          type="font/woff2"
-          crossorigin
-        />
-      )
-    }
+    {/* The two core faces, preloaded on every route because both are above
+        the fold on every route: Archivo sets the h1 and Inter sets the lead,
+        the field labels and every number. Preloading only Inter was measured
+        and rejected - it moved FCP from 0.8s to 1.2s and introduced a 0.002
+        CLS on three routes, because the h1 then painted in the fallback and
+        swapped.
+
+        The two `ext` faces are deliberately NOT preloaded. They cover the
+        characters only a name can need, the browser fetches one the moment it
+        has to render such a character, and preloading them would spend 51 KB
+        on every first paint for glyphs no page currently uses.
+
+        These filenames also appear in the @font-face block at the top of
+        global.css; `/fonts/*` is cached immutable for a year, so a new face
+        means a new filename. Keep the two lists in step. */}
+    <link rel="preload" href="/fonts/archivo-core.latin.v3.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/inter-core.latin.v3.woff2" as="font" type="font/woff2" crossorigin />
     {
       preload && (
         <link
@@ -155,16 +133,22 @@ const structuredData = {
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
-    <meta
-      property="og:image:alt"
-      content="Artemis Esports - an iRacing endurance, GT and NASCAR oval team"
-    />
+    <meta property="og:image:alt" content={`Artemis Esports - ${site.tagline}`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@EsportsArtemis" />
 
     {
       !noindex && (
         <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+      )
+    }
+
+    {/* Cookieless analytics, and only when this build was given a website id.
+        With the variable unset nothing is requested, nothing is stored, and
+        the footer says so. See lib/analytics.ts and DEPLOY.md. */}
+    {
+      analyticsEnabled && (
+        <script defer src={umamiSrc} data-website-id={umamiWebsiteId} />
       )
     }
 
@@ -180,6 +164,7 @@ const structuredData = {
       <slot />
     </main>
     <Footer />
+    {cta !== 'none' && <StickyCta intent={cta} />}
     <script>
       import '../scripts/site';
     </script>
@@ -190,8 +175,7 @@ const structuredData = {
   /* The sentinel marks "page is at the top"; it must not affect layout.
      64px tall, not 1px: at 1px the header flipped to solid at roughly two
      pixels of scroll and back again, which is a hair trigger on a 200ms
-     cross-fade. The bar now changes once the hero has actually begun to
-     leave. */
+     cross-fade. */
   [data-nav-sentinel] {
     position: absolute;
     top: 0;

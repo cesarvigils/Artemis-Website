@@ -4,6 +4,7 @@ import site from '../data/site.json';
 import Mark from './Mark.astro';
 import Icon from './Icon.astro';
 import { channelLinks, isCurrent } from '../lib/links';
+import { analyticsEnabled } from '../lib/analytics';
 
 const buildYear = new Date().getFullYear();
 const pathname = Astro.url.pathname;
@@ -16,7 +17,9 @@ const channels = channelLinks(site.socials, site.store);
 <footer class="site-footer">
   <div class="container footer-grid">
     <div class="footer-brand">
-      <span class="footer-mark"><Mark variant="mark" label="Artemis Esports" /></span>
+      {/* Tier 1 of the logo system: the wordmark is the workhorse, and the
+          header and the footer are exactly where it belongs. */}
+      <span class="footer-mark"><Mark variant="wordmark" label="Artemis Esports" /></span>
       <p class="footer-tagline">{site.tagline}</p>
       <a class="footer-email" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
     </div>
@@ -27,10 +30,7 @@ const channels = channelLinks(site.socials, site.store);
         {
           nav.footer.map((link) => (
             <li>
-              <a
-                href={link.href}
-                aria-current={isCurrent(link.href, pathname) ? 'page' : undefined}
-              >
+              <a href={link.href} aria-current={isCurrent(link.href, pathname) ? 'page' : undefined}>
                 {link.label}
               </a>
             </li>
@@ -45,7 +45,14 @@ const channels = channelLinks(site.socials, site.store);
         {
           channels.map((channel) => (
             <li>
-              <a href={channel.url} target="_blank" rel="noopener">
+              <a
+                href={channel.url}
+                target="_blank"
+                rel="noopener"
+                data-umami-event={channel.label === 'Discord' ? 'cta' : undefined}
+                data-umami-event-placement={channel.label === 'Discord' ? 'footer' : undefined}
+                data-umami-event-audience={channel.label === 'Discord' ? 'driver' : undefined}
+              >
                 {channel.label}
                 <Icon name="arrow-up-right" size={13} />
                 <span class="sr-only"> (opens in a new tab)</span>
@@ -61,23 +68,29 @@ const channels = channelLinks(site.socials, site.store);
     <p class="footer-copy">
       &copy; <span data-year>{buildYear}</span> Artemis Esports
     </p>
-    <p class="footer-note">We run no analytics and set no cookies.</p>
-    <p class="footer-hash data">{site.hashtags[0]}</p>
+    {/* Two states, one sentence each, and the build decides which is true. */}
+    <p class="footer-note">
+      {
+        analyticsEnabled
+          ? 'Cookieless analytics, no consent banner.'
+          : 'We run no analytics and set no cookies.'
+      }
+    </p>
   </div>
 </footer>
 
 <style>
   .site-footer {
     border-top: 1px solid var(--line);
-    background: var(--bg-raise);
+    background: var(--surface-1);
     /* `max(...)`: on a notched phone the base row otherwise sits under the
        home indicator. Needs `viewport-fit=cover` in the meta to resolve to
-       anything but 0, which Base.astro now sets. */
+       anything but 0, which Base.astro sets. */
     padding-block: var(--space-xl) max(var(--space-m), env(safe-area-inset-bottom));
   }
 
-  /* Three equal columns with the last one pushed to the shell edge, so the
-     footer fills its width instead of leaving a 200px hole on the right. */
+  /* Three columns with the last one pushed to the shell edge, so the footer
+     fills its width instead of leaving a hole on the right. */
   .footer-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -94,17 +107,18 @@ const channels = channelLinks(site.socials, site.store);
 
   .footer-mark {
     display: block;
-    --mark-size: 52px;
-    color: var(--teal);
+    --mark-w: 168px;
+    color: var(--mist);
   }
 
   .footer-tagline {
     margin-top: var(--space-m);
     max-width: 15em;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-display);
     font-size: var(--text-lg);
-    line-height: var(--leading-snug);
+    line-height: var(--leading-tight);
     text-transform: uppercase;
     letter-spacing: var(--track-title);
   }
@@ -117,7 +131,7 @@ const channels = channelLinks(site.socials, site.store);
     min-height: 44px;
     padding-block: 0.55rem;
     font-size: var(--text-sm);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     overflow-wrap: anywhere;
     border-bottom: 1px solid var(--line);
     transition: color var(--dur-2) var(--ease-out-quart),
@@ -145,27 +159,31 @@ const channels = channelLinks(site.socials, site.store);
     min-width: 44px;
     min-height: 44px;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-dim);
-    /* At a 200% root font "Instagram" is wider than its 131px column and the
-       footer grew a horizontal scrollbar. */
+    color: var(--mist-dim);
+    /* At a 200% root font "Instagram" is wider than its column and the footer
+       grew a horizontal scrollbar. */
     overflow-wrap: anywhere;
     transition: color var(--dur-2) var(--ease-out-quart),
       opacity var(--dur-1) var(--ease-out-quart);
   }
 
   .footer-col a[aria-current='page'] {
-    color: var(--teal);
+    color: var(--mist);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .footer-col a:hover,
     .footer-email:hover {
-      color: var(--teal);
-      border-color: var(--teal);
+      color: var(--signal);
+      border-color: var(--signal);
     }
   }
 
@@ -173,8 +191,8 @@ const channels = channelLinks(site.socials, site.store);
      used to sit at its resting colour with only the ring to say so. */
   .footer-col a:focus-visible,
   .footer-email:focus-visible {
-    color: var(--teal);
-    border-color: var(--teal);
+    color: var(--signal);
+    border-color: var(--signal);
   }
 
   .footer-base {
@@ -189,12 +207,9 @@ const channels = channelLinks(site.socials, site.store);
 
   .footer-copy,
   .footer-note {
-    color: var(--ink-faint);
+    color: var(--muted);
     font-size: var(--text-xs);
-  }
-
-  .footer-hash {
-    color: var(--teal-soft);
+    font-weight: var(--weight-small);
   }
 
   @media (max-width: 820px) {

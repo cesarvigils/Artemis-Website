@@ -14,22 +14,53 @@ npm run build
 ```
 
 The build runs `npm run check:data` first. If any of the three bot-owned files
-breaks the contract the build stops with a list of `file[index].field: message`
-lines and nothing is deployed, so the previous version stays live.
+or `seats.json` breaks the contract the build stops with a list of
+`file[index].field: message` lines and nothing is deployed, so the previous
+version stays live. `stats.json` is the one exception: it is written by a
+machine on a schedule, so every problem in it is a warning and the build
+continues without it.
+
+---
+
+## Words this site never uses
+
+The brand core's "don't say" column, applied. If you are writing copy for the
+site, none of these may appear, in any form:
+
+**silence**, **built in silence**, **quiet**, **precision**, **noise**,
+**called by the hunt**, **on the hunt**, **results speak louder**, any hashtag,
+any exclamation mark, any emoji, any em dash.
+
+There is also no sentence anywhere about our own restraint - "we keep the list
+short", "we would rather do a small number properly", "the roster stays small on
+purpose" are all out. Describing your own quietness is the one thing the voice
+section forbids outright.
+
+What replaces them: the promise, **"Every shot on the record."**, which is
+`site.tagline` and appears in the footer, the meta descriptions, the OG card and
+the structured data; and the motto, **"Take the shot."**, which is `site.motto`
+and appears exactly once, as the heading of the join band on the home page. Do
+not use the motto anywhere else.
+
+The full say / don't-say table is in `docs/brand-core.md`, section 7.
 
 ---
 
 ## Fill in
 
-Seventeen records on this site are **placeholders**: realistic, but not real.
-Every one carries `"_placeholder": true` in its JSON. The site renders them like
+Nineteen records on this site are **placeholders**: realistic, but not real -
+8 drivers, 6 results, 3 events and the 2 open seats. Every one carries
+`"_placeholder": true` in its JSON. The site renders them like
 any other record (nothing on the page says "placeholder"), and the bot marks
 them so you can find them: run **`/data placeholders`** in Discord and it lists
 every one, per file, with its id.
 
 Replace them and drop the flag. The bot drops it for you on `/result edit`,
 `/driver edit` and `/event edit`; a hand edit means deleting the
-`"_placeholder": true` line yourself.
+`"_placeholder": true` line yourself. The two seats in `seats.json` are
+hand-edited only - the bot does not know about that file - and are covered in
+"The open seats on /join" below, along with the four `join.expectations` rows,
+which are placeholders without a flag because `site.json` carries no flags.
 
 ### 1. The roster: 8 of 8 records are placeholders
 
@@ -288,19 +319,126 @@ empty the band does not render at all, rather than showing an empty logo row.
 
 All in `src/data/site.json`:
 
-- `tagline`, `heroLead`, `mission`, `focus` drive the home and About copy.
+- `tagline` is the promise, and changing it changes the footer, every meta
+  description, the OG card's alt text and the structured data at once. It is a
+  brand-core change, not a copy tweak.
+- `motto` is "Take the shot." and is the default heading of the join band. It
+  is used once on purpose.
+- `team` is what the site calls the team in body copy ("Artemis"); `name` is
+  the org ("Artemis Esports") and appears only in the `<title>`, the structured
+  data and the copyright line.
+- `heroLead`, `mission`, `focus` drive the home and About copy.
 - `shortDescription` is spare copy for meta descriptions.
 - `founded` and `simRacingSince` print on the About page.
 - `contactEmail` feeds the footer and every "Partner with us" button.
 - `socials` and `store`: any entry with a URL appears in the footer, on the
   Partners page and in the site's structured data. Empty ones disappear.
-  `socials.discord` is what every "Join the team" button points at, so do not
-  empty it.
-- `hashtags` feed the About values band and the footer line.
-- `pillars` are the four values. `title` and `line` show on both the home page
-  and About; `detail` shows only on About.
-- `join.lead` and `join.steps` are the Discord explainer. Three steps is what
-  the layout is built for, and they appear on the home page only.
+  `socials.discord` is what every Discord button points at, so do not empty it.
+- `hashtags` is an empty array and must stay one. The brand core removed
+  hashtags; the key is kept only so an old edit cannot crash a build.
+- `pillars` are the three commitments. Each has a `title`, a `line` (the
+  commitment) and a `test` (the sentence anyone can check it with). All three
+  render on the home page and on About. A commitment without a test is a
+  slogan, so do not add one without the other.
+- `join.lead` and `join.steps` are the Discord explainer: three steps, on the
+  home page and on `/join`.
+- `join.expectations` are the four rows of "What a season asks of you" on
+  `/join`. **All four are placeholders**: the practice cadence, the commitment,
+  the conduct line and the minimum age of 16 are plausible rather than agreed.
+  A driver reads them as a commitment, so confirm them before go-live.
+
+## The open seats on /join
+
+`src/data/seats.json`, hand-edited, never written by the bot. One object per
+seat:
+
+```json
+{
+  "id": "road-endurance-driver",
+  "program": "road",
+  "role": "Endurance driver",
+  "requirements": ["iRating 2000 or above in sports car", "..."],
+  "status": "open",
+  "note": "One line of context, or leave it out."
+}
+```
+
+| Field | Rules |
+|---|---|
+| `id` | lowercase slug, 3-80 characters, unique in the file |
+| `program` | `road`, `oval` or `crew` |
+| `role` | 2-60 characters, the seat's title |
+| `requirements` | 1 to 6 lines, 2-120 characters each |
+| `status` | `open` or `filled`. Only `open` seats render |
+| `note` | optional, up to 200 characters |
+
+An empty file, or a file with no open seats, is a real state: `/join` says "No
+seats open right now" and still offers the Discord. Never invent a seat to fill
+the section.
+
+**Both seats currently in the file are placeholders** (`"_placeholder": true`)
+and their rating floors are guesses. Replace or remove them before go-live.
+
+## Race start times
+
+`events.json` records can carry an optional `startTime`: the green flag as an
+ISO 8601 UTC timestamp **on the same date as `start`**, for example
+`"2026-09-25T15:15:00Z"`. The validator rejects anything else, including a
+timestamp with an offset instead of a `Z` and one that lands on the next day.
+
+With it the next-race strip prints the time in the visitor's own timezone (with
+the zone's short name, and the local date too when the conversion crosses a
+day boundary) and the countdown targets the green flag exactly, so reaching
+zero says "Under way". Without it the countdown targets midnight in the team's
+timezone and says "Race day" for the whole of the start date, which is the
+older behaviour and is still correct.
+
+Note for a US evening league: 8pm Eastern is the *next* UTC date, so that event
+either gets no `startTime` or gets one the validator will reject. That is the
+contract, not a bug.
+
+## Driver statistics from iRacing
+
+Two moving parts:
+
+1. **`iracingId` in `drivers.json`** - the driver's iRacing customer id, an
+   integer. Optional. Add it and the nightly sync starts collecting for that
+   driver; leave it out and nothing happens. Two drivers cannot share one id and
+   the validator says so.
+2. **`src/data/stats.json`** - written by the nightly sync
+   (`scripts/fetch-iracing.mjs`, via GitHub Actions). Never edit it by hand.
+
+What renders, when the file has an entry for a driver:
+
+- **The home teaser** shows the iRating and nothing else. One number is a reason
+  to open the roster; four is the roster.
+- **The team page** shows the iRating and the licence for the driver's own
+  category (`road` drivers get iRacing's sports-car figures, `oval` drivers the
+  oval ones), then a four-column table of the three newest official races: date,
+  series, start to finish, and strength of field.
+- **Crew have no racing category**, so nothing renders for them even if the sync
+  wrote an entry.
+
+Nothing is ever rendered as an empty label. No file, no entry, no category and
+no `recent` rows all mean the block is simply absent.
+
+A driver's `stats.irating` and `stats.licence` in `drivers.json` still work and
+are the manual fallback; where the sync has a value it wins.
+
+## The media kit
+
+If `public/media-kit.pdf` exists at build time, the Partners page grows a
+"Media kit (PDF)" link under "Where the audience is". If it does not, there is
+no link. Dropping the file in and rebuilding is the whole publishing step, and
+removing it is the whole unpublishing step - the site can never promise a
+download that 404s.
+
+## Analytics
+
+Off by default, and the footer says so. See `DEPLOY.md` for the two environment
+variables; nothing in `src/data/` controls it. When it is on, the footer line
+changes to "Cookieless analytics, no consent banner", which is true of Umami and
+is why there is no cookie banner on this site.
 
 ## Change the navigation
 
@@ -311,8 +449,12 @@ All in `src/data/site.json`:
 - `cta` names the site-wide header button by intent (`join`).
 - `ctaOverrides` swaps that button on one path. `/partners` uses `partnership`,
   so the header on that page carries the mailto instead of the Discord invite.
-  The two intents live in `src/lib/links.ts`, which is also where the mailto
-  address and subject line come from.
+  The three intents (`join`, `apply`, `partnership`) live in
+  `src/lib/links.ts`, which is also where the mailto address and subject line
+  come from.
+
+`/about` is in `footer` and not in `primary`: the header carries the four
+things a visitor acts on and `/about` is the one they read last.
 
 Adding a page means adding a file in `src/pages/`, a line in `primary`, a line
 in `footer`, and a `<url>` in `public/sitemap.xml`.
@@ -326,11 +468,20 @@ in `footer`, and a `<url>` in `public/sitemap.xml`.
 - **Reach figures.** The Partners page deliberately says "ask us" instead of
   printing follower counts. If you want real numbers on the page, send them and
   they can be added with a date stamp.
-- **Driver stats.** `irating` and `licence` render the moment they are filled in,
-  and stay invisible until then. Nothing is made up to fill the slot.
+- **Driver stats.** `irating` and `licence` render the moment they are filled
+  in, whether by hand or by the nightly sync, and stay invisible until then.
+  Nothing is made up to fill the slot. Whether they should be published about
+  real people at all is an owner decision, not a missing task - see
+  `PRODUCT.md`.
 - **A photograph of the sim rigs.** Every photo on the site is from the gaming
   side of the org. One picture of a wheel, a rig or a screen with a car on it
   would do more for the About page than anything else on this list.
-- **Eastman font.** Only trial OTFs existed, so Nexa covers all display and body
-  text and JetBrains Mono covers data. If Eastman is ever licensed, add the woff2
-  to `public/fonts/` and update `--font-display` in `src/styles/global.css`.
+- **The Arc.** The brand core's one recurring graphic device is not on the site
+  and should not be invented here: it needs to come from the designer who owns
+  the identity, at one weight, as a vector.
+- **A dark-variant GLYTCH mark**, and a clean 1920px re-render of the
+  Nordschleife shot. Both are in `PRODUCT.md` under open decisions.
+- **Fonts are settled.** Archivo and Inter, both variable, both self-hosted and
+  subset by `font-tool/subset6.mjs` outside the repo. Nexa, Eastman and
+  JetBrains Mono are retired and should not come back; `DESIGN.md` §3 has the
+  rule for replacing a face (new filename, always).

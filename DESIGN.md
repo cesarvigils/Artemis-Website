@@ -1,15 +1,30 @@
-# DESIGN.md - Artemis Esports
+# DESIGN.md - Artemis
 
-The visual system. Read `PRODUCT.md` first for audience and IA.
+The visual system. Read `PRODUCT.md` first for audience and IA, and
+`docs/brand-core.md` for the brand this system serves.
 Tokens live in `src/styles/global.css`; this file explains them and records why.
+
+## 0. Where the brand core overrules a design rule
+
+Pass 6 aligned the site to `docs/brand-core.md`. Three places where that
+document and a generic design rule disagree, and what was chosen:
+
+| Generic rule | Brand core | Choice |
+|---|---|---|
+| **impeccable** `reference/brand.md` lists **Inter** on the reflex-reject font list (a training-data default that creates monoculture) | Section 6 names Inter for body, UI and numbers, with tabular numerals | **Inter.** The same reference says identity-preservation wins where the brand has already committed to a face, and this brand has: the choice is the org's, made outside this repository, and a website whose body face differed from the stream overlays and the social templates would be the more expensive mistake. The reflex-reject list is for greenfield decisions. |
+| **taste** and **impeccable** both treat a near-black-plus-one-saturated-accent palette as the esports category reflex | Section 6 fixes Night, the surface ramp, Mist, Deep Teal and Signal by hex | **The brand core's palette.** The palette was never this work's to choose. What the redesign chose is the register (a timing tower, not an esports template), and pass 6 narrowed the accent from "the site's colour" to five named jobs. |
+| **colorize** `reference/colorize.md`: "alpha is a design smell; define explicit overlay colours" | Section 6 gives two muted values and one Mist, not a nine-step ramp | **Two alpha steps kept** (`--mist-dim`, and the two hairlines). They sit on three different grounds - Night, `--surface-1`, `--surface-2` - so an opaque value would be wrong on two of them. Everything else is an opaque token. |
 
 ## 1. Direction
 
 **"Pit wall, not billboard."**
 
-The brand identity (Gen3 teal on near-black, the leaf-and-profile mark, the
-"On the hunt" voice) is fixed and was preserved. What changed is the register:
-from *agency motion showcase* to *a racing team with evidence*.
+The brand identity (Night, Signal, the notched A, the wordmark) is fixed by
+`docs/brand-core.md` and was preserved. What changed in pass 1 was the register:
+from *agency motion showcase* to *a racing team with evidence*. What changed in
+pass 6 is the discipline: the accent went from decoration to budget, the two
+licensed faces became two variable ones, and the grid moved onto the brand's
+own 8% edge.
 
 The vocabulary is the pit wall and the timing tower: tabular numerals, hairline
 rules, position markers (P1 / P4), dense-but-calm data rows, and a lot of quiet
@@ -23,10 +38,11 @@ sheet. Not: an esports org template, not an editorial magazine, not a SaaS hero.
 Equal card grids. A tiny uppercase kicker above every section. Numbered section
 markers. Gradient text. Glass and `backdrop-filter` of any kind. A hero metric
 row. Marquee text. Scroll cues. Pinned or scroll-jacked sections. Decorative
-status dots. Em dashes. Hover states on rows that are not clickable.
+status dots. Em dashes. Hover states on rows that are not clickable. Graffiti,
+paint splash and scrawled words of any kind (brand core, section 6).
 
 One more rule, added in pass 2: **no layout family twice on a page.** Home runs
-eight sections and seven compositions. If a new band would be "narrow heading
+nine sections and eight compositions. If a new band would be "narrow heading
 column on the left, hairline rows on the right" and something above it already
 is, it gets a different shape.
 
@@ -36,117 +52,236 @@ it genuinely is a sequence.
 ## 2. Colour
 
 Dark only. There is no light mode: the brand is a near-black ground with one
-saturated accent, and a light variant would not be the same brand. `color-scheme:
-dark` is declared so form controls and scrollbars match.
+saturated accent, and a light variant would not be the same brand.
+`color-scheme: dark` is declared so form controls and scrollbars match.
 
-Strategy on the commitment axis: **committed** - one saturated colour carries the
-identity, everything else is a three-step near-black ramp.
+Strategy on the commitment axis: **restrained**, not committed. That is the
+pass-6 change. Signal used to be "the site's colour" and carried labels,
+kickers, class chips, driver numbers, table accents, footer tags and icons. The
+brand core caps it at 5-10% of any layout and says what it is for, so it now has
+exactly five jobs and everything else is Mist, muted or Deep Teal.
 
-| Token | Hex | OKLCH | Role | Contrast on `--bg` |
-|---|---|---|---|---|
-| `--bg` | `#000a08` | `oklch(13.0% 0.023 183)` | Page ground | - |
-| `--bg-raise` | `#03120e` | `oklch(16.6% 0.025 176)` | Alternating bands, footer | - |
-| `--bg-panel` | `#06201a` | `oklch(22.1% 0.034 175)` | Panels, the ghost 404 mark | - |
-| `--ink` | `#ebfffb` | `oklch(98.4% 0.022 183)` | Body and headings | 19.3:1 |
-| `--ink-dim` | `rgba(235,255,251,.78)` | `oklch(82.1% 0.020 185)` | Leads, secondary copy | 11.6:1 |
-| `--ink-faint` | `rgba(235,255,251,.52)` | `oklch(61.7% 0.018 182)` | Field labels, meta | 5.5:1 |
-| `--teal` | `#0fffcf` | `oklch(89.2% 0.171 172)` | The single accent | 15.5:1 |
-| `--teal-soft` | `rgba(15,255,207,.7)` | `oklch(69.2% 0.133 172)` | Outlined car numbers, hashtags | 7.8:1 |
-| `--teal-ink` | `#001410` | `oklch(17.1% 0.031 179)` | Text on a teal fill | 14.7:1 on `--teal` |
-| `--teal-hover` | `#7dffe3` | `oklch(93.3% 0.114 170)` | Solid-button hover | - |
-| `--line` | `rgba(235,255,251,.12)` | - | Hairline rules | - |
-| `--line-strong` | `rgba(235,255,251,.24)` | - | Table head, ghost button border | - |
-| `--line-teal` | `rgba(15,255,207,.32)` | - | Accent hairlines | - |
-| `--bg-rgb` | `0 10 8` | - | `--bg` as channels, for the legibility scrims | - |
+### Tokens
+
+| Token | Value | Role | Contrast on `--night` |
+|---|---|---|---|
+| `--night` | `#000a08` | The field, ~80% of every screen | - |
+| `--surface-1` | `#0a1714` | Tinted bands: next race, the commitments, the join band, the footer | - |
+| `--surface-2` | `#12211d` | Panels sitting on a tinted band | - |
+| `--surface-3` | `#1e322c` | The one opaque divider step | - |
+| `--mist` | `#ebfffb` | Most text and UI | 19.3:1 |
+| `--mist-dim` | `rgba(235,255,251,.76)` | Secondary prose: leads, blurbs, bios | 11.2:1 |
+| `--muted` | `#8fa8a1` | Captions, metadata, field labels, dates | 7.9:1 |
+| `--muted-deep` | `#486b62` | Large decorative type, disabled states. **Never body-size text** | 3.4:1 |
+| `--signal` | `#0fffcf` | The one thing the eye lands on | 15.5:1 |
+| `--signal-ink` | `#001410` | Text on a Signal fill | 14.7:1 on `--signal` |
+| `--signal-hover` | `#7dffe3` | Solid-button hover | - |
+| `--teal-deep` | `#0e7f6b` | Brand colour when it needs area rather than a line | - |
+| `--line` | `rgba(235,255,251,.12)` | Hairline rules | - |
+| `--line-strong` | `rgba(235,255,251,.24)` | Table head, ghost button border | - |
+| `--night-rgb` | `0 10 8` | `--night` as channels, for the hero scrims | - |
+
+The pass-5 names are gone: `--bg`, `--bg-raise`, `--bg-panel`, `--ink`,
+`--ink-dim`, `--ink-faint`, `--teal`, `--teal-soft`, `--teal-ink`,
+`--teal-hover`, `--line-teal`. A token named `--teal` invites a designer to
+reach for teal; a token named `--signal` states its job.
+
+### The Signal budget
+
+Signal is allowed in exactly five places. Anywhere else on the site is a bug.
+
+1. `.btn-solid` - the **one primary CTA per page** (hero, join band, sticky
+   phone bar, and the header button once the bar is the only chrome on screen).
+2. `.hero-pos` and `.hero-pos-rule` - the hero position marker and its podium
+   rule. This is the pass-4 signature moment, kept.
+3. `.nav-link[aria-current='page']::after` - the active-nav underline. The
+   label itself is Mist: a second accent on the same element spends the budget
+   twice.
+4. `:focus-visible` - every focus ring on the site, plus `::selection`.
+5. Every `:hover` colour step on a link or a control.
+
+**Measured, not asserted.** `audit-tool/signal6.mjs` counts Signal-coloured
+pixels on the full-page and hero captures of every route at 1440 and 390, with
+the photographs hidden (`visibility: hidden` preserves layout exactly) so the
+number describes the design rather than the teal liveries in the renders. The
+worst screen on the site is **5.4%**, against a 10% cap. The table is in
+`docs/pass6-report.md`.
+
+What moved off Signal in pass 6: the "Next race" heading, the countdown, the
+hero name's second line, the outlined car numbers in three places, the driver
+focus label, the results sheet's podium positions, the garage progress
+indicator, the join steps' numbers, the 404 code and mark, the footer mark, the
+partner-roster numbers, the class chips, the contact card border and the hero
+proof rule. All of them are Mist, `--muted` or `--muted-deep` now.
 
 **Which hairline, and when.** `--line-strong` goes above the first row of a data
 block: the results head, the roster list, the entry strip, the teaser, the
-dossier, the join steps, the pillar register, the channel list. `--line` is
-everything else: the rule between two rows, the seam between two sections, the
-rule that separates two things inside one block. There is no third weight.
+dossier, the join steps, the commitment register, the channel list, the seat
+list. `--line` is everything else: the rule between two rows, the seam between
+two sections, the rule that separates two things inside one block. There is no
+third weight.
 
-**`--bg-rgb` exists because a colour token cannot carry an alpha.** The hero
-scrim and the HUNT-texture scrim need the brand ground at four different
-opacities, and they were eleven hard-coded `rgba(0, 10, 8, ...)` values across
-four files. They are `rgb(var(--bg-rgb) / .88)` now. It is deliberately *not*
+**`--night-rgb` exists because a colour token cannot carry an alpha.** The hero
+scrims need the brand ground at several opacities and were eleven hard-coded
+`rgba(0, 10, 8, ...)` values across four files. It is deliberately *not*
 redefined in the print or forced-colours blocks: every element that uses it is
 hidden in both, and a scrim that inverted with the page would paint white over
 white.
 
-Decisions inside that:
+### Texture
 
-- `--ink-dim` was raised from the old `.68` to `.78` and `--ink-faint` from `.45`
-  to `.52`. The old faint step measured **4.35:1**, under AA. Every text token now
-  clears 4.5:1 on both `--bg` and `--bg-raise`.
-- `--teal-ink` replaces a hardcoded `#001410` that only existed inside `.btn-solid`.
-- Podium positions (P1-P3) are teal; the rest are `--ink-faint`. That is the only
-  semantic colour rule on the site, and it uses the same single accent.
+The graffiti texture is gone: `src/assets/hunt-texture.jpg` is deleted and no
+component references it. The brand core's replacement is material grain at 3-5%,
+implemented as `--grain` in `global.css`: one `feTurbulence` tile inside a
+`data:` URI, desaturated, painted by `.grain::before` at **4% opacity** on the
+join band and the 404. It costs no request, no raster asset and no layout, and
+it is dropped entirely in forced colours and in print.
+
+One measured side effect, recorded because it looks like a regression and is
+not: axe reports `color-contrast` as *incomplete* (not a violation) for text on
+the two grained sections, because it cannot compute a background behind a
+background-image. The real composite shift is under 3/255 of lightness on a
+19:1 pair.
 
 ## 3. Typography
 
-Two families, on a real contrast axis: a geometric display sans against a
-monospace. No third family, no extra weights.
+Two families on a real contrast axis: a condensed grotesk against a neutral
+humanist sans. Both variable, both self-hosted, no third family.
 
 | Token | Stack | Used for |
 |---|---|---|
-| `--font-display` / `--font-body` | Nexa 700 / 300, then Avenir Next, Helvetica Neue | Everything readable |
-| `--font-mono` | JetBrains Mono 400 / 700 | Data only |
+| `--font-display` | Archivo, then Arial Narrow, Helvetica Neue, Arial | h1-h4, buttons, nav, labels that sit beside the wordmark |
+| `--font-body` | Inter, then the system stack | Body, UI, leads, table cells |
+| `--font-data` | `var(--font-body)` | Positions, dates, counts, car numbers - Inter with `tabular-nums` |
 
-- **Nexa** is the licensed brand face and only Bold (700) and Light (300) exist on
-  disk. Hierarchy therefore comes from size, tracking, case and colour. The hero
-  uses that constraint as the idea: `ARTEMIS` in Bold, `ESPORTS` in Light, tracked
-  wider and set in teal, same size.
-- **JetBrains Mono** (`@fontsource/jetbrains-mono`, latin subset, woff2 only, two
-  weights, self-hosted in `public/fonts/`) carries positions, dates, counts, car
-  numbers and field labels, with `font-variant-numeric: tabular-nums`. It was
-  chosen over IBM Plex Mono and Space Mono, which are training-data defaults.
-  Mono here is not decoration: every use is a number or a column label.
-- All four faces are `font-display: swap`; the two Nexa faces are preloaded.
-- **Every mono rule declares `font-weight: 400`.** The body is 300 and only two
-  mono faces exist, so eight rules that set `font-family: var(--font-mono)` and
-  nothing else were asking for a weight the system does not have. Every browser
-  substituted the 400 face, so it looked right, from a rule that said otherwise.
-  Measured after the fix: the site paints exactly four family/weight pairs,
-  `Nexa 300`, `Nexa 700`, `JetBrains Mono 400`, `JetBrains Mono 700`, and
-  nothing else.
+- **Archivo** carries the display voice on two axes. `wdth` is the idea: **80%
+  (condensed) for h1 and h2**, the headline register; **100% for h3, h4 and
+  every subhead-scale label**. `wght` runs 400-800 and the site paints 400 (the
+  hero's second line), 600 (subheads and small labels) and 700 (h1, h2,
+  buttons).
+- **Inter** carries body, UI, tables and numbers, `wght` 400-700, with `tnum`
+  kept in the subset and `font-variant-numeric: tabular-nums` on `.data` so a
+  column of positions lines up. The `opsz` axis is pinned at 16: nothing here
+  needs optical sizing and the axis cost 9 KB.
+- **`--font-data` is deliberately the same family as the body.** Pass 5's data
+  voice was a monospace; the brand core names Inter for numbers. The token still
+  exists so a data rule reads as a data rule, and what separates data from prose
+  now is tabular figures, tracking and weight rather than a second family.
+- **Semi-bold is the floor for small type on this ground.** `--weight-small:
+  600` is applied to `.data`, `.field-label` and every label at `--text-xs` or
+  below. Light type on Night reads lighter than it measures, which is the same
+  reason the leading went up a step.
+- **Measured after the change:** the body paints exactly seven family / weight /
+  width combinations - `Archivo 400 100%`, `Archivo 600 100%`, `Archivo 700
+  100%`, `Archivo 700 80%`, `Inter 400 100%`, `Inter 600 100%`, `Inter 700 100%`
+  - and no fallback face paints any text on any page.
+- `.data` and `.field-label` pin `font-stretch: var(--wdth-normal)` explicitly,
+  because both are used inside `<h2>` in places (the footer column heads) and
+  would otherwise inherit the 80% condensed width into a family that has no
+  width axis at all.
 
 ### The subset faces
 
-The four files in `public/fonts/` are **subset builds**, not the originals:
-`nexa-bold.latin.v2.woff2`, `nexa-light.latin.v2.woff2`,
-`jetbrains-mono-400.latin.v2.woff2`, `jetbrains-mono-700.latin.v2.woff2`.
-**78.6 KB to 48.0 KB** across the four, a 38.9% cut, and about 30 KB off a
-first view of the home page.
+Four files in `public/fonts/`, two per family, split by `unicode-range`:
 
-What is kept, and why that list rather than a shorter one:
+| File | Bytes | Range |
+|---|---|---|
+| `archivo-core.latin.v3.woff2` | 35,800 | Basic Latin + the characters the site itself emits |
+| `archivo-ext.latin.v3.woff2` | 36,820 | Latin-1 Supplement, Latin Extended-A, combining marks, bot punctuation |
+| `inter-core.latin.v3.woff2` | 14,864 | as above |
+| `inter-ext.latin.v3.woff2` | 13,992 | as above |
+
+**50,664 B on a first paint** (the two core files, both preloaded) against
+48,036 B in pass 5, and 101,476 B on disk. As one file per family it was
+94,156 B on every first paint, which cost 0.2 s of LCP and one Lighthouse point
+on `/`; the split bought that back. The `ext` pair is not preloaded and is
+fetched only when a character in its range is actually rendered, which today is
+never.
+
+The character target is byte-for-byte the one pass 5 measured. What decided the
+split was a scan of the built HTML: the only characters the site's own copy
+emits beyond ASCII are **U+00A0** (the no-break space in the results sheet's
+driver separator) and **U+00A9** (the footer copyright), so both are in `core`.
+Leaving either in `ext` pulled a 14 KB face on every page for one glyph.
+
+The two ranges are **disjoint on purpose**: where two `@font-face` rules of one
+family declare overlapping ranges, the last one defined wins, so an `ext` rule
+that still claimed U+00A0 would beat the `core` rule that carries it.
+
+What is in the target, and why that list rather than a shorter one:
 
 - Basic Latin and the whole Latin-1 Supplement.
-- The Latin Extended-A letters the originals carried: `Ă ı Ł ł Œ œ Š š Ÿ Ž ž`.
+- The Latin Extended-A letters the pass-5 faces carried: `Ă ı Ł ł Œ œ Š š Ÿ Ž ž`.
   The bot writes driver names straight from Discord, and a sim-racing roster is
-  exactly where those letters appear. A kilobyte is not worth one fallback
-  letter in the middle of a display-size name.
+  exactly where those letters appear.
 - The General Punctuation the site or a bot-written note can emit, plus the
-  combining marks, so decomposed input still composes.
-- Nothing else: the dropped codepoints are spacing modifier letters
-  (`ˆ ˇ ˘ ˙ ˚ ˛ ˜ ˝ ʼ`), `ƒ`, Greek `µ` (the Latin-1 micro sign is kept), the
-  `fi`/`fl` presentation forms, and three control characters.
+  seven combining marks, so decomposed input still composes.
 
-What the mono lost on top of that is its **layout tables**: `calt` and `frac`,
-the code-editor ligatures and automatic fractions. That is where 12 of its 13 KB
-came from (394 glyphs to 243), and it is a correctness fix as well as a size
-one: a results sheet must never turn `->` in a note somebody typed in Discord
-into an arrow. `ccmp` and `mark` are kept, because accented text needs them.
-`tnum` is not in the font at all and never was, and does not need to be: the
-face is monospaced, so its digit advance is 600 units for all ten.
+Two codepoints are in the target and missing from the Inter source: **U+00AD**
+(the soft hyphen, which is invisible) and **U+2215** (the division slash, which
+the site never renders; `/` is U+002F). Archivo carries both.
 
 **No arrow glyphs are carried.** Every arrow on the site is an inline SVG path
-in `Icon.astro`.
+in `Icon.astro`, and the roster's start-to-finish column says "to" rather than
+drawing one.
 
 **A replacement face must get a new filename.** `vercel.json` serves `/fonts/*`
 with a one-year `immutable` cache, so a browser that has the old file will keep
-it. That is what `.v2` is for: re-subset, ship `.v3`, and change the four
-`@font-face` rules at the top of `global.css` and the four preloads in
-`Base.astro` together.
+it. That is what `.v3` is for: re-subset with `font-tool/subset6.mjs`, ship
+`.v4`, and change the four `@font-face` rules at the top of `global.css` and the
+two preloads in `Base.astro` together.
+
+Both faces are under the SIL Open Font License; `public/fonts/OFL.txt` ships
+with them, which section 5 of that licence requires.
+
+## 3b. Logo tiers
+
+Three marks, one job each, from `docs/brand-core.md` section 6. The component is
+`src/components/Mark.astro` and the variant names match the brand core's names.
+
+| Tier | Variant | Where | Sizing |
+|---|---|---|---|
+| **Wordmark** | `wordmark` | Header, footer, `public/og.png` | `--mark-w`, with a `max(100px, ...)` floor so it can never go below the brand core's minimum. 104px on a phone, 132px in the desktop bar, 168px in the footer |
+| **Icon** (the notched A) | `icon` | `favicon.svg`, `favicon.ico`, `favicon.png`, `apple-touch-icon.png`, the 404 mark | `--mark-size`, any size |
+| **Hero mark** (the profile) | `hero` | Nothing on the website | `--mark-size`, 96px and above only |
+
+**The icon is extracted, not redrawn.** `Mark.astro` pulls the A out of
+`WORDMARK_PATH` with a regular expression at build time and throws if it is not
+there, and `src/assets/brand/artemis-icon-a.svg` is written from the same
+substring by the icon generator. The two marks cannot drift.
+
+**The hero mark has no place on this website, and that is the finding.** The
+header and footer are the wordmark's job, everything under 96px is the icon's,
+and adding the profile somewhere in order to use it would be decoration. The
+variant stays in the component because the OG and social assets are generated
+from it.
+
+The pass-5 `lockup` variant (mark + wordmark locked together) is gone: the
+brand core's first tier is the wordmark alone.
+
+## 3c. The grid
+
+`--pad-x` is `clamp(1.25rem, 4vw, 3.5rem)` below 1024px and **`8vw` at 1024 and
+above**, because the brand core puts the lockup and every content edge at 8%
+from the left on every asset.
+
+The hard part is that a centred shell cannot satisfy that. At 1920 a
+`max-width: 1400px; margin-inline: auto` box puts its content edge at 16.5% of
+the viewport, not 8%. So `.container` and `.nav-inner` are **left-aligned
+boxes** - `margin-inline: 0 auto`, `max-width: calc(var(--shell) + 2 *
+var(--pad-x))` - and `--shell` rises to 1600px at 1024. The result:
+
+| Viewport | Left edge | Content width | Right gutter |
+|---|---|---|---|
+| 1024 | 81.9px (8%) | 860px | 81.9px |
+| 1440 | 115.2px (8%) | 1210px | 115.2px |
+| 1920 | 153.6px (8%) | 1600px | 166.4px |
+| 2560 | 204.8px (8%) | 1600px | 755px |
+
+Below 1920 the layout is still symmetric; above it the right gutter grows while
+the left edge stays on the brand grid, which is the trade the brand core asks
+for. The garage strip, which is full-bleed and cannot use `.container`, derives
+the same two numbers from `--pad-x` and `--shell` directly.
 
 ### Scale
 
@@ -154,12 +289,12 @@ Fluid `clamp()`, ratio about 1.27, ceiling 5rem (80px) - under the 6rem cap.
 
 | Token | Value | Typical use |
 |---|---|---|
-| `--text-2xs` | `0.6875rem` | Mono micro labels, chips, field labels |
+| `--text-2xs` | `0.6875rem` | Micro labels, chips, field labels (600 weight, always) |
 | `--text-xs` | `0.8125rem` | Nav links, buttons, footer links |
 | `--text-sm` | `0.9375rem` | Captions, bios, table body |
 | `--text-base` | `1.0625rem` | Body |
 | `--text-lg` | `clamp(1.125rem, 1rem + 0.5vw, 1.375rem)` | `.lead` |
-| `--text-xl` | `clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem)` | Pillar titles, contact email |
+| `--text-xl` | `clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem)` | Commitment titles, seat roles, contact email |
 | `--text-2xl` | `clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem)` | `.display-sm`, roster group heads |
 | `--text-3xl` | `min(clamp(1.875rem, 1.4rem + 2.4vw, 3rem), 11vw)` | `.display-md`, section headings |
 | `--text-4xl` | `min(clamp(2.375rem, 1.7rem + 3.4vw, 4rem), 13vw)` | `.display-lg`, band headings |
@@ -191,10 +326,14 @@ Car numbers used to be four hard-coded clamps in three files (36 / 40 / 48 /
 
 | Token | Value | Used for |
 |---|---|---|
-| `--leading-display` | `1.04` | h1-h4 |
-| `--leading-tight` | `1.15` | Field labels, chips, nav, `.data`, single-line display spans |
-| `--leading-snug` | `1.35` | Titles inside cells, sub-headings |
-| `--leading-body` | `1.6` | Body and all small prose |
+| `--leading-display` | `1.06` | h1-h4 |
+| `--leading-tight` | `1.2` | Field labels, chips, nav, `.data`, single-line display spans |
+| `--leading-snug` | `1.4` | Titles inside cells, sub-headings |
+| `--leading-body` | `1.65` | Body and all small prose |
+
+All four went up a step in pass 6. Inter has a larger x-height than the face it
+replaced, and light type on Night reads lighter than it measures, so the pass-5
+numbers would have set the body tighter than it looked.
 
 Before these existed, roughly twenty tracked uppercase labels silently
 inherited the body's 1.7, and `.step-title` led looser than the sentence under
@@ -204,12 +343,16 @@ it. Prose leading was spread across 1.4 / 1.5 / 1.55 / 1.6 / 1.7 for one job.
 
 | Token | Value | Used for |
 |---|---|---|
-| `--track-display` | `-0.01em` | h1-h4 |
-| `--track-title` | `0.04em` | Uppercase component titles at body size |
-| `--track-link` | `0.1em` | Uppercase micro-caps: interactive labels and chips |
-| `--track-label` | `0.16em` | Field labels and tracked meta |
-| `--track-data` | `0.02em` | Mono data |
-| `--track-lockup` | `0.06em` | The two-weight hero lockup only |
+| `--track-display` | `-0.005em` | h1-h4 |
+| `--track-title` | `0.02em` | Uppercase component titles at body size |
+| `--track-link` | `0.08em` | Uppercase micro-caps: interactive labels and chips |
+| `--track-label` | `0.14em` | Field labels and tracked meta |
+| `--track-data` | `0.01em` | Tabular data |
+
+Every value came down in pass 6. Archivo and Inter are both wider-set than the
+faces they replaced, so the pass-5 tracks over-opened the same labels.
+`--track-lockup` is gone: the hero's two lines separate on Archivo's width
+axis now, not on a bespoke tracking step.
 
 No component declares a literal `em` tracking value. There used to be ten of
 them across 28 declarations, which gave five identical 13px uppercase link
@@ -224,20 +367,19 @@ Display tracking never goes below -0.04em. Headings are uppercase with
 on the site. There used to be five different caps for that one element,
 spanning 39-54ch, three of them under the 45ch comfort floor.
 
-Headings are capped in `em`, never `ch`. `ch` is the advance of `0`; uppercase
-Nexa is about a fifth wider per character, so a "14ch" cap actually held ten or
-eleven glyphs and the nine `ch` caps on the site were not comparable with each
-other.
+Headings are capped in `em`, never `ch`. `ch` is the advance of `0`; condensed
+uppercase Archivo is a different width per character again, so a "14ch" cap was
+never comparable with the next one.
 
 **Overflow rule:** every headline was tested at 390px, and again at 390px with
 a 200% root font. The longest single word on the site (`PARTNERS`, `ESPORTS`,
-`PRECISION`) fits at the floor with the `1.25rem` gutter. Any new headline must
+`SCOREBOARD`) fits at the floor with the `1.25rem` gutter. Any new headline must
 be checked at both.
 
 **Unbreakable tokens.** `overflow-wrap: anywhere` is on h1-h4 globally and on
 every name-shaped span the bot can write: `.event-name`, `.driver-name` (both
 variants), `.driver-focus`, `.also-name`, `.slide-car`, `.entry-name`,
-`.partner-name`, `.field-label`, `.roster-name`, `.pillar-tags li`. The one
+`.partner-name`, `.field-label`, `.roster-name`, `.seat-role`. The one
 exception is `.hero-title`, which is the lockup and must never break mid-word.
 
 ## 4. Space, shape, layers
@@ -378,19 +520,21 @@ went from 133 KB to about 4 KB.
 
 | Component | What it is | Notes |
 |---|---|---|
-| `Mark.astro` | The Gen3 mark, wordmark and lockup as inline SVG | `fill="currentColor"`; sized by the parent through `--mark-size` |
+| `Mark.astro` | The three logo tiers as inline SVG: `wordmark`, `icon`, `hero` | `fill="currentColor"`; the wordmark is sized by width (`--mark-w`, floor 100px), the other two by height (`--mark-size`). The icon path is extracted from the wordmark path at build time, so the two marks cannot drift. See §3b |
 | `Icon.astro` | The only icon set: arrow-right, arrow-left, arrow-up-right, menu, close | One stroke weight (1.5), square caps, mitred joins |
-| `Nav.astro` | Fixed header, lockup, four links, one CTA | Ghost CTA over the hero, solid and fully opaque once scrolled; a compact CTA with a short label sits in the bar at phone widths and is the only item allowed to shrink; mobile panel with `aria-expanded`, Escape-to-close, a focus trap, `inert` behind it, a `position: fixed` body scroll lock and `overscroll-behavior: contain` |
-| `Footer.astro` | Mark, tagline, contact, pages, channels | Three equal columns, channels flush right. Social links are typographic labels, not hand-drawn brand glyphs |
+| `Nav.astro` | Fixed header, wordmark, four links, one CTA | Ghost CTA over the hero, solid and fully opaque once scrolled; a compact CTA with a short label sits in the bar at phone widths and is the only item allowed to shrink; mobile panel with `aria-expanded`, Escape-to-close, a focus trap, `inert` behind it, a `position: fixed` body scroll lock and `overscroll-behavior: contain` |
+| `Footer.astro` | Wordmark, the promise, contact, pages, channels | Three equal columns, channels flush right. Social links are typographic labels, not hand-drawn brand glyphs |
 | `Hero.astro` | Diagonal split, headline, lead, proof row, two actions | Takes the `getImage()` result so the same URL can be preloaded. The proof row prints field size when the record has it |
 | `NextRace.astro` | One thin data strip plus the rest of the calendar | Static date always renders; the countdown is JS-only and its line is pre-reserved. Falls back to "No race scheduled" with the last completed event |
 | `ResultsTable.astro` | The timing sheet | Real `<table>` with explicit ARIA roles so semantics survive the mobile `display: block`. Position, field size, series, class, drivers, date |
 | `Garage.astro` + `GarageSlide.astro` | Native scroll-snap filmstrip | Five fixed slots; the scrollable region is a wrapping `<section aria-label>` (which *is* `role="region"`) so the `<ul>` keeps its list role; the `<Image>` stays in `Garage.astro` (see §8). The arrows step to the next slide's own snap offset, derived from the first slide rather than from a computed `scroll-padding` that Chrome hands back unresolved |
-| `DriverCard.astro` | `compact` column or `row` roster entry | Stats and socials render only when present; the row prints the driver's latest finish, derived from `results.json` |
-| `PillarBand.astro` | The four values, `row` or `long` | `row` is a four-across band (home), `long` one entry per row with a race-weekend sentence and the hashtags along the foot (about) |
+| `DriverCard.astro` | `compact` column or `row` roster entry | Stats and socials render only when present; the row prints the driver's latest finish, derived from `results.json`. When `stats.json` has an entry, `compact` adds the iRating alone and `row` adds iRating, licence and a four-column table of the three newest official races. No entry means no label, not an empty one |
+| `PillarBand.astro` | The three commitments, `row` or `long` | Each one is a title, the commitment and the test anyone can run against it. `row` is a three-across band (home) with the tests sharing a baseline via `margin-top: auto`; `long` is one entry per row (about). Three across rather than four is also why no title reserve is needed any more |
 | `PartnerBand.astro` | `row` (logo-led register) or `stack` (dossier entries) | Never renders an empty logo row: with no partners it collapses to one column with the heading, an honest sentence and the mailto. `row` sits on `--bg` so it does not merge with the tinted pillar band above it |
-| `JoinCta.astro` | Discord CTA over the brand's spray texture | Full-width heading, lead, button, then the three steps across the band. Steps on the home page only |
-| `PageHead.astro` | h1, lead, meta, optional `action` and `aside` slots | Shared by team / about / partners; the aside is what stops the first screen being half empty. The split starts at 1101px, not 901px, because below that the copy column cannot carry the `display-xl` step; it renders the aside slot first and tests the result, so a slot whose content is conditional on data collapses instead of reserving a column |
+| `JoinCta.astro` | Discord CTA on a grained band | Full-width heading, lead, button, then the three steps across the band. The default heading is the motto, which is the one place on the site it appears. `intent` picks the wording of the same Discord action: `join` everywhere, `apply` on `/join` |
+| `AudienceRouter.astro` | Three plain links under the next-race strip | "Follow the team", "Race for us", "Partner with us", one line each. Hairlines, no cards, no icons: it is a router, and the moment it grows a box it competes with the Scoreboard below it |
+| `StickyCta.astro` | The phone-only action bar | 55px plus a hairline, `env(safe-area-inset-bottom)`, `position: fixed` from the first frame so it can never move the document. Shown once the first screen has scrolled away, hidden again at the footer and while the menu is open; the compact header CTA hides while it is up, so one Signal button is on screen at a time |
+| `PageHead.astro` | h1, lead, meta, optional `action` and `aside` slots | Shared by team / join / about / partners; the aside is what stops the first screen being half empty. The split starts at 1101px, not 901px, because below that the copy column cannot carry the `display-xl` step; it renders the aside slot first and tests the result, so a slot whose content is conditional on data collapses instead of reserving a column |
 
 Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 `.rule-top`, `.section-head` (+ `.section-head-stack`), `.roster-teaser`, `.btn`
@@ -403,23 +547,37 @@ The copy rules, written down because "polish" on a site this small is mostly
 this. Plain, specific, sentence case for anything that is a sentence. No
 exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen".
 
+- **The promise is everywhere, the motto is once.** *Every shot on the record.*
+  is `site.tagline`: the footer, every `og:image:alt`, the JSON-LD slogan.
+  *Take the shot.* appears exactly once, as the heading of the home join band.
+- **Words the site never uses**, because the brand core's don't-say column
+  bans them: "silence", "built in silence", "quiet", "precision", "noise",
+  "called by the hunt", "results speak louder", "on the hunt", and every
+  hashtag. `site.hashtags` is an empty array and the footer tag line is gone.
+  There is also **no sentence anywhere about our own restraint** - not "we keep
+  the list short", not "we would rather do a small number properly", not "the
+  roster stays small on purpose". Describing your own quietness is the one
+  thing the voice section forbids outright.
 - **Headings.** A heading that speaks takes a full stop; a heading that names
-  something does not. "On the hunt.", "Race with us.", "How to join.",
-  "Talk to us.", "Built in silence.", "Partner with Artemis.", "Off track." all
-  carry one. "The crew", "Recent results", "Next race", "The garage",
-  "Who drives", "How we race", "Who backs us", "Where this came from",
+  something does not. "Take the shot.", "Race with us.", "Race for us.",
+  "How to join.", "How to apply.", "Talk to us.", "Partner with Artemis.",
+  "Off track." all carry one. "The crew", "About Artemis", "The Scoreboard",
+  "Recent results", "Next race", "The garage", "Who drives", "Open seats",
+  "What a season asks of you", "Who backs us", "Where this came from",
   "What we stand for", "Current partners" do not.
 - **Field labels** are sentence case, always: "Best finish", "Results listed",
   "First iRacing season", "Who runs these entries". The uppercase is a
   `text-transform`, not the text. That matters because the same strings are read
   aloud.
-- **One label per intent, everywhere.** "Join the team" is the Discord invite on
-  every page and in every place on it. "Partner with us" is the partnership
-  mailto, in the header, the first screen and the contact card of `/partners`.
-  The two intents live in `src/lib/links.ts` so the address is written once.
-  The one deliberate pair is the results link: **"See results"** where the
-  reader has not seen any (the hero, the 404), **"All results"** only on
-  `/partners`, where three of the six are already on screen.
+- **One label per intent, per audience.** `src/lib/links.ts` holds three:
+  **"Join the Discord"** is the driver action on every page but `/join`,
+  **"Apply in the Discord"** is the same address worded for the one page where
+  the reader has already decided, and **"Partner with us"** is the partnership
+  mailto on `/partners`. The address is written once for each.
+  The Scoreboard is named the same way wherever it is linked: a text link says
+  **"The Scoreboard"**, a button says **"See the Scoreboard"**, the nav says
+  **"Scoreboard"**. Pass 5's "See results" / "All results" pair is gone - there
+  is one name for the destination now.
 - **One spelling per channel.** `socialLabel()` in `src/lib/links.ts` is the
   only place a social network is named, so the footer, `/partners` and a
   driver's own link all say "YouTube" rather than one of them saying "youtube".
@@ -433,15 +591,26 @@ exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen"
 - **The empty states are wording too.** "No race scheduled" in the "Next race"
   strip is pinned: `docs/data-contract.md` quotes it as the site's behaviour and
   the Discord bot is written against that document, so it changes on both sides
-  or on neither. The countdown's zero state is ours: **"Race day"** on the start
-  date, **"Under way"** only once that date has passed. The contract carries
-  dates and not times, so the target is midnight in the team's timezone, and
-  "Under way" at six in the morning would be a claim the clock cannot support.
+  or on neither. The countdown's zero state is ours, and it depends on what the
+  record knows. With a `startTime` the target **is** the green flag, so zero
+  means **"Under way"**. Without one the target is midnight in the team's
+  timezone, so it says **"Race day"** on the start date and "Under way" only
+  once that date has passed: "Under way" at six in the morning would be a claim
+  the clock cannot support.
+- **The green-flag time is UTC in the markup and local on screen.** The strip
+  prints `15:15 UTC`, which is true with no clock and no JavaScript; the client
+  rewrites it in the reader's own zone with the zone's short name, and adds the
+  local date whenever the conversion lands on a different day from the one the
+  strip is showing. A reader in Auckland would otherwise see "25 SEP" beside an
+  03:15 that is really the 26th.
+- **Seats are a real empty state.** `/join` says "No seats open right now" and
+  offers the Discord anyway, because that is what is true between recruitment
+  rounds. The page never invents a seat to fill the section.
 
 ## 7. Accessibility
 
 - Skip link to `#main`; `<main>`, `<header>`, `<footer>`, `<nav>` landmarks.
-- Visible focus: `2px` teal outline, `3px` offset, on everything focusable.
+- Visible focus: a `2px` Signal outline at `3px` offset on everything focusable. Measured: 174 tab stops across the six pages, 0 without a ring, 0 without an accessible name, 0 off screen when reached.
 - `aria-current="page"` in the desktop nav, the mobile panel **and the footer**,
   reinforced by an underline so it does not rely on colour alone. One `isCurrent`
   in `src/lib/links.ts` serves all three, which is what finally gives the home
@@ -458,14 +627,22 @@ exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen"
   headers themselves.
 - **Print is a real mode.** Browsers drop background colours and keep text
   colour, so a dark site prints near-white ink on white paper. One `@media print`
-  block inverts the token set (teal becomes `#046b58`, 4.9:1 on white), drops the
-  fixed header, the skip link, the hero photo, the texture and the controls
-  nobody can press, and prints the destination after every external link.
+  block inverts the token set (Signal becomes `#046b58`, 4.9:1 on white), drops
+  the fixed header, the skip link, the hero photo, the grain, the sticky phone
+  bar and the controls nobody can press, and prints the destination after every
+  external link.
 - **`.driver-number` will keep failing automated contrast checks, and it is
   fine.** It is `color: transparent` with `-webkit-text-stroke`, so every tool
-  reads 1:1 and defers. As rendered it is a 7.8:1 teal hairline at 36-64px, the
-  element is `aria-hidden`, and the number is printed again as plain text in
+  reads 1:1 and defers. As rendered it is a 7.9:1 `--muted` hairline at 36-64px,
+  the element is `aria-hidden`, and the number is printed again as plain text in
   `.driver-meta`. Do not "fix" it.
+- **axe reports `color-contrast` as *incomplete* on the grained sections and
+  over the hero photo, and those are not violations.** axe cannot compute a
+  background behind a `background-image`, so it defers rather than judging. The
+  grain shifts the composite by under 3/255 of lightness on a 19:1 pair, and the
+  hero copy sits on a scrim that takes the photo to near-solid Night. Zero
+  violations at level A and AA on all six pages at 1440 and 390, and on the
+  mobile menu with the panel open.
 - **`html-validate` reports ~72 `no-redundant-role` errors and they are not
   errors.** The explicit `role="table|rowgroup|row|columnheader|cell"` on
   `ResultsTable` is the entire mechanism keeping the stacked mobile layout
@@ -476,7 +653,8 @@ exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen"
 - The garage track is `tabindex="0"` with `role="region"` and a label, so it can be
   scrolled from the keyboard; the arrow buttons have visually hidden names.
 - Every meaningful image has descriptive alt text. The only decorative images are
-  the join-band texture (`alt=""`, in an `aria-hidden` wrapper) and the 404 mark.
+  the 404 mark. The join band's texture is gone entirely: the grain is a CSS
+  pseudo-element, so there is no node for a reader to reach.
 - The results table keeps `role="table"` / `rowgroup` / `row` / `cell` /
   `columnheader` so the mobile stacked layout is still announced as a table, and
   carries a visually hidden `<caption>`.
@@ -493,13 +671,14 @@ exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen"
   clickable, and the menu panel scrolls with `overscroll-behavior: contain`.
   Buttons are not `white-space: nowrap` (an unshrinkable label is what broke
   this), and the button's inline padding is capped in `vw` as well as `rem`.
-- **`prefers-contrast: more`** raises five tokens (`--ink-dim`, `--ink-faint`,
-  `--line`, `--line-strong`, `--line-teal`) and, because nothing hardcodes
-  those colours, that lifts every hairline on the site at once.
+- **`prefers-contrast: more`** raises five tokens (`--mist-dim`, `--muted`,
+  `--muted-deep`, `--line`, `--line-strong`) and, because nothing hardcodes
+  those colours, that lifts every hairline and every quiet step on the site at
+  once.
 - **`forced-colors: active`** is handled as a first-class mode, not an
   afterthought. Windows High Contrast strips every `background-image`, which on
-  this site means every legibility scrim, so the hero photo and the join
-  texture are hidden rather than left under unscrimmed copy. The primary button
+  this site means every legibility scrim and the grain, so the hero photo and
+  the grain are hidden rather than left under unscrimmed copy. The primary button
   takes `Highlight` / `HighlightText` with `forced-color-adjust: none` so it
   cannot collapse into the ghost button. The current-page indicator becomes an
   underline (a background-filled pseudo-element is forced to Canvas and
@@ -586,6 +765,51 @@ exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen"
   The garage measures inside `requestAnimationFrame`; the reveals measure nothing.
 
 ## 9. Decision log
+
+### Pass 6, 14 Sep 2026
+
+Brand-core alignment, then the retention features. The full report is
+`docs/pass6-report.md`; these are the decisions a future pass would otherwise
+have to re-derive.
+
+1. **Signal became a budget, not a colour.** Fifteen resting-state uses were
+   moved to Mist, `--muted` or `--muted-deep` and five jobs were kept. The
+   colour tokens were renamed at the same time, on purpose: `--teal` invited a
+   designer to reach for teal, `--signal` states its job. The worst screen on
+   the site measures 5.4% against a 10% cap.
+2. **Nexa and JetBrains Mono out, Archivo and Inter in.** Two variable families
+   replace four static faces, and the data voice stopped being a second family:
+   what separates a number from prose now is tabular figures, tracking and
+   weight. See §3 for what that cost and how the `unicode-range` split bought
+   it back.
+3. **The `unicode-range` split is the reason `/` is still a Lighthouse 100.**
+   One file per family was 94,156 B on every first paint and measured 99 with an
+   LCP of 2.0 s. Preloading only Inter was tried and was worse (FCP 0.8 s to
+   1.2 s, plus a 0.002 CLS on three routes, because the h1 then swapped). The
+   split ships 50,664 B and measures 100 with an LCP of 1.7 s, better than pass
+   5's 1.8 s.
+4. **The container is left-aligned above 1024px.** A centred shell cannot put a
+   content edge at 8% of a 1920px viewport; the brand grid wins over symmetry
+   above 1920, and the numbers are in §3c.
+5. **The hero mark is not on the website.** Recorded as a finding rather than a
+   gap: see §3b.
+6. **The h1 on the home page still says the org's name, under the header
+   wordmark that also says it.** This is the one pass-6 decision made against
+   instinct. Pass 2 filed it (B3) and pass 5 deferred it; pass 6 kept it because
+   the brand core asks for "wordmark-adjacent labels" in the condensed width,
+   which is what that heading is, and because replacing an `<h1>` on the home
+   page is a bigger call than a brand-alignment pass should make on its own. The
+   two lines now separate on Archivo's width axis rather than on a colour, which
+   is the most that could be done without making the call.
+7. **The results section is "The Scoreboard" and the anchor moved** from
+   `#results` to `#scoreboard`. `vercel.json`'s `/results` redirect follows it.
+   A bare `/#results` fragment cannot be redirected server-side and will now
+   land at the top of the home page, which is acceptable for a branch that has
+   not shipped.
+8. **The sticky phone bar and the compact header CTA are mutually exclusive.**
+   Two Signal-filled buttons in one 390px viewport measured 8.1% of the screen
+   for one intent. Hiding the header copy while the bar is up costs no layout,
+   because the hamburger is already flush right and the wordmark flush left.
 
 Newest first. Only decisions that changed the system, not every edit.
 

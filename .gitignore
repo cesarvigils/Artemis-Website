@@ -24,3 +24,9 @@ pnpm-debug.log*
 .idea/
 
 .vscode/
+
+# test suite (tests/package.json is its own project)
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/
+tests/.lighthouse/

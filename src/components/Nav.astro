@@ -8,8 +8,9 @@ const pathname = Astro.url.pathname;
 const path = pathname.replace(/\/+$/, '') || '/';
 
 /* The header button is the page's own primary action. On every page but one
-   that is "Join the team"; on /partners the page exists to start a partnership
-   conversation, so the chrome carries that instead of competing with it. */
+   that is "Join the Discord"; on /partners the page exists to start a
+   partnership conversation, so the chrome carries that instead of competing
+   with it. */
 const override = nav.ctaOverrides.find((entry) => entry.path === path);
 const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
 ---
@@ -17,7 +18,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
 <header class="site-nav">
   <div class="nav-inner">
     <a href="/" class="brand" aria-label="Artemis Esports, home">
-      <Mark variant="lockup" />
+      <Mark variant="wordmark" />
     </a>
 
     <nav class="nav-links" aria-label="Primary">
@@ -37,6 +38,9 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
         class="btn btn-sm nav-cta"
         target={cta.external ? '_blank' : undefined}
         rel={cta.external ? 'noopener' : undefined}
+        data-umami-event="cta"
+        data-umami-event-placement="header"
+        data-umami-event-audience={cta.audience}
       >
         {cta.label}
         <Icon name={cta.external ? 'arrow-up-right' : 'arrow-right'} size={15} />
@@ -52,17 +56,15 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       aria-label={cta.external ? `${cta.label} (opens in a new tab)` : cta.label}
       target={cta.external ? '_blank' : undefined}
       rel={cta.external ? 'noopener' : undefined}
+      data-umami-event="cta"
+      data-umami-event-placement="header"
+      data-umami-event-audience={cta.audience}
     >
       {cta.short}
       <Icon name={cta.external ? 'arrow-up-right' : 'arrow-right'} size={14} />
     </a>
 
-    <button
-      class="menu-toggle"
-      type="button"
-      aria-expanded="false"
-      aria-controls="mobile-menu"
-    >
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu">
       <span class="sr-only">Menu</span>
       <span class="menu-icon menu-icon-open"><Icon name="menu" size={22} /></span>
       <span class="menu-icon menu-icon-close"><Icon name="close" size={22} /></span>
@@ -85,6 +87,9 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       class="btn btn-solid mobile-cta"
       target={cta.external ? '_blank' : undefined}
       rel={cta.external ? 'noopener' : undefined}
+      data-umami-event="cta"
+      data-umami-event-placement="header"
+      data-umami-event-audience={cta.audience}
     >
       {cta.label}
       <Icon name={cta.external ? 'arrow-up-right' : 'arrow-right'} size={16} />
@@ -101,19 +106,17 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     z-index: var(--z-nav);
     border-bottom: 1px solid transparent;
     /* Same tier as the panel below it. The bar used to cross-fade for 240ms
-       while the full-screen menu it belongs to appeared in 0ms, so for a
-       quarter of a second the header and the panel were different colours
-       with hero foliage showing between them. */
+       while the full-screen menu it belongs to appeared in 0ms. */
     transition: background-color var(--dur-2) var(--ease-out-expo),
       border-color var(--dur-2) var(--ease-out-expo);
   }
 
-  /* Scrim so the mark and the toggle stay readable over the hero photo. */
+  /* Scrim so the wordmark and the toggle stay readable over the hero photo. */
   .site-nav::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgb(var(--bg-rgb) / 0.72), transparent);
+    background: linear-gradient(to bottom, rgb(var(--night-rgb) / 0.72), transparent);
     pointer-events: none;
     transition: opacity var(--dur-2) var(--ease-out-expo);
   }
@@ -122,7 +125,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
      through it, and a 14px blur behind a near-solid surface is a compositing
      layer nobody can see. */
   .site-nav.is-stuck {
-    background: var(--bg);
+    background: var(--night);
     border-bottom-color: var(--line);
   }
 
@@ -132,7 +135,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
 
   /* With the menu open the header sits on the panel, not on the hero. */
   :global(html.menu-open) .site-nav {
-    background: var(--bg);
+    background: var(--night);
     border-bottom-color: var(--line);
   }
 
@@ -140,11 +143,15 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     opacity: 0;
   }
 
+  /* The same box as `.container`, so the wordmark starts on the brand grid's
+     8% edge and every section below it starts in the same place. */
   .nav-inner {
     position: relative;
-    max-width: var(--shell);
-    margin-inline: auto;
-    padding-inline: var(--pad-x);
+    width: 100%;
+    max-width: calc(var(--shell) + 2 * var(--pad-x));
+    margin-inline: 0 auto;
+    padding-inline: max(var(--pad-x), env(safe-area-inset-left))
+      max(var(--pad-x), env(safe-area-inset-right));
     height: var(--nav-h);
     display: flex;
     align-items: center;
@@ -152,31 +159,30 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     gap: var(--space-m);
   }
 
-  /* `flex: 0 0 auto`: as a shrinkable flex item the lockup was squashed to
-     59px on a 320px phone and the global `svg { max-width: 100% }` clipped
-     the wordmark mid-letter. The mark is sized in px so it does not grow
-     with the root font either. */
+  /* `flex: 0 0 auto`: as a shrinkable flex item the wordmark was squashed and
+     the global `svg { max-width: 100% }` clipped it mid-letter. The mark is
+     sized in px so it does not grow with the root font either, and its own
+     `max(100px, ...)` floor is the brand core's minimum size. */
   .brand {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
-    /* The lockup is 28px tall; the link around it is a target. */
     min-height: 44px;
-    color: var(--ink);
-    --mark-size: 28px;
+    color: var(--mist);
+    --mark-w: 104px;
     transition: color var(--dur-2) var(--ease-out-quart),
       opacity var(--dur-1) var(--ease-out-quart);
   }
 
   @media (min-width: 821px) {
     .brand {
-      --mark-size: 36px;
+      --mark-w: 132px;
     }
   }
 
   @media (hover: hover) and (pointer: fine) {
     .brand:hover {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
@@ -192,18 +198,20 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     min-width: 44px;
     text-align: center;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--muted);
     /* 44px of pointer target without changing --nav-h. */
     padding-block: 0.95rem;
     transition: color var(--dur-2) var(--ease-out-quart),
       opacity var(--dur-1) var(--ease-out-quart);
   }
 
+  /* The underline is one of the five places Signal is allowed to appear. */
   .nav-link::after {
     content: '';
     position: absolute;
@@ -211,14 +219,16 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     right: 0;
     bottom: 0;
     height: 1px;
-    background: var(--teal);
+    background: var(--signal);
     transform: scaleX(0);
     transform-origin: left center;
     transition: transform var(--dur-2) var(--ease-out-quart);
   }
 
+  /* The label itself is Mist, not Signal: the underline says "this one" and
+     a second accent on the same element spends the budget twice. */
   .nav-link[aria-current='page'] {
-    color: var(--teal);
+    color: var(--mist);
   }
 
   .nav-link[aria-current='page']::after {
@@ -229,7 +239,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
      says "this one"; behind `@media (hover: hover)` it was mouse-only, so a
      keyboard user got the focus ring and never the mark. */
   .nav-link:focus-visible {
-    color: var(--ink);
+    color: var(--mist);
   }
 
   .nav-link:focus-visible::after {
@@ -238,7 +248,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
 
   @media (hover: hover) and (pointer: fine) {
     .nav-link:hover {
-      color: var(--ink);
+      color: var(--mist);
     }
     .nav-link:hover::after {
       transform: scaleX(1);
@@ -246,47 +256,47 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
   }
 
   /* Quiet over the hero, where the page's own primary button is the loud
-     one; solid once the bar is the only chrome left on screen. */
+     one; Signal once the bar is the only chrome left on screen. */
   .nav-cta {
     letter-spacing: var(--track-link);
     border-color: var(--line-strong);
-    color: var(--ink);
+    color: var(--mist);
   }
 
   .site-nav.is-stuck .nav-cta,
   :global(html.menu-open) .nav-cta {
-    background: var(--teal);
-    color: var(--teal-ink);
-    border-color: var(--teal);
+    background: var(--signal);
+    color: var(--signal-ink);
+    border-color: var(--signal);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .nav-cta:hover {
-      border-color: var(--teal);
-      color: var(--teal);
+      border-color: var(--signal);
+      color: var(--signal);
     }
     .site-nav.is-stuck .nav-cta:hover {
-      background: var(--teal-hover);
-      border-color: var(--teal-hover);
-      color: var(--teal-ink);
+      background: var(--signal-hover);
+      border-color: var(--signal-hover);
+      color: var(--signal-ink);
     }
   }
 
   .nav-cta:focus-visible {
-    border-color: var(--teal);
-    color: var(--teal);
+    border-color: var(--signal);
+    color: var(--signal);
   }
 
   .site-nav.is-stuck .nav-cta:focus-visible,
   :global(html.menu-open) .nav-cta:focus-visible {
-    background: var(--teal-hover);
-    border-color: var(--teal-hover);
-    color: var(--teal-ink);
+    background: var(--signal-hover);
+    border-color: var(--signal-hover);
+    color: var(--signal-ink);
   }
 
   /* Order of yielding in the bar, from most to least protected: hamburger,
-     lockup, CTA. This is the one item allowed to shrink, so the control that
-     opens the navigation can never be pushed off the device. */
+     wordmark, CTA. This is the one item allowed to shrink, so the control
+     that opens the navigation can never be pushed off the device. */
   .nav-cta-compact {
     display: none;
     flex: 0 1 auto;
@@ -299,9 +309,6 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     letter-spacing: var(--track-link);
   }
 
-  /* The only way to reach navigation on a phone, and until this pass the one
-     control on the site that gave nothing back: no hover, no press, no
-     transition, while the compact CTA 10px to its left pressed. */
   .menu-toggle {
     display: none;
     place-items: center;
@@ -311,7 +318,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     width: 44px;
     height: 44px;
     margin-right: -10px;
-    color: var(--ink);
+    color: var(--mist);
     cursor: pointer;
     transition: color var(--dur-2) var(--ease-out-quart),
       transform var(--dur-1) var(--ease-out-quart);
@@ -323,12 +330,12 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
 
   @media (hover: hover) and (pointer: fine) {
     .menu-toggle:hover {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
   .menu-toggle:focus-visible {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   /* Both glyphs share one grid cell and cross-fade. A `display` swap cannot
@@ -369,8 +376,11 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       display: inline-flex;
     }
 
-    /* ...except while the panel is open, where the panel carries it. */
-    :global(html.menu-open) .nav-cta-compact {
+    /* ...except while the panel is open, where the panel carries it, and
+       while the sticky bar is up, where the bar carries it. One Signal
+       button per screen, one action. */
+    :global(html.menu-open) .nav-cta-compact,
+    :global(html.sticky-shown) .nav-cta-compact {
       display: none;
     }
 
@@ -387,18 +397,15 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       justify-content: space-between;
       gap: var(--space-l);
       padding: var(--space-m) var(--pad-x) calc(var(--space-xl) + env(safe-area-inset-bottom));
-      background: var(--bg);
+      background: var(--night);
       border-top: 1px solid var(--line);
       overflow-y: auto;
       /* The panel is never taller than the screen, so it has nothing of its
-         own to scroll and every drag on it used to scroll the page behind.
-         Paired with the scroll lock in scripts/site.ts. */
+         own to scroll and every drag on it used to scroll the page behind. */
       overscroll-behavior: contain;
       visibility: visible;
       opacity: 1;
       transform: translateY(0);
-      /* Same tier and same curve as the bar above it, so the header and the
-         panel are one surface arriving rather than two. */
       transition: opacity var(--dur-2) var(--ease-out-expo),
         transform var(--dur-2) var(--ease-out-expo);
     }
@@ -406,9 +413,8 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     /* `visibility`, not `display`. The panel has to leave the accessibility
        tree and the tab order the instant it closes - which `visibility:
        hidden` does and `opacity: 0` does not - while still being able to
-       animate out. A `display: none` closed state cannot transition at all,
-       which is why this used to snap. The `hidden` attribute stays the single
-       source of truth; only the way it is expressed changes. */
+       animate out. The `hidden` attribute stays the single source of truth;
+       only the way it is expressed changes. */
     .mobile-menu[hidden] {
       display: flex;
       visibility: hidden;
@@ -431,23 +437,27 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       justify-content: space-between;
       gap: var(--space-s);
       font-family: var(--font-display);
-      font-weight: 700;
+      font-weight: var(--weight-display);
+      font-stretch: var(--wdth-display);
       font-size: var(--text-xl);
       letter-spacing: var(--track-title);
       text-transform: uppercase;
       padding-block: 1.125rem;
       border-bottom: 1px solid var(--line);
-      color: var(--ink);
+      color: var(--mist);
       transition: color var(--dur-2) var(--ease-out-quart),
         opacity var(--dur-1) var(--ease-out-quart);
     }
 
     .mobile-links a[aria-current='page'] {
-      color: var(--teal);
+      text-decoration: underline;
+      text-decoration-color: var(--signal);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
     }
 
     .mobile-links a:focus-visible {
-      color: var(--teal);
+      color: var(--signal);
     }
 
     .mobile-cta {

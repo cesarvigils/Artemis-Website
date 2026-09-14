@@ -1,100 +1,155 @@
 /* ------------------------------------------------------------------
-   Artemis Esports - global styles
+   Artemis - global styles
    Design system: tokens, base, type scale, shared primitives.
    Direction: "pit wall, not billboard" (see DESIGN.md).
+   Brand: docs/brand-core.md. Where the brand core and a generic design
+   rule disagree, the brand core wins and DESIGN.md records it.
 ------------------------------------------------------------------- */
 
 /* Fonts ------------------------------------------------------------
-   Nexa is the licensed brand face (700 + 300 only - hierarchy comes
-   from size, tracking, case and colour, never from extra weights).
-   JetBrains Mono carries data only: positions, dates, numbers.
+   Two variable families, four files, all self-hosted.
 
-   `.latin.v2` files are subset builds: Basic Latin, Latin-1 Supplement,
-   the Latin Extended-A letters a European driver name needs
-   (L-stroke, S/Z-caron, OE, dotless i, A-breve), the punctuation the
-   site or the bot can emit, and the combining marks. The mono also
-   lost its code-editor ligature tables (`calt`, `frac`), which a
-   results sheet must never apply to text a Discord command wrote.
-   78.6 KB -> 48.0 KB across the four faces. Arrows on the site are
-   inline SVG (see Icon.astro), so no arrow glyphs are carried.
+   Archivo carries display: `wdth` 75-100 and `wght` 400-800, so one
+   family gives the condensed headline voice and the normal-width
+   subhead voice. Inter carries body, UI, tables and numbers: `wght`
+   400-700 with `tnum` kept, and the `opsz` axis pinned at 16 because
+   nothing here needs optical sizing and the axis cost 9 KB.
+
+   Each family is split by `unicode-range` into `core` and `ext`, and
+   that split is the whole reason the page is as fast as it was with
+   four static faces. `core` is Basic Latin plus every character the site's own
+   copy emits - measured from the built HTML, which is how the no-break
+   space and the copyright sign ended up in it. Every page renders it,
+   so it is preloaded.
+   `ext` is the whole Latin-1 Supplement, the Latin Extended-A letters
+   a European sim-racing roster needs, the seven combining marks and
+   the bot-only punctuation - the characters a *name* can need and the
+   site's own words never do. It downloads when one of those characters
+   is actually rendered, which today is never.
+
+   Measured: 94,156 B on every first paint as one file per family,
+   50,664 B split (pass 5 shipped 48,036 B across four static faces).
+   The whole set on disk is 101,476 B. The two ranges are disjoint on
+   purpose: where two rules of one family declare overlapping ranges,
+   the LAST one defined wins.
+
+   The character target is byte-for-byte the one pass 5 measured; only
+   the packaging changed.
 
    `/fonts/*` is served `immutable` for a year (vercel.json), so a
-   replacement face MUST get a new filename. That is what `.v2` is.
-   The subsetting script is kept outside the repo; re-run it against a
-   fresh source file and bump to `.v3` if a face is ever changed.
+   replacement face MUST get a new filename. That is what `.v3` is. The
+   subsetter lives outside the repo (font-tool/subset6.mjs); re-run it
+   against a fresh source file and bump to `.v4` if a face changes.
+   These four filenames also appear as preloads in Base.astro - keep
+   the two lists in step.
 ------------------------------------------------------------------- */
 @font-face {
-  font-family: 'Nexa';
-  src: url('/fonts/nexa-bold.latin.v2.woff2') format('woff2');
-  font-weight: 700;
+  font-family: 'Archivo';
+  src: url('/fonts/archivo-core.latin.v3.woff2') format('woff2-variations');
+  font-weight: 400 800;
+  font-stretch: 75% 100%;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+2013-2014, U+2018-2019,
+    U+201C-201D, U+2022, U+2026, U+2212;
 }
 @font-face {
-  font-family: 'Nexa';
-  src: url('/fonts/nexa-light.latin.v2.woff2') format('woff2');
-  font-weight: 300;
+  font-family: 'Archivo';
+  src: url('/fonts/archivo-ext.latin.v3.woff2') format('woff2-variations');
+  font-weight: 400 800;
+  font-stretch: 75% 100%;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+00A1-00A8, U+00AA-00FF, U+0102, U+0131, U+0141-0142,
+    U+0152-0153, U+0160-0161, U+0178, U+017D-017E, U+0300-0301, U+0303-0304,
+    U+0308-0309, U+0323, U+201A, U+201E, U+2020-2021, U+2030, U+2032-2033,
+    U+2039-203A, U+2044, U+20AC, U+2122, U+2191, U+2193, U+2215;
 }
 @font-face {
-  font-family: 'JetBrains Mono';
-  src: url('/fonts/jetbrains-mono-400.latin.v2.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Inter';
+  src: url('/fonts/inter-core.latin.v3.woff2') format('woff2-variations');
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+2013-2014, U+2018-2019,
+    U+201C-201D, U+2022, U+2026, U+2212;
 }
 @font-face {
-  font-family: 'JetBrains Mono';
-  src: url('/fonts/jetbrains-mono-700.latin.v2.woff2') format('woff2');
-  font-weight: 700;
+  font-family: 'Inter';
+  src: url('/fonts/inter-ext.latin.v3.woff2') format('woff2-variations');
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+00A1-00A8, U+00AA-00FF, U+0102, U+0131, U+0141-0142,
+    U+0152-0153, U+0160-0161, U+0178, U+017D-017E, U+0300-0301, U+0303-0304,
+    U+0308-0309, U+0323, U+201A, U+201E, U+2020-2021, U+2030, U+2032-2033,
+    U+2039-203A, U+2044, U+20AC, U+2122, U+2191, U+2193, U+2215;
 }
 
 /* Tokens ----------------------------------------------------------- */
 :root {
   color-scheme: dark;
 
-  /* Surfaces. Three-step near-black ramp, green-cast, never pure #000. */
-  --bg: #000a08;              /* oklch(13.0% 0.023 183) */
-  --bg-raise: #03120e;        /* oklch(16.6% 0.025 176) */
-  --bg-panel: #06201a;        /* oklch(22.1% 0.034 175) */
-  /* The same ground as `--bg`, as channels, for the legibility scrims over
-     the hero photo and the HUNT texture. Those need the brand black at four
-     different alphas, and a colour token cannot carry an alpha. Deliberately
-     not redefined in the print or forced-colours blocks: every element that
-     uses it is hidden in both, and a scrim that inverted with the page would
-     paint white over white. */
-  --bg-rgb: 0 10 8;
+  /* Field and surfaces. The brand core's names, values and jobs. */
+  --night: #000a08; /* the field, ~80% of every screen */
+  --surface-1: #0a1714; /* tinted bands: next race, pillars, footer */
+  --surface-2: #12211d; /* panels sitting on a tinted band */
+  --surface-3: #1e322c; /* the one opaque divider/border step */
+  /* The same ground as `--night`, as channels, for the legibility scrims
+     over the hero photo. Those need the brand black at several alphas and a
+     colour token cannot carry one. Deliberately not redefined in the print
+     or forced-colours blocks: every element that uses it is hidden in both,
+     and a scrim that inverted with the page would paint white over white. */
+  --night-rgb: 0 10 8;
 
-  /* Ink. Light mint; the alpha steps are pre-checked for contrast. */
-  --ink: #ebfffb;                          /* 19.3:1 on --bg */
-  --ink-dim: rgba(235, 255, 251, 0.78);    /* 11.6:1 on --bg */
-  --ink-faint: rgba(235, 255, 251, 0.52);  /*  5.5:1 on --bg */
+  /* Type colour. Three steps, and only three.
+     `--mist` is most text. `--mist-dim` is the same ink, quieter, for
+     secondary prose. `--muted` is the brand's caption/metadata colour at
+     7.9:1 on Night. `--muted-deep` is 3.4:1 and therefore NEVER carries
+     body-size text: large decorative type, disabled states, hairline-ish
+     uses only. */
+  --mist: #ebfffb; /* 19.3:1 on Night */
+  --mist-dim: rgba(235, 255, 251, 0.76); /* 11.2:1 on Night */
+  --muted: #8fa8a1; /*  7.9:1 on Night, 6.6:1 on --surface-2 */
+  --muted-deep: #486b62; /*  3.4:1 on Night - large/decorative/disabled only */
 
-  /* Accent. One colour, whole site. */
-  --teal: #0fffcf;                         /* 15.5:1 on --bg */
-  --teal-soft: rgba(15, 255, 207, 0.7);    /*  7.8:1 on --bg */
-  --teal-ink: #001410;                     /* 14.7:1 on --teal */
-  --teal-hover: #7dffe3;
+  /* Signal. 5-10% of any layout, and only where the eye should land:
+     the one primary CTA per page, the hero position marker and its podium
+     rule, the active-nav underline, focus rings, link hover. Every other
+     accent on this site is Mist, muted or Deep Teal. */
+  --signal: #0fffcf; /* 15.5:1 on Night */
+  --signal-ink: #001410; /* 14.7:1 on --signal */
+  --signal-hover: #7dffe3;
+
+  /* Deep Teal: the brand colour when it needs area rather than a line. */
+  --teal-deep: #0e7f6b;
 
   /* Hairlines. The pit-wall rule vocabulary. */
   --line: rgba(235, 255, 251, 0.12);
   --line-strong: rgba(235, 255, 251, 0.24);
-  --line-teal: rgba(15, 255, 207, 0.32);
+
+  /* Material grain. An inline feTurbulence tile at 3-5% opacity, which is
+     what replaced the graffiti texture. Texture is material, never
+     vandalism (brand core, section 6). */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
 
   /* Type */
-  --font-display: 'Nexa', 'Avenir Next', 'Helvetica Neue', sans-serif;
-  --font-body: 'Nexa', 'Avenir Next', 'Helvetica Neue', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-display: 'Archivo', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  /* Data is Inter with tabular figures. The token exists so a data rule
+     reads as a data rule; it is deliberately the same family as the body. */
+  --font-data: var(--font-body);
 
-  /* Size. The bottom of the scale used to be 12/13/15 - ratios of 1.08 and
-     1.15 - which is not a scale, it is three sizes nobody can tell apart. The
-     micro step is 11px so a field label reads as a different thing from a nav
-     link. The display steps carry a `vw` ceiling as well as a `rem` floor:
-     at a 200% root font the floor alone doubled and painted headings straight
-     out of their columns. */
+  /* Width. Archivo's `wdth` axis is the headline voice: condensed for h1/h2
+     and the wordmark-adjacent labels, normal width for subheads. */
+  --wdth-display: 80%;
+  --wdth-normal: 100%;
+
+  /* Size. The micro step is 11px so a field label reads as a different
+     thing from a nav link. The display steps carry a `vw` ceiling as well
+     as a `rem` floor: at a 200% root font the floor alone doubled and
+     painted headings straight out of their columns. */
   --text-2xs: 0.6875rem;
   --text-xs: 0.8125rem;
   --text-sm: 0.9375rem;
@@ -111,29 +166,32 @@
   --number-md: var(--text-2xl);
   --number-lg: var(--text-4xl);
 
-  /* Leading. Four steps, one per role. Before this, ~20 tracked uppercase
-     labels silently inherited the body's 1.7 and one heading led looser than
-     the sentence under it. */
-  --leading-display: 1.04;
-  --leading-tight: 1.15;
-  --leading-snug: 1.35;
-  --leading-body: 1.6;
+  /* Weight. Four roles, four values. 600 is the floor for anything at
+     `--text-xs` or below on this ground: light type on dark reads lighter
+     than it is, and the brand core sets semi-bold as the small-type
+     minimum. */
+  --weight-body: 400;
+  --weight-medium: 500;
+  --weight-small: 600;
+  --weight-display: 700;
 
-  /* Tracking. One value per role. Ten hard-coded em values across eleven
-     files used to give five identical uppercase link styles five different
-     tracks. `--track-link` covers uppercase micro-caps: interactive labels
-     and the class chips. */
-  --track-display: -0.01em;
-  --track-title: 0.04em;
-  --track-link: 0.1em;
-  --track-label: 0.16em;
-  --track-data: 0.02em;
-  --track-lockup: 0.06em;
+  /* Leading. Four steps, one per role. Inter on a dark ground carries a
+     little more leading than the old face did, for the same reason the
+     weight floor exists. */
+  --leading-display: 1.06;
+  --leading-tight: 1.2;
+  --leading-snug: 1.4;
+  --leading-body: 1.65;
 
-  /* Space. One fluid rhythm; sections vary deliberately.
-     The top two steps are keyed to width like everything else here. Keyed to
-     `vh` they made the widest layout the tightest one, and gave two people on
-     identical monitors a different rhythm because one had a shorter window. */
+  /* Tracking. One value per role. `--track-link` covers uppercase
+     micro-caps: interactive labels and the class chips. */
+  --track-display: -0.005em;
+  --track-title: 0.02em;
+  --track-link: 0.08em;
+  --track-label: 0.14em;
+  --track-data: 0.01em;
+
+  /* Space. One fluid rhythm; sections vary deliberately. */
   --space-3xs: 0.25rem;
   --space-2xs: 0.5rem;
   --space-xs: 0.75rem;
@@ -144,30 +202,20 @@
   --space-2xl: clamp(4rem, 2.5rem + 5vw, 7rem);
   --space-3xl: clamp(5.5rem, 3.5rem + 7vw, 9.5rem);
 
+  /* The brand grid. Below 1024 the gutter is the old fluid pad; at 1024 and
+     up it is exactly 8% of the viewport, because the brand core puts the
+     lockup and every content edge at 8% from the left on every asset. */
   --pad-x: clamp(1.25rem, 4vw, 3.5rem);
   --measure: 66ch;
-  /* One cap for every `.lead` on the site. Five different values between 39
-     and 54ch used to mean the same element read differently on every page. */
   --measure-lead: 52ch;
   --shell: 1400px;
 
   /* Shape. Committed: everything is square. */
   --radius: 0;
 
-  /* Motion. One easing family and three durations, so two controls that do
-     the same thing cannot move on different clocks. Five duration tokens and
-     three curves used to give the same gesture four answers: a press at 120ms
-     beside a press at 240ms, a hover eased on one curve and its own underline
-     on another.
-
-     Curves: both are ease-out powers of the same family. `expo` has the
-     sharper head and the longer tail - it is what things arriving or leaving
-     use. `quart` is gentler and is what a hover or a press uses, where the
-     travel is a few pixels and a long tail reads as lag.
-
-     Durations: tier 1 is feedback the finger asks for, tier 2 is a state
-     change, tier 3 is the longest anything on this site is allowed to take.
-     Nothing is exempt, including the entrance. */
+  /* Motion. One easing family and three durations. `expo` has the sharper
+     head and the longer tail - it is what things arriving or leaving use.
+     `quart` is gentler and is what a hover or a press uses. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --dur-1: 120ms;
@@ -186,14 +234,23 @@
   --z-skip: 200;
 
   /* The bar has to contain a 44px compact CTA, and it has to keep containing
-     it when the reader's root font is 200%: the `rem` term grows with the
-     text, the `px` floor and ceiling keep the bar sane at either end. */
+     it when the reader's root font is 200%. */
   --nav-h: clamp(64px, 4rem, 88px);
 }
 
 @media (min-width: 821px) {
   :root {
     --nav-h: clamp(72px, 4.5rem, 96px);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --pad-x: 8vw;
+    /* A wider content cap, because the gutters grew: at 1920 this puts the
+       left edge at 153.6px (8%) and the right edge 166px in, which is the
+       brand grid without a 750px hole on one side. */
+    --shell: 1600px;
   }
 }
 
@@ -207,21 +264,22 @@
 }
 
 /* No global `scroll-behavior: smooth`: it turns a cross-page anchor
-   (/partners -> /#results) into a long animated flight that lands the reader
-   mid-page. In-page anchors are smoothed per click in scripts/site.ts instead. */
+   (/partners -> /#scoreboard) into a long animated flight that lands the
+   reader mid-page. In-page anchors are smoothed per click in scripts/site.ts. */
 html {
   scroll-padding-top: calc(var(--nav-h) + 1rem);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--night);
+  color: var(--mist);
   font-family: var(--font-body);
-  font-weight: 300;
+  font-weight: var(--weight-body);
   font-size: var(--text-base);
   line-height: var(--leading-body);
   overflow-x: clip;
+  font-kerning: normal;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -253,21 +311,24 @@ ol {
 }
 
 ::selection {
-  background: var(--teal);
-  color: var(--teal-ink);
+  background: var(--signal);
+  color: var(--signal-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--teal);
+  outline: 2px solid var(--signal);
   outline-offset: 3px;
 }
 
+/* Display type: Archivo, condensed, uppercase. h1 and h2 are the headline
+   voice and take the condensed width; h3 and h4 are subheads and take the
+   normal width, which is the whole difference between the two registers. */
 h1,
 h2,
 h3,
 h4 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: var(--weight-display);
   line-height: var(--leading-display);
   letter-spacing: var(--track-display);
   text-transform: uppercase;
@@ -276,6 +337,18 @@ h4 {
      straight out of its cell, and `overflow-x: clip` then cut it off with no
      scrollbar and no ellipsis. Headings break rather than escape. */
   overflow-wrap: anywhere;
+}
+
+h1,
+h2 {
+  font-stretch: var(--wdth-display);
+}
+
+h3,
+h4 {
+  font-stretch: var(--wdth-normal);
+  font-weight: var(--weight-small);
+  letter-spacing: var(--track-title);
 }
 
 p {
@@ -300,17 +373,16 @@ p {
 .lead {
   font-size: var(--text-lg);
   line-height: var(--leading-body);
-  color: var(--ink-dim);
+  color: var(--mist-dim);
 }
 
-/* Data voice: positions, dates, counts, driver numbers.
-   `font-weight: 400` is declared, not inherited. The body is 300 and only two
-   mono faces exist, so an undeclared mono element asked for a weight the
-   system does not have and every browser silently substituted the 400 face -
-   the right glyphs, by accident, from a rule that says otherwise. */
+/* Data voice: positions, dates, counts, driver numbers. Inter with tabular
+   figures, so a column of numbers lines up. 600 because 13px light type on
+   Night reads lighter than it measures. */
 .data {
-  font-family: var(--font-mono);
-  font-weight: 400;
+  font-family: var(--font-data);
+  font-stretch: var(--wdth-normal);
+  font-weight: var(--weight-small);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--track-data);
   font-size: var(--text-xs);
@@ -320,24 +392,27 @@ p {
 /* One small tracked label style. Used for genuine field labels in data
    rows (a timing sheet has column headers), never as a section eyebrow. */
 .field-label {
-  font-family: var(--font-mono);
-  font-weight: 400;
+  font-family: var(--font-data);
+  font-stretch: var(--wdth-normal);
+  font-weight: var(--weight-small);
   font-size: var(--text-2xs);
   line-height: var(--leading-tight);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--muted);
   overflow-wrap: anywhere;
 }
 
-/* Layout ----------------------------------------------------------- */
-/* The `env()` terms matter in landscape on a notched phone, where the inset
-   is on the left or right rather than the bottom. They resolve to 0 (and the
-   gutter is just `--pad-x`) everywhere else. */
+/* Layout -----------------------------------------------------------
+   The brand grid. `margin-inline: 0 auto` rather than `auto`: at 1024 and
+   above the left content edge has to be exactly 8% of the viewport, and a
+   centred shell puts it at 16% on a 1920 screen. The box therefore starts
+   at 0 and its own max-width caps the content; the `env()` terms matter in
+   landscape on a notched phone and resolve to 0 everywhere else. */
 .container {
   width: 100%;
-  max-width: var(--shell);
-  margin-inline: auto;
+  max-width: calc(var(--shell) + 2 * var(--pad-x));
+  margin-inline: 0 auto;
   padding-inline: max(var(--pad-x), env(safe-area-inset-left))
     max(var(--pad-x), env(safe-area-inset-right));
 }
@@ -365,11 +440,11 @@ p {
   margin-bottom: var(--space-l);
 }
 
-/* `em`, not `ch`. `ch` is the advance of "0"; uppercase Nexa is about a fifth
-   wider per character, so an "18ch" cap actually held 14 glyphs and the nine
-   `ch` caps across the site were not comparable with each other. */
+/* `em`, not `ch`. `ch` is the advance of "0"; condensed uppercase Archivo is
+   a different width per character again, so an "18ch" cap was never
+   comparable with the next one. */
 .section-head h2 {
-  max-width: 14em;
+  max-width: 15em;
 }
 
 /* Stacked variant: heading with its own explainer underneath, never a
@@ -429,20 +504,24 @@ p {
   }
 }
 
-/* Links ------------------------------------------------------------ */
+/* Links ------------------------------------------------------------
+   Mist, not Signal. A text link is not where the eye should land on a page
+   that already has one primary action; the Signal step is the hover and the
+   focus ring, which is exactly the budget the brand core allows. */
 .text-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--teal);
+  color: var(--mist);
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: var(--weight-small);
+  font-stretch: var(--wdth-normal);
   font-size: var(--text-sm);
   letter-spacing: var(--track-link);
   text-transform: uppercase;
   /* 0.25rem gave a 35px control. This reads identically and clears 44px. */
   padding-block: 0.65rem;
-  border-bottom: 1px solid var(--line-teal);
+  border-bottom: 1px solid var(--line-strong);
   transition: border-color var(--dur-2) var(--ease-out-quart),
     color var(--dur-2) var(--ease-out-quart),
     opacity var(--dur-1) var(--ease-out-quart);
@@ -450,28 +529,34 @@ p {
 
 @media (hover: hover) and (pointer: fine) {
   .text-link:hover {
-    border-color: var(--teal);
+    color: var(--signal);
+    border-color: var(--signal);
   }
 }
 
 /* The affordance the mouse gets is the affordance the keyboard gets. */
 .text-link:focus-visible {
-  border-color: var(--teal);
+  color: var(--signal);
+  border-color: var(--signal);
 }
 
 /* The arrow nudge -------------------------------------------------
    Six link families carry an arrow glyph and every one of them nudges the
-   same 3px on the same clock. The list below IS that set: a text link that
-   leaves the site carries the up-right glyph, a text link that stays carries
-   the right glyph, and a link whose content is a logo carries neither,
-   because the mark is the label. `.notfound-links` is deliberately absent -
-   it is the one arrow-free link family on the site.
-
-   `[target='_blank']` is the selector for the diagonal because it is already
-   in the markup: the alternative was a `data-icon` attribute on every one of
-   the site's forty-odd inline icons.
+   same 3px on the same clock. A text link that leaves the site carries the
+   up-right glyph, a text link that stays carries the right glyph, and a link
+   whose content is a logo carries neither, because the mark is the label.
+   `.notfound-links` is deliberately absent - it is the one arrow-free link
+   family on the site.
 ------------------------------------------------------------------- */
-:where(.text-link, .btn, .footer-col a, .mobile-links a, .channel-list a, .driver-socials a) svg {
+:where(
+    .text-link,
+    .btn,
+    .footer-col a,
+    .mobile-links a,
+    .channel-list a,
+    .driver-socials a
+  )
+  svg {
   transition: transform var(--dur-2) var(--ease-out-quart);
 }
 
@@ -500,7 +585,8 @@ p {
   justify-content: center;
   gap: 0.65rem;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: var(--weight-display);
+  font-stretch: var(--wdth-normal);
   font-size: var(--text-sm);
   line-height: 1;
   letter-spacing: var(--track-link);
@@ -510,8 +596,6 @@ p {
      390px phone - which pushed the layout viewport out to 597px and took the
      hamburger off the screen with it. The label wraps instead. */
   text-wrap: balance;
-  /* The inline padding is also capped against the viewport: 1.75rem is 56px
-     a side at a 200% root, which is a third of a 350px line spent on air. */
   padding: 1.0625rem min(1.75rem, 7vw);
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -526,14 +610,15 @@ p {
   transform: scale(var(--press-scale));
 }
 
+/* The one Signal fill on a page: its primary action. */
 .btn-solid {
-  background: var(--teal);
-  color: var(--teal-ink);
+  background: var(--signal);
+  color: var(--signal-ink);
 }
 
 .btn-ghost {
   border-color: var(--line-strong);
-  color: var(--ink);
+  color: var(--mist);
 }
 
 .btn-sm {
@@ -545,11 +630,11 @@ p {
 
 @media (hover: hover) and (pointer: fine) {
   .btn-solid:hover {
-    background: var(--teal-hover);
+    background: var(--signal-hover);
   }
   .btn-ghost:hover {
-    border-color: var(--teal);
-    color: var(--teal);
+    border-color: var(--signal);
+    color: var(--signal);
   }
 }
 
@@ -558,16 +643,15 @@ p {
    solid button is already the loudest thing on the page and gets the ring
    alone. */
 .btn-ghost:focus-visible {
-  border-color: var(--teal);
-  color: var(--teal);
+  border-color: var(--signal);
+  color: var(--signal);
 }
 
 /* Press feedback -------------------------------------------------
    One gesture, two answers, both deliberate: a control scales by
    `--press-scale`, a text link dims. A scaling text link is wrong - the
    words re-flow under the finger - so the link families take an opacity
-   step at the same tier instead. Eight of the ten pressable families used
-   to acknowledge nothing at all.
+   step at the same tier instead.
 ------------------------------------------------------------------- */
 :where(
     .nav-link,
@@ -578,6 +662,7 @@ p {
     .driver-compact > a,
     .driver-socials a,
     .notfound-links a,
+    .router-link,
     .brand
   ):active {
   opacity: 0.65;
@@ -591,10 +676,10 @@ p {
   left: 0;
   z-index: var(--z-skip);
   transform: translateY(-120%);
-  background: var(--teal);
-  color: var(--teal-ink);
+  background: var(--signal);
+  color: var(--signal-ink);
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: var(--weight-display);
   font-size: var(--text-xs);
   letter-spacing: var(--track-link);
   text-transform: uppercase;
@@ -621,6 +706,28 @@ p {
   border: 0;
 }
 
+/* Material grain ---------------------------------------------------
+   The brand core's replacement for the graffiti texture: fine grain at
+   3-5%, never vandalism. One tile, generated by feTurbulence inside a
+   data URI, so it costs no request and no raster asset.
+------------------------------------------------------------------- */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--grain);
+  background-size: 180px 180px;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+@media (forced-colors: active) {
+  .grain::before {
+    display: none;
+  }
+}
+
 /* Reveal-on-scroll -------------------------------------------------
    Transform only. Content is never faded from `opacity: 0`, so a paused
    tab, a headless renderer or an observer that never fires can only ever
@@ -639,28 +746,10 @@ html.js .reveal.in-view {
 
 /* Hero entrance ----------------------------------------------------
    Pure CSS, no library. Only under html.js, so the no-JS render is the
-   finished state.
-
-   There is no opacity anywhere in it now. `enter-up` used to start at
-   `opacity: 0` with `animation-fill-mode: both`, which meant the home first
-   screen frozen at t=0 was a photograph and nothing else - no headline, no
-   claim, no proof row, no buttons - and the inner pages shipped an
-   invisible <h1>. That is the exact failure the site documents itself as
-   not having, and it cost real LCP: on /team the largest paint *was* the
-   lead paragraph, arriving 120ms + 560ms after it could have.
-
-   The masked line rise on the two lockup lines is the one thing still
-   hidden at t=0, and it stays that way deliberately. It is a clip reveal,
-   not a fade: the type is at full ink the entire time, it is the only
-   element on the first screen that is a *repetition* (the same two words
-   sit in the header lockup, painted from frame one), and it is clear of the
-   mask in 320ms rather than 560. A partial mask was tried and rejected -
-   at any travel small enough to be legible at t=0 it cuts the bottom bar
-   off the uppercase, and "ESPORTS" reads as "FSPORTS".
-
-   Timing, measured: line one clears at 320ms, line two at 390ms, and every
-   other element in the hero is at opacity 1 and within 16px of home from
-   frame one.
+   finished state. There is no opacity anywhere in it: the masked line rise
+   on the two lockup lines is a clip reveal, the type is at full ink the
+   whole time, and every other element in the hero is at opacity 1 and
+   within 16px of home from frame one.
 ------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
   html.js [data-enter] {
@@ -675,8 +764,7 @@ html.js .reveal.in-view {
 
   /* No opacity in this one either, and for a harder reason: the hero photo
      is the LCP candidate on a fast connection, and an image that starts
-     transparent is not a paint candidate at all, so fading it in pushed the
-     largest paint out by 2.3s on a throttled connection. */
+     transparent is not a paint candidate at all. */
   html.js [data-enter-media] {
     animation: enter-media var(--dur-3) var(--ease-out-expo) both;
   }
@@ -719,15 +807,10 @@ html.js .reveal.in-view {
     transition: none;
   }
   /* `animation-duration` alone left every transform *transition* running, so
-     the property list is clamped here too: colour and opacity still ease,
-     nothing moves or scales. Components reset their own hover transforms.
-
-     `transition-duration` has to be clamped with it. CSS cycles the shorter
-     of the two lists, so a six-property list against an element's own
-     four-value duration list landed the durations on the wrong properties:
-     `.btn`'s opacity inherited the 120ms press duration and its `fill` got
-     it too, while `.garage-btn`'s hover border-color quietly dropped from
-     200ms to 120ms only for readers who had asked for less motion. */
+     the property list is clamped here too, and `transition-duration` has to
+     be clamped with it: CSS cycles the shorter of the two lists, so a
+     six-property list against an element's own four-value duration list
+     landed the durations on the wrong properties. */
   *,
   *::before,
   *::after {
@@ -755,27 +838,26 @@ html.js .reveal.in-view {
 }
 
 /* More contrast ----------------------------------------------------
-   Nothing on the site hardcodes these five values, so raising the tokens
-   raises every hairline, every dim step and every faint step at once. The
-   0.12-alpha rules are the whole structural vocabulary of this direction;
-   a reader who has asked for more contrast should be able to see them.
+   Nothing on the site hardcodes these values, so raising the tokens raises
+   every hairline and every quiet step at once. The 0.12-alpha rules are the
+   whole structural vocabulary of this direction; a reader who has asked for
+   more contrast should be able to see them.
 ------------------------------------------------------------------- */
 @media (prefers-contrast: more) {
   :root {
-    --ink-dim: #ebfffb;
-    --ink-faint: rgba(235, 255, 251, 0.78);
+    --mist-dim: #ebfffb;
+    --muted: #c3d6d1;
+    --muted-deep: #8fa8a1;
     --line: rgba(235, 255, 251, 0.34);
     --line-strong: rgba(235, 255, 251, 0.6);
-    --line-teal: rgba(15, 255, 207, 0.7);
-    --teal-soft: #0fffcf;
   }
 }
 
 /* Forced colours ---------------------------------------------------
    Windows High Contrast drops every background-image, which on this site
-   means every legibility scrim, and flattens both buttons to one link
-   colour. The rule below: anything that carries meaning is expressed as a
-   border, an outline or an opaque system colour - never as a gradient.
+   means every legibility scrim and the grain, and flattens both buttons to
+   one link colour. Anything that carries meaning is expressed as a border,
+   an outline or an opaque system colour - never as a gradient.
 ------------------------------------------------------------------- */
 @media (forced-colors: active) {
   /* Primary and secondary rendered identically: same transparent ground,
@@ -808,7 +890,7 @@ html.js .reveal.in-view {
    Browsers default to `print-color-adjust: economy`, which drops background
    colours and keeps text colour, so a dark site prints near-white ink on
    white paper. The whole palette is tokens and nothing hardcodes a colour,
-   so one `:root` block inverts the sheet. The teal is darkened to #046b58
+   so one `:root` block inverts the sheet. Signal is darkened to #046b58
    (4.9:1 on white) because #0fffcf is invisible on paper.
 
    Printing matters here for one real reason: a sponsor prints /partners and
@@ -816,19 +898,20 @@ html.js .reveal.in-view {
 ------------------------------------------------------------------- */
 @media print {
   :root {
-    --bg: #fff;
-    --bg-raise: #fff;
-    --bg-panel: #fff;
-    --ink: #000;
-    --ink-dim: #333;
-    --ink-faint: #555;
-    --teal: #046b58;
-    --teal-soft: #046b58;
-    --teal-hover: #046b58;
-    --teal-ink: #fff;
+    --night: #fff;
+    --surface-1: #fff;
+    --surface-2: #fff;
+    --surface-3: #bbb;
+    --mist: #000;
+    --mist-dim: #333;
+    --muted: #555;
+    --muted-deep: #777;
+    --signal: #046b58;
+    --signal-hover: #046b58;
+    --signal-ink: #fff;
+    --teal-deep: #046b58;
     --line: #bbb;
     --line-strong: #888;
-    --line-teal: #888;
     color-scheme: light;
   }
 
@@ -842,9 +925,13 @@ html.js .reveal.in-view {
   .skip-link,
   .garage-controls,
   .garage-progress,
-  .join-texture,
   .hero-media,
-  .footer-mark {
+  .footer-mark,
+  .sticky-cta {
+    display: none !important;
+  }
+
+  .grain::before {
     display: none !important;
   }
 
@@ -857,10 +944,10 @@ html.js .reveal.in-view {
     padding-bottom: var(--space-m) !important;
   }
 
-  /* A printed link that only says "Join the team" is a dead end. */
+  /* A printed link that only says "Join the Discord" is a dead end. */
   a[href^='http']::after {
     content: ' (' attr(href) ')';
-    font-family: var(--font-mono);
+    font-family: var(--font-data);
     font-size: 0.7em;
     word-break: break-all;
   }

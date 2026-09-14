@@ -8,13 +8,14 @@
   "scripts": {
     "dev": "astro dev",
     "check:data": "node scripts/check-data.mjs",
-    "prebuild": "npm run check:data",
+    "prebuild": "npm run check:data && node scripts/guard-placeholders.mjs",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "sync:iracing": "node scripts/fetch-iracing.mjs",
+    "test:sync": "node --test test/fetch-iracing.test.mjs"
   },
   "dependencies": {
-    "@fontsource/jetbrains-mono": "^5.3.0",
     "astro": "^7.0.7"
   }
 }

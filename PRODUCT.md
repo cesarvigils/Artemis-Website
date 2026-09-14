@@ -1,13 +1,25 @@
-# PRODUCT.md - Artemis Esports
+# PRODUCT.md - Artemis
 
 Project context for anyone (human or agent) working on this site.
-Companion file: `DESIGN.md` (the visual system). Content editing: `CONTENT.md`.
+Companion files: `docs/brand-core.md` (the brand this serves and the authority
+over every naming, colour, type and voice question), `DESIGN.md` (the visual
+system), `CONTENT.md` (content editing).
 
 ## What this is
 
-The marketing site for **Artemis Esports**, an iRacing endurance / GT and NASCAR
-oval team. Four pages plus a 404, static, no CMS, no backend. Built with Astro,
-deployed as plain files to a cPanel/LiteSpeed host.
+The marketing site for **Artemis**, an iRacing endurance / GT and NASCAR oval
+team. Five pages plus a 404, static, no CMS, no backend. Built with Astro,
+deployed by Vercel from the repository.
+
+**The team is "Artemis."** One roster means the org name is the team name
+(brand core, section 5). "Artemis Esports" is the org, and it appears only where
+the org itself is named: the wordmark, the `<title>`, the structured data and
+the copyright line. Body copy says Artemis. "Artemis iRacing" does not exist
+until there is a second roster.
+
+**The promise is "Every shot on the record."** It is the tagline everywhere -
+footer, `site.json`, meta descriptions, the OG card, the JSON-LD slogan. The
+motto, "Take the shot.", appears once: the home join band.
 
 Register: **brand** (design IS the product). A visitor's impression is the thing
 being made. It is not app UI.
@@ -35,38 +47,54 @@ One primary CTA per page, at most one quieter secondary action.
 
 | Page | Primary | Secondary |
 |---|---|---|
-| `/` | Join the team (Discord) | See results (in-page anchor) |
-| `/team` | Join the team (Discord) | - |
-| `/about` | Join the team (Discord) | - |
-| `/partners` | Partner with us (mailto) | "All results" to the home results table |
-| `404` | Back to the paddock | See results |
+| `/` | Join the Discord | See the Scoreboard (in-page anchor) |
+| `/team` | Join the Discord | - |
+| `/join` | Apply in the Discord | - |
+| `/about` | Join the Discord | - |
+| `/partners` | Partner with us (mailto) | "The Scoreboard" to the home results module |
+| `404` | Back to home | See the Scoreboard |
 
-The results link is the one place two labels serve one destination, and it is
-deliberate: **"See results"** where the reader has not seen any yet (the hero,
-the 404), **"All results"** only on `/partners`, where three of the six are
-already on screen. Every other intent has exactly one label site-wide.
+**One label per intent, per audience.** `src/lib/links.ts` holds three:
+"Join the Discord" is the driver action everywhere but `/join`; "Apply in the
+Discord" is the same address worded for the one page where the reader has
+already decided; "Partner with us" is the partnership mailto. Pass 5's
+"See results" / "All results" pair is gone: the destination is called **the
+Scoreboard** wherever it is linked.
 
-The header button carries the **page's own** primary action. That is
-"Join the team" everywhere except `/partners`, where it is the same mailto as
-the page head and the contact card. One label per intent, used everywhere on
-that page: a sponsor never sees two different words for the same next step.
-`src/data/nav.json` holds the override and `src/lib/links.ts` the two intents.
+The header button carries the **page's own** primary action, and on a phone the
+sticky bottom bar carries the same one. Only one of the two is on screen at a
+time: the compact header button hides while the bar is up, because two
+Signal-filled buttons in one 390px viewport spend the colour budget twice on one
+intent. `src/data/nav.json` holds the per-path override and `src/lib/links.ts`
+the three intents.
+
+**The audience router** sits directly under the next-race strip on the home
+page: three plain text links, one line each, for the three audiences above.
+"Follow the team" to the Scoreboard, "Race for us" to `/join`, "Partner with
+us" to `/partners`. It is the first moment a visitor has seen enough to know
+which of the three they are.
 
 ## Information architecture
 
-Flat. Four pages, no sub-navigation, no new top-level pages.
+Flat. Five pages, no sub-navigation, no further top-level pages.
 
 ```
-/            Hero -> Next race -> Results -> Garage -> Drivers -> How we race -> Partners -> Join
+/            Hero -> Next race -> Audience router -> The Scoreboard -> Garage
+             -> Who drives -> What we stand for -> Partners -> Join
 /team        Entry list -> Roster grouped road / oval / pitwall -> Race with us
-/about       Origin + photos -> Values (with the hashtags) -> How to join
-/partners    Dossier + contact -> What a partner gets -> Results + who runs them
-             -> Channels -> Current partners -> Contact
-404          Branded, links home + results + the three pages
+/join        Open seats -> What a season asks of you -> How to apply
+/about       Origin + photos -> What we stand for (long) -> How to join
+/partners    Dossier + contact -> What a partner gets -> Recent results + who runs
+             them -> Channels -> Current partners -> Contact
+404          Branded, links home + the Scoreboard + the pages
 ```
 
-Results are reachable from every page: the header nav and the footer both point
-at `/#results`.
+Nav is **Scoreboard / Team / Join / Partners** plus the CTA. `/about` moved to
+the footer only: it is the page a visitor reads last, if at all, and the header
+had no room for a fifth label beside a button.
+
+The Scoreboard is reachable from every page: the header nav and the footer both
+point at `/#scoreboard`.
 
 Results and the next race are **home-page modules**, not pages: the content volume
 of one small team's calendar does not justify the extra depth, and results are the
@@ -88,7 +116,9 @@ change to it applies to both. `npm run check:data` validates them and runs as
 | `results.json` | Race results: position, field size, series, class, drivers | The bot (`/result`) |
 | `drivers.json` | Roster, grouped `road` / `oval` / `crew`, with `active` and optional stats | The bot (`/driver`) |
 | `events.json` | Calendar, with `status` per entry | The bot (`/event`) |
-| `site.json` | Name, tagline, hero lead, mission, founding dates, contact, socials, store, hashtags, pillars, join steps | By hand |
+| `site.json` | Name, team name, tagline, motto, hero lead, mission, founding dates, contact, socials, store, the three commitments, the join steps and the join expectations | By hand |
+| `seats.json` | The open (and filled) seats on `/join`: program, role, requirements, status, note | By hand |
+| `stats.json` | iRating, safety rating and the newest official races per driver | The nightly iRacing sync. Optional in every direction: no file, no entry and no category all render nothing |
 | `nav.json` | The single source of truth for nav links, the CTA intent and its per-path override | By hand |
 | `cars.json` | Captions for the five garage slides | By hand |
 | `partners.json` | Partner name, logo file, link, blurb | By hand |
@@ -98,9 +128,14 @@ in order, because a human edit can always break it.
 
 ## Constraints
 
-- **Static forever.** No server, no forms that POST, no analytics backend.
-- **Fonts:** Nexa Bold (700) and Nexa Light (300) are the only licensed weights on
-  disk. JetBrains Mono carries data. Nothing else may be added.
+- **Static forever.** No server, no forms that POST, no analytics backend of our
+  own. The one third-party script is Umami Cloud, it is cookieless, and it ships
+  only when `PUBLIC_UMAMI_WEBSITE_ID` is set at build time.
+- **Fonts:** Archivo (display) and Inter (body, UI, numbers), both variable, both
+  self-hosted and subset. Nothing else may be added. See `DESIGN.md` §3.
+- **The Signal budget.** `#0FFFCF` is capped at 5-10% of any screen and has five
+  allowed jobs. Adding a sixth is a change to `docs/brand-core.md`, not to a
+  component.
 - **No invented metrics.** No follower counts, no iRating figures, no sponsor names
   that are not confirmed. If a number is not known, the site says where to ask.
 - **No stock or AI imagery.** Only the team's own in-sim renders and photos.
@@ -139,6 +174,23 @@ in order, because a human edit can always break it.
    partner and the two cannot both be true on one page. A yes puts the render
    back and adds a record to `partners.json`; a no keeps it out. Nobody has
    asked.
+
+9. **The Arc.** The brand core's one recurring graphic device - a crescent whose
+   inner edge sharpens into an arrowhead, derived from the notched A - is not on
+   the site. It needs to be drawn by the designer who owns the identity, at one
+   weight, as a vector; inventing one here would put a second, wrong version of
+   a brand asset into circulation. Deferred deliberately.
+10. **Confirm the `/join` placeholders.** Both seats in `src/data/seats.json`
+    are marked `_placeholder` and so are the four expectations in
+    `site.json`: the rating floors, the stint length, which league night, the
+    practice cadence and the minimum age of 16 are all plausible rather than
+    agreed. A driver will read them as a commitment.
+11. **Umami.** Analytics are wired and switched off. Turning them on is two
+    environment variables on the Vercel project; see `DEPLOY.md`. Until then
+    the footer says "We run no analytics and set no cookies", which is true.
+
+**Closed:** the results link's two labels ("See results" on the home page and
+the 404, "All results" on `/partners`) are now one, "the Scoreboard".
 
 **Closed:** the hero render carried a NordVPN decal while the Partners page said
 GLYTCH was the only partner. The hero is now the Interlagos LMP2, which carries

@@ -3,6 +3,7 @@ import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import NextRace from '../components/NextRace.astro';
+import AudienceRouter from '../components/AudienceRouter.astro';
 import ResultsTable from '../components/ResultsTable.astro';
 import Garage from '../components/Garage.astro';
 import DriverCard from '../components/DriverCard.astro';
@@ -15,6 +16,7 @@ import results from '../data/results.json';
 import events from '../data/events.json';
 import drivers from '../data/drivers.json';
 import {
+  driverStats,
   featuredDrivers,
   heroProof,
   lastCompletedEvent,
@@ -25,7 +27,7 @@ import {
   type RaceEvent,
   type RaceResult,
 } from '../lib/data';
-import { discordInvite } from '../lib/links';
+import { stats } from '../lib/stats';
 
 /* The Artemis LMP2 at Interlagos: the only render in the set that carries no
    third-party decal, so the first screen makes no claim the Partners page has
@@ -56,8 +58,7 @@ const driverCount = (drivers as Driver[]).filter(
 
 <Base
   title="Artemis Esports | iRacing endurance, GT and oval team"
-  description="Artemis Esports is an iRacing endurance, GT and NASCAR oval team. Recent results, the next race, the cars and how to join the roster."
-  monoBold
+  description="Artemis is an iRacing endurance, GT and NASCAR oval team. Every shot on the record: recent results, the next race, the cars and how to join the roster."
   preload={{
     href: heroImg.src,
     srcset: heroImg.srcSet.attribute,
@@ -71,25 +72,26 @@ const driverCount = (drivers as Driver[]).filter(
     image={heroImg}
     alt="The Artemis Oreca 07 LMP2 running through the esses at Interlagos at dusk"
     proof={proof}
-    ctaHref={discordInvite}
   />
 
   <NextRace upcoming={upcoming} lastDone={lastDone} />
 
-  <section class="section rule-top" id="results" aria-labelledby="results-heading">
+  <AudienceRouter />
+
+  <section class="section rule-top" id="scoreboard" aria-labelledby="scoreboard-heading">
     <div class="container">
       <div class="section-head section-head-stack">
-        <h2 class="display-lg" id="results-heading">Recent results</h2>
+        <h2 class="display-lg" id="scoreboard-heading">The Scoreboard</h2>
         <p class="lead">
-          The last six finishes, with the field size where we have it, across
-          endurance, GT and oval.
+          Recent results. The last six finishes across endurance, GT and oval,
+          with the field size where we have it.
         </p>
       </div>
       {
         recent.length > 0 ? (
           <ResultsTable
             results={recent}
-            caption="The six most recent Artemis Esports race results"
+            caption="The six most recent Artemis race results"
           />
         ) : (
           <p class="lead">
@@ -119,7 +121,11 @@ const driverCount = (drivers as Driver[]).filter(
           </div>
           <ul class="roster-teaser">
             {featured.map((driver) => (
-              <DriverCard driver={driver} variant="compact" />
+              <DriverCard
+                driver={driver}
+                variant="compact"
+                stats={driverStats(stats, driver)}
+              />
             ))}
           </ul>
         </div>
@@ -128,17 +134,13 @@ const driverCount = (drivers as Driver[]).filter(
   }
 
   <PillarBand
-    heading="How we race"
-    lead="Four rules. They decide who we sign and how we run a stint."
+    heading="What we stand for"
+    lead="Three commitments, each with a test anyone can run against us."
   />
 
-  {/* "A channel in the Discord": the same words the offer list on /partners
-      and the band's own empty state use. This line said "a seat in the
-      Discord", which is a different promise from the one the sponsor page
-      actually makes. */}
   <PartnerBand
     heading="Who backs us"
-    lead="We keep the list short. A partner gets livery placement, result posts and a channel in the Discord."
+    lead="A partner gets livery placement, result posts and a channel in the Discord."
     link={{ href: '/partners', label: 'What a partner gets' }}
   />
 

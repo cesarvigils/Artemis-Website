@@ -1,0 +1,119 @@
+---
+/**
+ * The three things a visitor can be here for, said in three words each and
+ * pointed at the page that answers them. It sits directly under the next-race
+ * strip because that is the first moment the reader has seen enough to know
+ * which of the three they are.
+ *
+ * Hairlines, no cards, no icons: this is a router, not a feature grid, and
+ * the moment it grows a box it starts competing with the Scoreboard below it.
+ */
+const ROUTES = [
+  {
+    href: '/#scoreboard',
+    label: 'Follow the team',
+    line: 'Every race we enter goes public within 48 hours, win or loss.',
+  },
+  {
+    href: '/join',
+    label: 'Race for us',
+    line: 'Open seats, what a season asks of you, and the one step to apply.',
+  },
+  {
+    href: '/partners',
+    label: 'Partner with us',
+    line: 'Livery placement, result posts and a channel in the Discord.',
+  },
+];
+---
+
+<nav class="router rule-top" aria-label="Where to go next">
+  <div class="container">
+    <ul class="router-list">
+      {
+        ROUTES.map((route) => (
+          <li>
+            <a class="router-link" href={route.href}>
+              <span class="router-label">{route.label}</span>
+              <span class="router-line">{route.line}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</nav>
+
+<style>
+  .router {
+    padding-block: var(--space-m);
+  }
+
+  .router-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .router-list li + li {
+    border-left: 1px solid var(--line);
+  }
+
+  .router-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    height: 100%;
+    min-height: 44px;
+    padding: var(--space-xs) var(--space-l) var(--space-xs) 0;
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
+  }
+
+  .router-list li + li .router-link {
+    padding-left: var(--space-l);
+  }
+
+  .router-label {
+    font-family: var(--font-display);
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
+    font-size: var(--text-sm);
+    letter-spacing: var(--track-link);
+    text-transform: uppercase;
+    line-height: var(--leading-tight);
+    color: var(--mist);
+    overflow-wrap: anywhere;
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  .router-line {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+    color: var(--muted);
+    max-width: 38ch;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .router-link:hover .router-label {
+      color: var(--signal);
+    }
+  }
+
+  .router-link:focus-visible .router-label {
+    color: var(--signal);
+  }
+
+  @media (max-width: 900px) {
+    .router-list {
+      grid-template-columns: 1fr;
+    }
+    .router-list li + li {
+      border-left: none;
+      border-top: 1px solid var(--line);
+    }
+    .router-link,
+    .router-list li + li .router-link {
+      padding: var(--space-s) 0;
+    }
+  }
+</style>

@@ -140,7 +140,7 @@ const list = partners.map((partner) => {
 
 <style>
   .partner-band {
-    background: var(--bg-raise);
+    background: var(--surface-1);
     padding-block: var(--space-2xl);
   }
 
@@ -148,12 +148,12 @@ const list = partners.map((partner) => {
      rule between them, so the two read as one region. Alternating the ground
      is the separation; the hairlines below are the composition. */
   .partner-band.is-row {
-    background: var(--bg);
+    background: var(--night);
   }
 
   .partner-lead {
     margin-top: var(--space-s);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-base);
     line-height: var(--leading-body);
   }
@@ -196,7 +196,7 @@ const list = partners.map((partner) => {
   }
 
   .is-row .partner-since {
-    color: var(--ink-faint);
+    color: var(--muted);
     font-size: var(--text-2xs);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
@@ -236,7 +236,7 @@ const list = partners.map((partner) => {
   .is-stack .partner-item {
     border: 1px solid var(--line);
     padding: var(--space-m);
-    background: var(--bg);
+    background: var(--night);
   }
 
   .is-stack .partner-item > a {
@@ -260,7 +260,8 @@ const list = partners.map((partner) => {
 
   .partner-name {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--weight-display);
+    font-stretch: var(--wdth-normal);
     font-size: var(--text-sm);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
@@ -268,7 +269,7 @@ const list = partners.map((partner) => {
   }
 
   .is-stack .partner-since {
-    color: var(--ink-faint);
+    color: var(--muted);
     font-size: var(--text-2xs);
   }
 
@@ -276,7 +277,7 @@ const list = partners.map((partner) => {
     margin-top: var(--space-s);
     padding-top: var(--space-s);
     border-top: 1px solid var(--line);
-    color: var(--ink-dim);
+    color: var(--mist-dim);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
   }
@@ -284,7 +285,7 @@ const list = partners.map((partner) => {
   @media (hover: hover) and (pointer: fine) {
     .partner-item > a:hover .partner-name,
     .partner-marks a:hover .partner-since {
-      color: var(--teal);
+      color: var(--signal);
     }
   }
 
@@ -297,7 +298,7 @@ const list = partners.map((partner) => {
 
   .partner-item > a:focus-visible .partner-name,
   .partner-marks a:focus-visible .partner-since {
-    color: var(--teal);
+    color: var(--signal);
   }
 
   .partner-item > a:active,
@@ -313,7 +314,7 @@ const list = partners.map((partner) => {
     .partner-marks :global(img),
     .partner-item :global(img) {
       forced-color-adjust: none;
-      background: rgb(var(--bg-rgb));
+      background: rgb(var(--night-rgb));
       padding: var(--space-2xs);
       border: 1px solid CanvasText;
     }

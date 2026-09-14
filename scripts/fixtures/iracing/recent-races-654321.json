@@ -1,0 +1,62 @@
+{
+  "cust_id": 654321,
+  "races": [
+    {
+      "season_id": 4855,
+      "series_id": 388,
+      "series_name": "NASCAR Class B Fixed",
+      "car_id": 91,
+      "license_level": 17,
+      "session_start_time": "2026-09-11T01:30:00Z",
+      "start_position": 17,
+      "finish_position": 5,
+      "laps_led": 0,
+      "laps_complete": 80,
+      "incidents": 3,
+      "strength_of_field": 1740,
+      "subsession_id": 68205318,
+      "track": { "track_id": 122, "track_name": "Richmond Raceway", "config_name": "" },
+      "drop_race": false,
+      "season_year": 2026,
+      "season_quarter": 3
+    },
+    {
+      "season_id": 4855,
+      "series_id": 388,
+      "series_name": "NASCAR Class B Fixed",
+      "car_id": 91,
+      "license_level": 17,
+      "session_start_time": "2026-09-04T02:00:00Z",
+      "start_position": 3,
+      "finish_position": 0,
+      "laps_led": 42,
+      "laps_complete": 75,
+      "incidents": 1,
+      "strength_of_field": 1905,
+      "subsession_id": 68141660,
+      "track": { "track_id": 227, "track_name": "Darlington Raceway", "config_name": "" },
+      "drop_race": false,
+      "season_year": 2026,
+      "season_quarter": 3
+    },
+    {
+      "season_id": 4861,
+      "series_id": 392,
+      "series_name": "Trucks Series",
+      "car_id": 88,
+      "license_level": 16,
+      "session_start_time": "2026-08-30T00:45:00Z",
+      "start_position": 21,
+      "finish_position": 13,
+      "laps_led": 0,
+      "laps_complete": 94,
+      "incidents": 9,
+      "strength_of_field": 1520,
+      "subsession_id": 68096004,
+      "track": { "track_id": 310, "track_name": "Talladega Superspeedway", "config_name": "" },
+      "drop_race": false,
+      "season_year": 2026,
+      "season_quarter": 3
+    }
+  ]
+}
