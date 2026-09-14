@@ -151,8 +151,8 @@ const isPodium = !!proof && proof.position <= 3;
     background: linear-gradient(
         100deg,
         var(--bg) 8%,
-        rgba(0, 10, 8, 0.88) 36%,
-        rgba(0, 10, 8, 0.12) 62%
+        rgb(var(--bg-rgb) / 0.88) 36%,
+        rgb(var(--bg-rgb) / 0.12) 62%
       ),
       linear-gradient(to top, var(--bg) 2%, transparent 30%);
   }
@@ -361,9 +361,9 @@ const isPodium = !!proof && proof.position <= 3;
       background: linear-gradient(
         to top,
         var(--bg) 18%,
-        rgba(0, 10, 8, 0.86) 42%,
-        rgba(0, 10, 8, 0.3) 72%,
-        rgba(0, 10, 8, 0.52)
+        rgb(var(--bg-rgb) / 0.86) 42%,
+        rgb(var(--bg-rgb) / 0.3) 72%,
+        rgb(var(--bg-rgb) / 0.52)
       );
     }
 

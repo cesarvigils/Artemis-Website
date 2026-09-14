@@ -144,6 +144,7 @@ const driverList = (names: string[]) =>
     display: block;
     margin-top: 0.35rem;
     font-family: var(--font-mono);
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
@@ -171,6 +172,7 @@ const driverList = (names: string[]) =>
     display: block;
     margin-top: 0.3rem;
     font-family: var(--font-mono);
+    font-weight: 400;
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
@@ -194,6 +196,7 @@ const driverList = (names: string[]) =>
     display: inline-block;
     white-space: nowrap;
     font-family: var(--font-mono);
+    font-weight: 400;
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
     letter-spacing: var(--track-link);
@@ -203,15 +206,21 @@ const driverList = (names: string[]) =>
     border: 1px solid var(--line);
   }
 
-  .col-driver {
+  /* `td`, not the bare class. The column classes sit on the `<th>` as well,
+     and a scoped `.col-driver` is (0,2,0) against `.field-label`'s (0,1,0) in
+     global.css - so the Drivers header was rendering at 15px `--ink-dim` body
+     type and the Date header at `--track-data` beside three 11px tracked mono
+     labels. One row of column headers, one style. */
+  td.col-driver {
     font-size: var(--text-sm);
     color: var(--ink-dim);
     line-height: var(--leading-body);
     overflow-wrap: anywhere;
   }
 
-  .col-date {
+  td.col-date {
     font-family: var(--font-mono);
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
     font-size: var(--text-2xs);
     line-height: var(--leading-tight);
@@ -292,6 +301,7 @@ const driverList = (names: string[]) =>
     td.col-date::before {
       content: attr(data-label) ': ';
       font-family: var(--font-mono);
+      font-weight: 400;
       font-size: var(--text-2xs);
       letter-spacing: var(--track-label);
       text-transform: uppercase;

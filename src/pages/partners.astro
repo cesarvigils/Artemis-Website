@@ -67,8 +67,12 @@ const channels = channelLinks(site.socials, site.store);
   title="Partners | Artemis Esports"
   description="What a partner gets from Artemis Esports: livery placement, result posts, roster exposure and the Discord community. Recent results, roster and contact."
 >
+  {/* A heading that speaks (an imperative or a statement) takes a full stop;
+      a heading that names a page or a section does not. "Talk to us." below
+      and "Built in silence." on /about with one, "The crew" and "Recent
+      results" without. */}
   <PageHead
-    title="Partner with Artemis"
+    title="Partner with Artemis."
     lead="Everything a sponsor needs to decide is on this page: what you get, what we have finished recently, who drives, and where the audience is."
     meta="2026 season / endurance, GT and oval"
   >
@@ -373,9 +377,16 @@ const channels = channelLinks(site.socials, site.store);
   }
 
   /* Seven channels in a two-column grid left a visible hole in the last
-     row. One column of seven reads as a list, which is what it is. */
+     row. One column of seven reads as a list, which is what it is.
+
+     `--line-strong` above the first row, `--line` between rows: the site's
+     rule is that a hairline opening a data block is the strong step and a
+     hairline separating two things inside one block is the light step. Every
+     other list head on the site (the results head, the roster, the entry
+     strip, the dossier, the join steps, the pillar register) already did
+     this; this one did not. */
   .channel-list {
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--line-strong);
   }
 
   .channel-list a {

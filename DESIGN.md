@@ -57,6 +57,21 @@ identity, everything else is a three-step near-black ramp.
 | `--line` | `rgba(235,255,251,.12)` | - | Hairline rules | - |
 | `--line-strong` | `rgba(235,255,251,.24)` | - | Table head, ghost button border | - |
 | `--line-teal` | `rgba(15,255,207,.32)` | - | Accent hairlines | - |
+| `--bg-rgb` | `0 10 8` | - | `--bg` as channels, for the legibility scrims | - |
+
+**Which hairline, and when.** `--line-strong` goes above the first row of a data
+block: the results head, the roster list, the entry strip, the teaser, the
+dossier, the join steps, the pillar register, the channel list. `--line` is
+everything else: the rule between two rows, the seam between two sections, the
+rule that separates two things inside one block. There is no third weight.
+
+**`--bg-rgb` exists because a colour token cannot carry an alpha.** The hero
+scrim and the HUNT-texture scrim need the brand ground at four different
+opacities, and they were eleven hard-coded `rgba(0, 10, 8, ...)` values across
+four files. They are `rgb(var(--bg-rgb) / .88)` now. It is deliberately *not*
+redefined in the print or forced-colours blocks: every element that uses it is
+hidden in both, and a scrim that inverted with the page would paint white over
+white.
 
 Decisions inside that:
 
@@ -87,6 +102,51 @@ monospace. No third family, no extra weights.
   chosen over IBM Plex Mono and Space Mono, which are training-data defaults.
   Mono here is not decoration: every use is a number or a column label.
 - All four faces are `font-display: swap`; the two Nexa faces are preloaded.
+- **Every mono rule declares `font-weight: 400`.** The body is 300 and only two
+  mono faces exist, so eight rules that set `font-family: var(--font-mono)` and
+  nothing else were asking for a weight the system does not have. Every browser
+  substituted the 400 face, so it looked right, from a rule that said otherwise.
+  Measured after the fix: the site paints exactly four family/weight pairs,
+  `Nexa 300`, `Nexa 700`, `JetBrains Mono 400`, `JetBrains Mono 700`, and
+  nothing else.
+
+### The subset faces
+
+The four files in `public/fonts/` are **subset builds**, not the originals:
+`nexa-bold.latin.v2.woff2`, `nexa-light.latin.v2.woff2`,
+`jetbrains-mono-400.latin.v2.woff2`, `jetbrains-mono-700.latin.v2.woff2`.
+**78.6 KB to 48.0 KB** across the four, a 38.9% cut, and about 30 KB off a
+first view of the home page.
+
+What is kept, and why that list rather than a shorter one:
+
+- Basic Latin and the whole Latin-1 Supplement.
+- The Latin Extended-A letters the originals carried: `Ă ı Ł ł Œ œ Š š Ÿ Ž ž`.
+  The bot writes driver names straight from Discord, and a sim-racing roster is
+  exactly where those letters appear. A kilobyte is not worth one fallback
+  letter in the middle of a display-size name.
+- The General Punctuation the site or a bot-written note can emit, plus the
+  combining marks, so decomposed input still composes.
+- Nothing else: the dropped codepoints are spacing modifier letters
+  (`ˆ ˇ ˘ ˙ ˚ ˛ ˜ ˝ ʼ`), `ƒ`, Greek `µ` (the Latin-1 micro sign is kept), the
+  `fi`/`fl` presentation forms, and three control characters.
+
+What the mono lost on top of that is its **layout tables**: `calt` and `frac`,
+the code-editor ligatures and automatic fractions. That is where 12 of its 13 KB
+came from (394 glyphs to 243), and it is a correctness fix as well as a size
+one: a results sheet must never turn `->` in a note somebody typed in Discord
+into an arrow. `ccmp` and `mark` are kept, because accented text needs them.
+`tnum` is not in the font at all and never was, and does not need to be: the
+face is monospaced, so its digit advance is 600 units for all ten.
+
+**No arrow glyphs are carried.** Every arrow on the site is an inline SVG path
+in `Icon.astro`.
+
+**A replacement face must get a new filename.** `vercel.json` serves `/fonts/*`
+with a one-year `immutable` cache, so a browser that has the old file will keep
+it. That is what `.v2` is for: re-subset, ship `.v3`, and change the four
+`@font-face` rules at the top of `global.css` and the four preloads in
+`Base.astro` together.
 
 ### Scale
 
@@ -337,6 +397,47 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 (`.btn-solid`, `.btn-ghost`, `.btn-sm`), `.text-link`, `.lead`, `.data`,
 `.field-label`, `.display-*`, `.reveal`, `.skip-link`, `.sr-only`.
 
+### Words
+
+The copy rules, written down because "polish" on a site this small is mostly
+this. Plain, specific, sentence case for anything that is a sentence. No
+exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen".
+
+- **Headings.** A heading that speaks takes a full stop; a heading that names
+  something does not. "On the hunt.", "Race with us.", "How to join.",
+  "Talk to us.", "Built in silence.", "Partner with Artemis.", "Off track." all
+  carry one. "The crew", "Recent results", "Next race", "The garage",
+  "Who drives", "How we race", "Who backs us", "Where this came from",
+  "What we stand for", "Current partners" do not.
+- **Field labels** are sentence case, always: "Best finish", "Results listed",
+  "First iRacing season", "Who runs these entries". The uppercase is a
+  `text-transform`, not the text. That matters because the same strings are read
+  aloud.
+- **One label per intent, everywhere.** "Join the team" is the Discord invite on
+  every page and in every place on it. "Partner with us" is the partnership
+  mailto, in the header, the first screen and the contact card of `/partners`.
+  The two intents live in `src/lib/links.ts` so the address is written once.
+  The one deliberate pair is the results link: **"See results"** where the
+  reader has not seen any (the hero, the 404), **"All results"** only on
+  `/partners`, where three of the six are already on screen.
+- **One spelling per channel.** `socialLabel()` in `src/lib/links.ts` is the
+  only place a social network is named, so the footer, `/partners` and a
+  driver's own link all say "YouTube" rather than one of them saying "youtube".
+- **Dates** are `06 SEP 2026` and ranges are `25 - 27 SEP 2026`, everywhere,
+  from `src/lib/format.ts`. Fixed three-letter months, uppercase, zero-padded
+  day: `Intl` gives "Sept" in some builds and that breaks the column.
+- **Arrows.** A text link that leaves the site carries the up-right glyph; a
+  text link that stays carries the right glyph; a link whose content is a logo
+  carries neither, because the mark is the label. All six arrow-carrying
+  families nudge 3px on the same clock (see §5).
+- **The empty states are wording too.** "No race scheduled" in the "Next race"
+  strip is pinned: `docs/data-contract.md` quotes it as the site's behaviour and
+  the Discord bot is written against that document, so it changes on both sides
+  or on neither. The countdown's zero state is ours: **"Race day"** on the start
+  date, **"Under way"** only once that date has passed. The contract carries
+  dates and not times, so the target is midnight in the team's timezone, and
+  "Under way" at six in the morning would be a claim the clock cannot support.
+
 ## 7. Accessibility
 
 - Skip link to `#main`; `<main>`, `<header>`, `<footer>`, `<nav>` landmarks.
@@ -467,6 +568,12 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
   while the same build served the way `vercel.json` serves it reports 99. Measure
   against `audit-tool/server-vercel.mjs`, not `audit-tool/server.mjs`, when the
   number is the point.
+- **The fonts are subsets, and that is where the last real win was.** 78.6 KB of
+  woff2 became 48.0 KB with no visible change: ten full-page renders at 1440 and
+  390 came back pixel-identical to the previous build except for the countdown's
+  own digits. Nearly all of it is the mono's code-editor ligature tables, which a
+  results sheet had no use for. See §3 for what is in the subset and for the rule
+  that a replacement face needs a new filename.
 - **`jetbrains-mono-700` is preloaded per page, not everywhere.** It sets
   above-the-fold text on `/`, `/team` and the 404 (the position marker and the
   roster numbers) and below the fold on `/about` and `/partners`, where a fourth
@@ -481,6 +588,48 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 ## 9. Decision log
 
 Newest first. Only decisions that changed the system, not every edit.
+
+### Pass 5, 14 Sep 2026
+
+**The fonts are subsets now, and the mono lost its ligature tables.** 78.6 KB to
+48.0 KB across the four faces, which is about 30 KB off a first view. Most of it
+is `calt` and `frac` in JetBrains Mono: 151 glyphs of code-editor ligatures and
+automatic fractions that a timing sheet has no use for, and that would have
+turned `->` in a bot-written note into an arrow. What was *not* dropped is the
+Latin Extended-A the originals carried: `Ł ł Š š Ž ž Œ œ Ÿ ı Ă` are exactly the
+letters a real sim-racing roster contains, and saving a kilobyte is not worth one
+fallback letter in the middle of a display-size name. Because `/fonts/*` is
+served `immutable` for a year, the files carry new names (`.latin.v2`) and the
+`@font-face` block and the preloads changed with them.
+
+**The column headers of the results sheet were being styled by the body-cell
+rules.** `.col-driver` and `.col-date` sit on the `<th>` as well as the `<td>`,
+and an Astro-scoped class out-specifies `.field-label` in `global.css`, so
+"Drivers" rendered as 15px body type and "Date" at the wrong tracking beside
+three 11px tracked mono labels. Both are scoped to `td` now. This is the same
+cascade trap pass 3 documented for `--compact-inset`, in a third place.
+
+**Eight mono rules were asking for a weight that does not exist.** The body is
+300 and the site ships two mono faces, 400 and 700, so every rule that set
+`font-family: var(--font-mono)` and no weight inherited 300; browsers quietly
+substituted 400 and it looked correct. Every mono rule declares its weight now,
+and the site paints exactly the four family/weight pairs it loads.
+
+**The scrims are tokens.** Eleven `rgba(0, 10, 8, ...)` literals across four
+components became `rgb(var(--bg-rgb) / ...)`. A colour token cannot carry an
+alpha, which is why they were literals; a channel token can.
+
+**The four-across value register lines up.** One of the four titles wraps at
+1440 ("Precision over flash" in a 320px cell), so the four sentences under them
+started at three different heights with full-height hairlines between them
+making it obvious. Two lines are reserved for the title in the four-across band
+only; below 1025px the band is two across, the pairs wrap together, and nothing
+is reserved.
+
+**The countdown's zero state stopped over-claiming.** The contract carries dates
+and not times, so the target is midnight in the team's timezone. "Under way" at
+six in the morning on race day was a claim the clock could not support. It says
+"Race day" on the start date and "Under way" only once that date has passed.
 
 ### Pass 4, 14 Sep 2026
 

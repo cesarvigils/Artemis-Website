@@ -8,31 +8,45 @@
    Nexa is the licensed brand face (700 + 300 only - hierarchy comes
    from size, tracking, case and colour, never from extra weights).
    JetBrains Mono carries data only: positions, dates, numbers.
+
+   `.latin.v2` files are subset builds: Basic Latin, Latin-1 Supplement,
+   the Latin Extended-A letters a European driver name needs
+   (L-stroke, S/Z-caron, OE, dotless i, A-breve), the punctuation the
+   site or the bot can emit, and the combining marks. The mono also
+   lost its code-editor ligature tables (`calt`, `frac`), which a
+   results sheet must never apply to text a Discord command wrote.
+   78.6 KB -> 48.0 KB across the four faces. Arrows on the site are
+   inline SVG (see Icon.astro), so no arrow glyphs are carried.
+
+   `/fonts/*` is served `immutable` for a year (vercel.json), so a
+   replacement face MUST get a new filename. That is what `.v2` is.
+   The subsetting script is kept outside the repo; re-run it against a
+   fresh source file and bump to `.v3` if a face is ever changed.
 ------------------------------------------------------------------- */
 @font-face {
   font-family: 'Nexa';
-  src: url('/fonts/nexa-bold.woff2') format('woff2');
+  src: url('/fonts/nexa-bold.latin.v2.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Nexa';
-  src: url('/fonts/nexa-light.woff2') format('woff2');
+  src: url('/fonts/nexa-light.latin.v2.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'JetBrains Mono';
-  src: url('/fonts/jetbrains-mono-400.woff2') format('woff2');
+  src: url('/fonts/jetbrains-mono-400.latin.v2.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'JetBrains Mono';
-  src: url('/fonts/jetbrains-mono-700.woff2') format('woff2');
+  src: url('/fonts/jetbrains-mono-700.latin.v2.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -46,6 +60,13 @@
   --bg: #000a08;              /* oklch(13.0% 0.023 183) */
   --bg-raise: #03120e;        /* oklch(16.6% 0.025 176) */
   --bg-panel: #06201a;        /* oklch(22.1% 0.034 175) */
+  /* The same ground as `--bg`, as channels, for the legibility scrims over
+     the hero photo and the HUNT texture. Those need the brand black at four
+     different alphas, and a colour token cannot carry an alpha. Deliberately
+     not redefined in the print or forced-colours blocks: every element that
+     uses it is hidden in both, and a scrim that inverted with the page would
+     paint white over white. */
+  --bg-rgb: 0 10 8;
 
   /* Ink. Light mint; the alpha steps are pre-checked for contrast. */
   --ink: #ebfffb;                          /* 19.3:1 on --bg */
@@ -282,9 +303,14 @@ p {
   color: var(--ink-dim);
 }
 
-/* Data voice: positions, dates, counts, driver numbers. */
+/* Data voice: positions, dates, counts, driver numbers.
+   `font-weight: 400` is declared, not inherited. The body is 300 and only two
+   mono faces exist, so an undeclared mono element asked for a weight the
+   system does not have and every browser silently substituted the 400 face -
+   the right glyphs, by accident, from a rule that says otherwise. */
 .data {
   font-family: var(--font-mono);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--track-data);
   font-size: var(--text-xs);
@@ -295,6 +321,7 @@ p {
    rows (a timing sheet has column headers), never as a section eyebrow. */
 .field-label {
   font-family: var(--font-mono);
+  font-weight: 400;
   font-size: var(--text-2xs);
   line-height: var(--leading-tight);
   letter-spacing: var(--track-label);
@@ -433,24 +460,34 @@ p {
 }
 
 /* The arrow nudge -------------------------------------------------
-   Five link families carry the same arrow glyph and exactly one of them
-   moved it, which reads as an oversight rather than as a signature. Every
-   arrow-carrying link now nudges the same 3px on the same clock.
+   Six link families carry an arrow glyph and every one of them nudges the
+   same 3px on the same clock. The list below IS that set: a text link that
+   leaves the site carries the up-right glyph, a text link that stays carries
+   the right glyph, and a link whose content is a logo carries neither,
+   because the mark is the label. `.notfound-links` is deliberately absent -
+   it is the one arrow-free link family on the site.
 
-   A link that opens a new tab carries the up-right glyph, so it leaves in
-   the direction it points. `[target='_blank']` is the selector because it
-   is already in the markup: the alternative was a `data-icon` attribute on
-   every one of the site's forty-odd inline icons, for a diagonal.
+   `[target='_blank']` is the selector for the diagonal because it is already
+   in the markup: the alternative was a `data-icon` attribute on every one of
+   the site's forty-odd inline icons.
 ------------------------------------------------------------------- */
-:where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a) svg {
+:where(.text-link, .btn, .footer-col a, .mobile-links a, .channel-list a, .driver-socials a) svg {
   transition: transform var(--dur-2) var(--ease-out-quart);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  :where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a):hover svg {
+  :where(.text-link, .btn, .footer-col a, .mobile-links a, .channel-list a, .driver-socials a):hover
+    svg {
     transform: translateX(3px);
   }
-  :where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a)[target='_blank']:hover
+  :where(
+      .text-link,
+      .btn,
+      .footer-col a,
+      .mobile-links a,
+      .channel-list a,
+      .driver-socials a
+    )[target='_blank']:hover
     svg {
     transform: translate(2px, -2px);
   }
@@ -701,7 +738,15 @@ html.js .reveal.in-view {
       stroke !important;
     transition-duration: var(--dur-2) !important;
   }
-  :where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a):hover svg,
+  :where(
+      .text-link,
+      .btn,
+      .footer-col a,
+      .mobile-links a,
+      .channel-list a,
+      .driver-socials a
+    ):hover
+    svg,
   .btn:active,
   .menu-toggle:active,
   .garage-btn:active {

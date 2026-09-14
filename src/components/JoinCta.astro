@@ -84,8 +84,8 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     background: linear-gradient(
       to right,
       var(--bg) 12%,
-      rgba(0, 10, 8, 0.86) 46%,
-      rgba(0, 10, 8, 0.72)
+      rgb(var(--bg-rgb) / 0.86) 46%,
+      rgb(var(--bg-rgb) / 0.72)
     );
   }
 
@@ -158,8 +158,8 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
       background: linear-gradient(
         to top,
         var(--bg) 10%,
-        rgba(0, 10, 8, 0.82) 55%,
-        rgba(0, 10, 8, 0.7)
+        rgb(var(--bg-rgb) / 0.82) 55%,
+        rgb(var(--bg-rgb) / 0.7)
       );
     }
     .join-steps {

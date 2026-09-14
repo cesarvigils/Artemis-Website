@@ -101,6 +101,19 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
     font-size: var(--text-lg);
   }
 
+  /* Four across, one of the four titles wraps ("Precision over flash" at a
+     320px cell), and the register's four sentences then started at three
+     different heights with full-height hairlines between them to make it
+     obvious. Two lines are reserved for the title in the four-across band, so
+     the four `dd` lines share a baseline whether a title wraps or not. Below
+     1025px the band is two across and the pairs wrap together, so nothing is
+     reserved and no space is spent. */
+  @media (min-width: 1025px) {
+    .is-row .pillar dt {
+      min-height: calc(2 * var(--leading-tight) * 1em);
+    }
+  }
+
   .is-row .pillar dd {
     margin-top: var(--space-2xs);
     font-size: var(--text-sm);

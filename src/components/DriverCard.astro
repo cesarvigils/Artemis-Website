@@ -1,5 +1,7 @@
 ---
+import Icon from './Icon.astro';
 import { raceDate } from '../lib/format';
+import { socialLabel } from '../lib/links';
 import type { Driver, RaceResult } from '../lib/data';
 
 interface Props {
@@ -93,12 +95,17 @@ const stats = [
             ))}
           </dl>
         )}
+        {/* Same two things every other text link that leaves the site
+            carries: the channel's own spelling, and the up-right glyph. A
+            logo link does not take the glyph (the mark is the label); a word
+            does. */}
         {socials.length > 0 && (
           <ul class="driver-socials">
             {socials.map(([name, url]) => (
               <li>
                 <a href={url} target="_blank" rel="noopener">
-                  <span>{name}</span>
+                  <span>{socialLabel(name)}</span>
+                  <Icon name="arrow-up-right" size={13} />
                   <span class="sr-only"> (opens in a new tab)</span>
                 </a>
               </li>
@@ -300,6 +307,7 @@ const stats = [
   .driver-socials a {
     display: inline-flex;
     align-items: center;
+    gap: 0.35rem;
     min-height: 44px;
     font-family: var(--font-display);
     font-weight: 700;

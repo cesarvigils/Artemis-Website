@@ -45,7 +45,11 @@ list.
 **Cache headers.** `/_astro/*` and `/fonts/*` get a year with `immutable`.
 `/_astro` filenames carry a content hash, so that is free. **`/fonts/*` does
 not** - if a font file is ever replaced, give the new file a new name, or
-browsers will keep the old one for a year. The icons and the OG card get a day.
+browsers will keep the old one for a year. That is what the `.v2` in
+`nexa-bold.latin.v2.woff2` is for: the four faces are subset builds, and a
+re-subset ships as `.v3` with the `@font-face` block in
+`src/styles/global.css` and the preloads in `src/layouts/Base.astro` updated to
+match. The icons and the OG card get a day.
 The HTML deliberately keeps Vercel's default (`max-age=0, must-revalidate`), so
 a bot-driven data push is live the moment the build finishes.
 
@@ -75,20 +79,22 @@ npm run build
 This produces a `dist/` folder containing the whole site (`index.html`,
 `team/index.html`, etc.).
 
-**Expected output:** about **2.7 MB** total, roughly 78 files, and it should
-finish in under 10 seconds. If `dist/` comes out at tens of megabytes, something
-started copying full-size original photos again; see `DESIGN.md` section 8
-before shipping.
+**Expected output:** about **2.6 MB** total, 78 files, and it should finish in
+under 10 seconds. If `dist/` comes out at tens of megabytes, something started
+copying full-size original photos again; see `DESIGN.md` section 8 before
+shipping.
 
 Largest files in a normal build:
 
 | File | Size |
 |---|---|
-| the hero render at 1920px (webp) | ~115 KB |
-| the About group photo at 1920px (webp) | ~230 KB |
-| `og.png` (the social card) | ~115 KB |
-| all CSS | inlined into each page, about 6 KB gzipped per route |
-| all client JavaScript | ~3 KB, inlined, no external request |
+| the About group photo at 1920px (webp) | ~228 KB |
+| the hero render at 1920px (webp) | ~116 KB |
+| `og.png` (the social card) | ~116 KB |
+| `index.html` | ~109 KB raw, **~18 KB over brotli** |
+| all four web fonts together | **48 KB** |
+| all CSS | inlined into each page, 5 to 9 KB gzipped per route |
+| all client JavaScript | 5.8 KB, inlined, no external request |
 
 `robots.txt` and `sitemap.xml` are hand-maintained in `public/`. Adding a page
 means adding a `<url>` to the sitemap.

@@ -20,6 +20,12 @@ const when = next ? raceDateRange(next.start, next.end) : '';
     <div class="next-race-inner">
       <h2 class="next-race-heading" id="next-race-heading">Next race</h2>
 
+      {/* The empty branch is between seasons, not broken: the subtitle names
+          the last thing that did happen, so the strip is still evidence
+          rather than a gap. The wording is fixed - `docs/data-contract.md`
+          quotes "No race scheduled" as the site's behaviour and the Discord
+          bot is written against that document, so it changes on both sides
+          or on neither. */}
       {
         next ? (
           <dl class="next-race-data">

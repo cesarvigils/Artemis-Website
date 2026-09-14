@@ -38,8 +38,13 @@ One primary CTA per page, at most one quieter secondary action.
 | `/` | Join the team (Discord) | See results (in-page anchor) |
 | `/team` | Join the team (Discord) | - |
 | `/about` | Join the team (Discord) | - |
-| `/partners` | Partner with us (mailto) | All results / Full roster links |
+| `/partners` | Partner with us (mailto) | "All results" to the home results table |
 | `404` | Back to the paddock | See results |
+
+The results link is the one place two labels serve one destination, and it is
+deliberate: **"See results"** where the reader has not seen any yet (the hero,
+the 404), **"All results"** only on `/partners`, where three of the six are
+already on screen. Every other intent has exactly one label site-wide.
 
 The header button carries the **page's own** primary action. That is
 "Join the team" everywhere except `/partners`, where it is the same mailto as
@@ -111,8 +116,12 @@ in order, because a human edit can always break it.
    One real photo of the sim setup would do more for `/about` than any edit.
 4. Confirm the About origin copy; it is a first draft written from the two known
    facts (founded 2017, iRacing since 2023).
-5. Driver `stats` (iRating, licence) render the moment they are filled in and
-   stay invisible until then. Nothing is invented to fill the slot.
+5. **Decide whether iRating and licence class go on the site at all.** The
+   `stats` slot renders the moment it is filled in and stays invisible until
+   then, and nothing is invented to fill it. This is not a missing task: it is
+   public information about individual people, and a driver who is having a bad
+   season has their rating published beside their name. Either the team wants
+   that on the roster or it does not.
 6. **A dark-variant GLYTCH mark.** `src/assets/partners/glytch-white.png` is
    white on transparent, so on any light ground it is invisible - including
    Windows High Contrast, which is the mode a partner's accessibility-audited
@@ -124,6 +133,14 @@ in order, because a human edit can always break it.
    retina tablet at full sharpness. A clean re-render at 1920 without the
    hoardings in frame would close that.
 
+8. **Is NordVPN a current partner?** The Daytona Porsche render carries a
+   legible NordVPN door decal, and it is the best-lit shot in the set. It is out
+   of the site entirely because the Partners page says GLYTCH is the only
+   partner and the two cannot both be true on one page. A yes puts the render
+   back and adds a record to `partners.json`; a no keeps it out. Nobody has
+   asked.
+
 **Closed:** the hero render carried a NordVPN decal while the Partners page said
 GLYTCH was the only partner. The hero is now the Interlagos LMP2, which carries
-no third-party mark, and the Porsche is out of the garage as well.
+no third-party mark, and the Porsche is out of the garage as well. The question
+of whether NordVPN should be listed is open above.

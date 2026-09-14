@@ -212,9 +212,18 @@ function initCountdown() {
   let timer = 0;
   let last = '';
 
+  const DAY = 86400000;
+
+  /* Zero state. The contract carries dates, not times, so the target is
+     midnight on the start date in the team's timezone - which means "Under
+     way" at 6am on race morning would be a claim the clock cannot support.
+     On the start date itself the line says "Race day"; only once that date
+     has passed (the strip keeps an event until its end date does) does it say
+     the race is running. */
   const text = () => {
     const diff = target - Date.now();
-    if (diff <= 0) return 'Under way';
+    if (diff <= -DAY) return 'Under way';
+    if (diff <= 0) return 'Race day';
     const minutes = Math.floor(diff / 60000);
     const days = Math.floor(minutes / 1440);
     const hours = Math.floor((minutes % 1440) / 60);

@@ -12,10 +12,10 @@ export const partnershipMailto = `mailto:${site.contactEmail}?subject=Partnershi
 
 /**
  * `short` is the phone header's label. The compact CTA sits in a 320px bar
- * beside a 44px hamburger, and `.btn` is `white-space: nowrap`, so a
- * 13-character label has an unshrinkable min-content width that pushed the
- * only navigation control off the device. The anchor keeps the full label as
- * its accessible name, so nothing is lost to a screen reader.
+ * beside a 44px hamburger, and a 13-character label is wider than the space
+ * that is left once the lockup and the toggle have taken theirs. The anchor
+ * keeps the full label as its accessible name, so nothing is lost to a screen
+ * reader.
  */
 export const CTA_INTENTS: Record<
   string,
@@ -57,6 +57,16 @@ const SOCIAL_LABELS: Record<string, string> = {
 };
 
 /**
+ * One spelling per channel, wherever a channel is named. The footer and
+ * /partners went through `channelLinks()` and got "YouTube"; a driver's own
+ * social link printed the raw `socials` key and got "youtube", which the
+ * uppercase rule hid on screen and a screen reader read out.
+ */
+export function socialLabel(key: string): string {
+  return SOCIAL_LABELS[key] ?? key;
+}
+
+/**
  * The public channel list, built once. The footer guarded `site.store` and
  * `/partners` did not, so an empty store URL gave the sponsor page a
  * `href=""` link with `target="_blank"` - a new tab that reloads the page it
@@ -69,7 +79,7 @@ export function channelLinks(
   return [
     ...Object.entries(socials)
       .filter(([, url]) => url)
-      .map(([key, url]) => ({ label: SOCIAL_LABELS[key] ?? key, url })),
+      .map(([key, url]) => ({ label: socialLabel(key), url })),
     ...(store ? [{ label: 'Store', url: store }] : []),
   ];
 }
