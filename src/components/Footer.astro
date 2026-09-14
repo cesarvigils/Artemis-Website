@@ -3,9 +3,10 @@ import nav from '../data/nav.json';
 import site from '../data/site.json';
 import Mark from './Mark.astro';
 import Icon from './Icon.astro';
-import { channelLinks } from '../lib/links';
+import { channelLinks, isCurrent } from '../lib/links';
 
 const buildYear = new Date().getFullYear();
+const pathname = Astro.url.pathname;
 
 /* One builder, shared with /partners, so the store guard cannot be present in
    one place and missing in the other. */
@@ -23,7 +24,18 @@ const channels = channelLinks(site.socials, site.store);
     <nav class="footer-col" aria-label="Footer">
       <h2 class="field-label">Pages</h2>
       <ul>
-        {nav.footer.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        {
+          nav.footer.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={isCurrent(link.href, pathname) ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
       </ul>
     </nav>
 
@@ -108,8 +120,9 @@ const channels = channelLinks(site.socials, site.store);
     color: var(--ink-dim);
     overflow-wrap: anywhere;
     border-bottom: 1px solid var(--line);
-    transition: color var(--dur-hover) var(--ease-out),
-      border-color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      border-color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
   }
 
   .footer-col h2 {
@@ -140,7 +153,12 @@ const channels = channelLinks(site.socials, site.store);
     /* At a 200% root font "Instagram" is wider than its 131px column and the
        footer grew a horizontal scrollbar. */
     overflow-wrap: anywhere;
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
+  }
+
+  .footer-col a[aria-current='page'] {
+    color: var(--teal);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -149,6 +167,14 @@ const channels = channelLinks(site.socials, site.store);
       color: var(--teal);
       border-color: var(--teal);
     }
+  }
+
+  /* The colour step the mouse gets, on the keyboard. A focused footer link
+     used to sit at its resting colour with only the ring to say so. */
+  .footer-col a:focus-visible,
+  .footer-email:focus-visible {
+    color: var(--teal);
+    border-color: var(--teal);
   }
 
   .footer-base {

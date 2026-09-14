@@ -26,21 +26,21 @@ const hasAction = Astro.slots.has('action');
       <h1 class="display-xl" data-enter>{title}</h1>
       {
         lead && (
-          <p class="lead page-lead" data-enter style="--enter-delay: 120ms">
+          <p class="lead page-lead" data-enter style="--enter-delay: 60ms">
             {lead}
           </p>
         )
       }
       {
         meta && (
-          <p class="page-meta data" data-enter style="--enter-delay: 180ms">
+          <p class="page-meta data" data-enter style="--enter-delay: 100ms">
             {meta}
           </p>
         )
       }
       {
         hasAction && (
-          <div class="page-action" data-enter style="--enter-delay: 240ms">
+          <div class="page-action" data-enter style="--enter-delay: 160ms">
             <slot name="action" />
           </div>
         )
@@ -49,7 +49,7 @@ const hasAction = Astro.slots.has('action');
 
     {
       hasAside && (
-        <div class="page-head-aside" data-enter style="--enter-delay: 220ms">
+        <div class="page-head-aside" data-enter style="--enter-delay: 120ms">
           <Fragment set:html={asideHtml} />
         </div>
       )

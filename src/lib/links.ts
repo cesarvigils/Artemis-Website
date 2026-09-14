@@ -30,6 +30,23 @@ export const CTA_INTENTS: Record<
   },
 };
 
+/**
+ * "You are here", in one place. The header marked the current page and the
+ * footer never did, and the home page carried no marker at all, because the
+ * primary nav's first entry is an anchor *into* home rather than a link to
+ * it. The footer's list does contain `/`, so sharing this is what gives the
+ * home page a marker.
+ *
+ * An href carrying a fragment is never "the current page": it is a place
+ * inside one, and `/#results` marked as `aria-current="page"` would be a
+ * claim the reader can disprove by scrolling.
+ */
+export function isCurrent(href: string, pathname: string): boolean {
+  if (href.includes('#')) return false;
+  const normalise = (value: string) => value.replace(/\/+$/, '') || '/';
+  return normalise(href) === normalise(pathname);
+}
+
 const SOCIAL_LABELS: Record<string, string> = {
   discord: 'Discord',
   x: 'X',

@@ -133,15 +133,28 @@
   /* Shape. Committed: everything is square. */
   --radius: 0;
 
-  /* Motion */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Motion. One easing family and three durations, so two controls that do
+     the same thing cannot move on different clocks. Five duration tokens and
+     three curves used to give the same gesture four answers: a press at 120ms
+     beside a press at 240ms, a hover eased on one curve and its own underline
+     on another.
+
+     Curves: both are ease-out powers of the same family. `expo` has the
+     sharper head and the longer tail - it is what things arriving or leaving
+     use. `quart` is gentler and is what a hover or a press uses, where the
+     travel is a few pixels and a long tail reads as lag.
+
+     Durations: tier 1 is feedback the finger asks for, tier 2 is a state
+     change, tier 3 is the longest anything on this site is allowed to take.
+     Nothing is exempt, including the entrance. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --dur-press: 120ms;
-  --dur-hover: 180ms;
-  --dur-ui: 240ms;
-  --dur-reveal: 320ms;
-  --dur-entrance: 560ms;
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+
+  /* One press scale for every control on the site. */
+  --press-scale: 0.97;
 
   /* Layers */
   --z-base: 0;
@@ -403,20 +416,43 @@ p {
   /* 0.25rem gave a 35px control. This reads identically and clears 44px. */
   padding-block: 0.65rem;
   border-bottom: 1px solid var(--line-teal);
-  transition: border-color var(--dur-hover) var(--ease-out),
-    color var(--dur-hover) var(--ease-out);
-}
-
-.text-link svg {
-  transition: transform var(--dur-hover) var(--ease-out);
+  transition: border-color var(--dur-2) var(--ease-out-quart),
+    color var(--dur-2) var(--ease-out-quart),
+    opacity var(--dur-1) var(--ease-out-quart);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .text-link:hover {
     border-color: var(--teal);
   }
-  .text-link:hover svg {
+}
+
+/* The affordance the mouse gets is the affordance the keyboard gets. */
+.text-link:focus-visible {
+  border-color: var(--teal);
+}
+
+/* The arrow nudge -------------------------------------------------
+   Five link families carry the same arrow glyph and exactly one of them
+   moved it, which reads as an oversight rather than as a signature. Every
+   arrow-carrying link now nudges the same 3px on the same clock.
+
+   A link that opens a new tab carries the up-right glyph, so it leaves in
+   the direction it points. `[target='_blank']` is the selector because it
+   is already in the markup: the alternative was a `data-icon` attribute on
+   every one of the site's forty-odd inline icons, for a diagonal.
+------------------------------------------------------------------- */
+:where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a) svg {
+  transition: transform var(--dur-2) var(--ease-out-quart);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a):hover svg {
     transform: translateX(3px);
+  }
+  :where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a)[target='_blank']:hover
+    svg {
+    transform: translate(2px, -2px);
   }
 }
 
@@ -443,14 +479,14 @@ p {
   border: 1px solid transparent;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: transform var(--dur-press) var(--ease-out),
-    background-color var(--dur-hover) var(--ease-out),
-    border-color var(--dur-hover) var(--ease-out),
-    color var(--dur-hover) var(--ease-out);
+  transition: transform var(--dur-1) var(--ease-out-quart),
+    background-color var(--dur-2) var(--ease-out-quart),
+    border-color var(--dur-2) var(--ease-out-quart),
+    color var(--dur-2) var(--ease-out-quart);
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
 }
 
 .btn-solid {
@@ -478,6 +514,37 @@ p {
     border-color: var(--teal);
     color: var(--teal);
   }
+}
+
+/* The ghost button's only visual affordance is its border, so the keyboard
+   gets the same border step the mouse does, on top of the focus ring. The
+   solid button is already the loudest thing on the page and gets the ring
+   alone. */
+.btn-ghost:focus-visible {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+/* Press feedback -------------------------------------------------
+   One gesture, two answers, both deliberate: a control scales by
+   `--press-scale`, a text link dims. A scaling text link is wrong - the
+   words re-flow under the finger - so the link families take an opacity
+   step at the same tier instead. Eight of the ten pressable families used
+   to acknowledge nothing at all.
+------------------------------------------------------------------- */
+:where(
+    .nav-link,
+    .mobile-links a,
+    .footer-col a,
+    .footer-email,
+    .text-link,
+    .driver-compact > a,
+    .driver-socials a,
+    .notfound-links a,
+    .brand
+  ):active {
+  opacity: 0.65;
+  transition-duration: var(--dur-1);
 }
 
 /* Skip link -------------------------------------------------------- */
@@ -525,7 +592,7 @@ p {
 ------------------------------------------------------------------- */
 html.js .reveal {
   transform: translateY(12px);
-  transition: transform var(--dur-reveal) var(--ease-out-quart);
+  transition: transform var(--dur-3) var(--ease-out-expo);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -534,31 +601,52 @@ html.js .reveal.in-view {
 }
 
 /* Hero entrance ----------------------------------------------------
-   Pure CSS, no library. Same rule: only under html.js, so the no-JS
-   render is the finished state.
+   Pure CSS, no library. Only under html.js, so the no-JS render is the
+   finished state.
+
+   There is no opacity anywhere in it now. `enter-up` used to start at
+   `opacity: 0` with `animation-fill-mode: both`, which meant the home first
+   screen frozen at t=0 was a photograph and nothing else - no headline, no
+   claim, no proof row, no buttons - and the inner pages shipped an
+   invisible <h1>. That is the exact failure the site documents itself as
+   not having, and it cost real LCP: on /team the largest paint *was* the
+   lead paragraph, arriving 120ms + 560ms after it could have.
+
+   The masked line rise on the two lockup lines is the one thing still
+   hidden at t=0, and it stays that way deliberately. It is a clip reveal,
+   not a fade: the type is at full ink the entire time, it is the only
+   element on the first screen that is a *repetition* (the same two words
+   sit in the header lockup, painted from frame one), and it is clear of the
+   mask in 320ms rather than 560. A partial mask was tried and rejected -
+   at any travel small enough to be legible at t=0 it cuts the bottom bar
+   off the uppercase, and "ESPORTS" reads as "FSPORTS".
+
+   Timing, measured: line one clears at 320ms, line two at 390ms, and every
+   other element in the hero is at opacity 1 and within 16px of home from
+   frame one.
 ------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
   html.js [data-enter] {
-    animation: enter-up var(--dur-entrance) var(--ease-out-quart) both;
+    animation: enter-up var(--dur-3) var(--ease-out-expo) both;
     animation-delay: var(--enter-delay, 0ms);
   }
 
   html.js [data-enter-mask] > * {
-    animation: enter-mask var(--dur-entrance) var(--ease-out-quart) both;
+    animation: enter-mask var(--dur-3) var(--ease-out-expo) both;
     animation-delay: var(--enter-delay, 0ms);
   }
 
-  /* No opacity in this one. The hero photo is the LCP element, and an
-     image that starts transparent is not a paint candidate, so fading it
-     in pushed the largest paint out by 2.3s on a throttled connection. */
+  /* No opacity in this one either, and for a harder reason: the hero photo
+     is the LCP candidate on a fast connection, and an image that starts
+     transparent is not a paint candidate at all, so fading it in pushed the
+     largest paint out by 2.3s on a throttled connection. */
   html.js [data-enter-media] {
-    animation: enter-media 640ms var(--ease-out-quart) both;
+    animation: enter-media var(--dur-3) var(--ease-out-expo) both;
   }
 }
 
 @keyframes enter-up {
   from {
-    opacity: 0;
     transform: translateY(16px);
   }
 }
@@ -595,7 +683,14 @@ html.js .reveal.in-view {
   }
   /* `animation-duration` alone left every transform *transition* running, so
      the property list is clamped here too: colour and opacity still ease,
-     nothing moves or scales. Components reset their own hover transforms. */
+     nothing moves or scales. Components reset their own hover transforms.
+
+     `transition-duration` has to be clamped with it. CSS cycles the shorter
+     of the two lists, so a six-property list against an element's own
+     four-value duration list landed the durations on the wrong properties:
+     `.btn`'s opacity inherited the 120ms press duration and its `fill` got
+     it too, while `.garage-btn`'s hover border-color quietly dropped from
+     200ms to 120ms only for readers who had asked for less motion. */
   *,
   *::before,
   *::after {
@@ -604,9 +699,12 @@ html.js .reveal.in-view {
     scroll-behavior: auto !important;
     transition-property: opacity, color, background-color, border-color, fill,
       stroke !important;
+    transition-duration: var(--dur-2) !important;
   }
-  .text-link:hover svg,
-  .btn:active {
+  :where(.text-link, .btn, .footer-col a, .mobile-links a, .notfound-links a):hover svg,
+  .btn:active,
+  .menu-toggle:active,
+  .garage-btn:active {
     transform: none;
   }
 }
@@ -658,5 +756,84 @@ html.js .reveal.in-view {
      disappears; a border keeps its forced colour. */
   .text-link {
     border-bottom-width: 2px;
+  }
+}
+
+/* Paper -------------------------------------------------------------
+   Browsers default to `print-color-adjust: economy`, which drops background
+   colours and keeps text colour, so a dark site prints near-white ink on
+   white paper. The whole palette is tokens and nothing hardcodes a colour,
+   so one `:root` block inverts the sheet. The teal is darkened to #046b58
+   (4.9:1 on white) because #0fffcf is invisible on paper.
+
+   Printing matters here for one real reason: a sponsor prints /partners and
+   somebody prints the results sheet.
+------------------------------------------------------------------- */
+@media print {
+  :root {
+    --bg: #fff;
+    --bg-raise: #fff;
+    --bg-panel: #fff;
+    --ink: #000;
+    --ink-dim: #333;
+    --ink-faint: #555;
+    --teal: #046b58;
+    --teal-soft: #046b58;
+    --teal-hover: #046b58;
+    --teal-ink: #fff;
+    --line: #bbb;
+    --line-strong: #888;
+    --line-teal: #888;
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* Chrome that is navigation, decoration or a control nobody can press. */
+  .site-nav,
+  .skip-link,
+  .garage-controls,
+  .garage-progress,
+  .join-texture,
+  .hero-media,
+  .footer-mark {
+    display: none !important;
+  }
+
+  /* `!important` because these are component-scoped rules, and an Astro
+     scoped selector carries an extra attribute that out-specifies a bare
+     class here. */
+  .hero {
+    min-height: auto !important;
+    padding-top: var(--space-m) !important;
+    padding-bottom: var(--space-m) !important;
+  }
+
+  /* A printed link that only says "Join the team" is a dead end. */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-family: var(--font-mono);
+    font-size: 0.7em;
+    word-break: break-all;
+  }
+
+  .section,
+  .section-tall {
+    padding-block: var(--space-m);
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  tr,
+  li {
+    break-inside: avoid;
   }
 }

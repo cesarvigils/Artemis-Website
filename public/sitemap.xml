@@ -2,6 +2,11 @@
 <!--
   Four pages, hand-maintained. Adding a page means adding a file in
   src/pages/, a line in src/data/nav.json and a <url> here.
+
+  No trailing slashes except on the root: vercel.json sets trailingSlash
+  false, every internal link uses the bare form, and the canonical tag is
+  normalised to match. All three have to agree or the site has two live
+  URLs per page.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -10,17 +15,17 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://artemisesports.com/team/</loc>
+    <loc>https://artemisesports.com/team</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://artemisesports.com/about/</loc>
+    <loc>https://artemisesports.com/about</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://artemisesports.com/partners/</loc>
+    <loc>https://artemisesports.com/partners</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -61,11 +61,15 @@ import portrait from '../assets/photos/member-portrait.jpg';
           {/* Measured fractions, not guesses: the frame renders at 38% of a
               1440 viewport and stops growing at 545px once the shell caps,
               so the vw term is bracketed on both sides. */}
+          {/* The ladder gained a 768 rung and the `vw` term tells the truth
+              about the frame (the grid is inset by the page gutter, so it is
+              not 100vw): together those turned an 84 KB fetch on a mobile
+              profile into a 38 KB one for the same 648px frame. */}
           <Image
             src={huddle}
             alt="The Artemis Esports crew standing together outside an event in team jerseys"
-            widths={[400, 640, 960, 1280, 1920]}
-            sizes="(min-width: 1512px) 545px, (min-width: 901px) 38vw, 100vw"
+            widths={[400, 640, 768, 960, 1280, 1920]}
+            sizes="(min-width: 1512px) 545px, (min-width: 901px) 38vw, calc(100vw - 2.5rem)"
             format="webp"
             quality={72}
             loading="lazy"
@@ -194,12 +198,13 @@ import portrait from '../assets/photos/member-portrait.jpg';
   }
 
   /* :global is required: the <img> is rendered by Astro's Image
-     component, so it does not carry this page's scope attribute. */
+     component, so it does not carry this page's scope attribute.
+     No hover zoom: these are captioned photographs, not links, and a frame
+     that scales under the cursor promises a click that does not exist. */
   .shot-frame :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 200ms var(--ease-out);
   }
 
   .shot figcaption {
@@ -230,18 +235,6 @@ import portrait from '../assets/photos/member-portrait.jpg';
 
   .shot-small .shot-frame {
     aspect-ratio: 4 / 3;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .shot:hover .shot-frame :global(img) {
-      transform: scale(1.03);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .shot:hover .shot-frame :global(img) {
-      transform: none;
-    }
   }
 
   @media (max-width: 900px) {

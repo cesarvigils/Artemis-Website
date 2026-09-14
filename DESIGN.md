@@ -225,60 +225,92 @@ hairlines and rectangles, and a rounded corner anywhere would read as a mistake.
 
 ## 5. Motion
 
-Durations and easings are tokens, and every one of them is under 300ms except the
-two entrance animations.
+**One easing family, three durations.** Nothing is exempt, including the
+entrance. Before pass 4 there were five duration tokens and three curves, which
+gave the same gesture four answers: a press at 120ms beside a press at 240ms, a
+hover eased on one curve with its own underline on another, three properties of
+one hover running on three clocks.
 
 | Token | Value | Used for |
 |---|---|---|
-| `--dur-press` | `120ms` | `:active` scale on buttons |
-| `--dur-hover` | `180ms` | Colour and border changes |
-| `--dur-ui` | `240ms` | Nav state, menu |
-| `--dur-reveal` | `320ms` | Scroll reveal |
-| `--dur-entrance` | `560ms` | Hero entrance |
-| `--ease-out` | `cubic-bezier(.23, 1, .32, 1)` | Default |
-| `--ease-out-quart` | `cubic-bezier(.25, 1, .5, 1)` | Entrances and reveals |
-| `--ease-in-out` | `cubic-bezier(.77, 0, .175, 1)` | On-screen movement |
+| `--dur-1` | `120ms` | Press: `scale(0.97)` on a control, an opacity step on a text link, the menu-icon cross-fade |
+| `--dur-2` | `200ms` | State: hover and focus colours, the nav underline, the sticky-bar cross-fade, the mobile panel, the podium rule |
+| `--dur-3` | `320ms` | Travel: the scroll reveal, the entrance rise, the hero photo's scale settle |
+| `--ease-out-expo` | `cubic-bezier(.16, 1, .3, 1)` | Anything arriving or leaving: entrances, reveals, the bar, the panel |
+| `--ease-out-quart` | `cubic-bezier(.25, 1, .5, 1)` | Hovers and presses, where the travel is a few pixels and a long tail reads as lag |
+| `--press-scale` | `0.97` | Every control on the site. One value, one gesture |
 
 No bounce, no elastic, no `ease-in`, no `transition: all`. Only `transform`,
-`opacity`, `filter`, `clip-path` and colour are animated.
+`opacity`, `clip-path` and colour are animated.
 
 **The vocabulary, and why each one exists:**
 
 | Move | Where | Why it earns its place |
 |---|---|---|
-| Masked line rise | Hero h1, two lines, 70ms apart | Sets the pace of the page once, at the only moment there is nothing to read yet |
-| Fade + 16px rise | Hero lead, proof, actions, page h1 | Sequences the hero so the eye lands on the headline first |
-| Photo 1.04 scale settle, 640ms | Hero image | Keeps the photo from snapping in under the text. No opacity: see the log entry on the LCP |
+| **Position marker count + podium rule** | Hero `P41 → P2` over 420ms, then a 2px rule drawn left to right in 200ms | **The signature moment.** It animates the evidence rather than the logo, it is the one device only this site could do, and it happens once, on one element, on one page |
+| Masked line rise | Hero h1, two lines, 70ms apart | Sets the pace of the page once, at the only moment there is nothing to read yet. This is the house entrance, not the signature |
+| 16px rise, no fade | Hero lead, proof, actions, page h1, the 404 | Sequences the first screen so the eye lands on the headline first, at no cost to legibility |
+| Photo 1.04 scale settle | Hero image | Keeps the photo from snapping in under the text. No opacity: see §8 on the LCP |
 | Scroll parallax, 5% travel | Hero image | Depth between the copy plane and the photo plane; CSS scroll-driven, no JS |
-| Reveal (12px rise, no fade) | Sibling lists below the fold | Signals a new unit without ever being the reason content is not on screen |
-| Underline scale-x | Nav links, current page | Feedback, and it marks the current page without relying on colour alone |
-| `scale(0.97)` | Every button on `:active` | The interface confirms it heard the press |
-| `scale(1.02)` on a photo | Garage slide, About photo, hover only | Signals the frame is interactive |
-| Smooth `scrollBy` | Garage arrows | Shows the carousel moved rather than jumping |
+| Reveal (12px rise, no fade) | Sibling lists below the fold, including the six results rows at 45ms apart | A timing tower filling row by row is the one entrance that is *about* what it reveals |
+| Underline scale-x | Nav links: current page, hover **and focus** | Feedback, and it marks the current page without relying on colour alone |
+| `scale(--press-scale)` | Every button, the garage arrows, the hamburger, on `:active` | The interface confirms it heard the press |
+| `opacity: 0.65` | Every text link on `:active` | Same confirmation, without re-flowing words under the finger |
+| 3px arrow nudge | Every arrow-carrying link; diagonal on the ones that open a tab | The glyph leaves in the direction it points |
+| Cross-fade, 200ms | The mobile panel *and* the bar above it, on one clock | They are one surface arriving, not two |
+| Snap-position `scrollTo` | Garage arrows | Shows the carousel moved, and moves it to the next slide's own stop |
 
 **Rules that hold everywhere:**
 
-- **Nothing is ever animated from `opacity: 0`.** Reveals move 12px and nothing
-  else, so a paused tab, a headless renderer or an observer that never fires can
-  only cost the reader an offset, not the section. Reveal styles are also gated
-  behind `html.js`, so with JS off every element renders at its final state, and
-  a 1.5s timer settles anything the observer has not reached.
+- **Nothing is ever animated from `opacity: 0`.** As of pass 4 this is true of
+  `[data-enter]` as well: `enter-up` is a 16px transform and nothing else, so the
+  hero copy, the CTAs and every inner page's `<h1>` are at full ink on the first
+  frame. Reveals move 12px and nothing else. A paused tab, a headless renderer or
+  an observer that never fires can only cost the reader an offset. Reveal and
+  entrance styles are gated behind `html.js`, so with JS off every element renders
+  at its final state, and a 1.5s timer settles anything the observer missed.
+  - **The one exception, and why it is one.** The two hero lockup lines rise out
+    of an `overflow: hidden` mask, so they are clipped at t=0. That is a clip
+    reveal and not a fade - the type is at full ink throughout - it clears in
+    320ms / 390ms, and the same two words are painted in the header lockup from
+    frame one. A partial mask was tried and rejected: at any travel small enough
+    to be legible at t=0 it cuts the bottom bar off the uppercase and "ESPORTS"
+    reads as "FSPORTS".
+- **The signature moment is safe by construction.** The finished position is what
+  is in the markup; the script borrows the number, counts to it and hands it back.
+  The counting glyph is `aria-hidden` with the real value beside it as text, the
+  field is reserved at the width of the largest number that can appear in it (so
+  counting cannot shift a pixel), and the count is skipped entirely under reduced
+  motion, on a hidden tab, with no field size in the record, or when the module
+  runs later than the CSS clock it is in step with. The podium rule is a CSS
+  animation with `both`, so its finished state is reached whether or not the
+  module runs at all.
 - `prefers-reduced-motion: reduce` collapses all of it: animations are cut to 1ms,
-  reveals lose their transition entirely, the parallax is not attached at all, the
-  garage arrows scroll instantly, and the transition property list is clamped to
-  colour and opacity so no transform-based hover survives. Reduced motion is
-  gentler, not zero: colour still eases.
+  reveals lose their transition, the parallax is not attached at all, the garage
+  arrows scroll instantly, the marker does not count, and the transition property
+  **and duration** lists are clamped together so no transform-based hover survives
+  and no duration lands on the wrong property. Reduced motion is gentler, not
+  zero: colour and opacity still ease.
 - **Nothing on a keyboard-initiated path animates.** The skip link has no
   transition; it arrives on the first frame of the first Tab.
+- **Hover, press and focus are one table, not one state.** Every interactive
+  family has all three, and the focus state carries the same affordance the mouse
+  gets - the nav underline included. Hover is gated behind `@media (hover: hover)
+  and (pointer: fine)`; focus never is.
+- **No hover effect promises a click that does not exist.** The results rows have
+  no row hover, and as of pass 4 neither the garage slides nor the About collage
+  have a hover zoom: they are captioned figures, not links.
 - No `window` scroll listener anywhere. Sticky nav state comes from an
-  IntersectionObserver on a 1px sentinel; the garage progress bar listens to the
-  *track element's* own scroll, passively, coalesced into one `requestAnimationFrame`.
-- Hover effects are gated behind `@media (hover: hover) and (pointer: fine)`.
+  IntersectionObserver on a **64px** sentinel (1px made it a hair trigger on a
+  200ms cross-fade: the bar flipped at two pixels of scroll and back); the garage
+  progress bar listens to the *track element's* own scroll, passively, coalesced
+  into one `requestAnimationFrame`, and writes its width only when the width
+  actually changes.
 
-**Removed in this pass:** Lenis smooth scroll, the pinned four-panel pillar stack,
+**Removed in pass 2:** Lenis smooth scroll, the pinned four-panel pillar stack,
 the scroll-driven horizontal garage pan, the word-by-word mission brightening, the
 magnetic buttons, the looping "On the hunt" marquee, and GSAP itself. Client JS
-went from 133 KB to about 2.9 KB.
+went from 133 KB to about 4 KB.
 
 ## 6. Components
 
@@ -293,7 +325,7 @@ went from 133 KB to about 2.9 KB.
 | `Hero.astro` | Diagonal split, headline, lead, proof row, two actions | Takes the `getImage()` result so the same URL can be preloaded. The proof row prints field size when the record has it |
 | `NextRace.astro` | One thin data strip plus the rest of the calendar | Static date always renders; the countdown is JS-only and its line is pre-reserved. Falls back to "No race scheduled" with the last completed event |
 | `ResultsTable.astro` | The timing sheet | Real `<table>` with explicit ARIA roles so semantics survive the mobile `display: block`. Position, field size, series, class, drivers, date |
-| `Garage.astro` + `GarageSlide.astro` | Native scroll-snap filmstrip | Five fixed slots; the scrollable region is a wrapping `<div>` so the `<ul>` keeps its list role; the `<Image>` stays in `Garage.astro` (see §8) |
+| `Garage.astro` + `GarageSlide.astro` | Native scroll-snap filmstrip | Five fixed slots; the scrollable region is a wrapping `<section aria-label>` (which *is* `role="region"`) so the `<ul>` keeps its list role; the `<Image>` stays in `Garage.astro` (see §8). The arrows step to the next slide's own snap offset, derived from the first slide rather than from a computed `scroll-padding` that Chrome hands back unresolved |
 | `DriverCard.astro` | `compact` column or `row` roster entry | Stats and socials render only when present; the row prints the driver's latest finish, derived from `results.json` |
 | `PillarBand.astro` | The four values, `row` or `long` | `row` is a four-across band (home), `long` one entry per row with a race-weekend sentence and the hashtags along the foot (about) |
 | `PartnerBand.astro` | `row` (logo-led register) or `stack` (dossier entries) | Never renders an empty logo row: with no partners it collapses to one column with the heading, an honest sentence and the mailto. `row` sits on `--bg` so it does not merge with the tinted pillar band above it |
@@ -309,8 +341,35 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 
 - Skip link to `#main`; `<main>`, `<header>`, `<footer>`, `<nav>` landmarks.
 - Visible focus: `2px` teal outline, `3px` offset, on everything focusable.
-- `aria-current="page"` in both the desktop and mobile nav, reinforced by an
-  underline so it does not rely on colour alone.
+- `aria-current="page"` in the desktop nav, the mobile panel **and the footer**,
+  reinforced by an underline so it does not rely on colour alone. One `isCurrent`
+  in `src/lib/links.ts` serves all three, which is what finally gives the home
+  page a marker: the primary nav's first entry is an anchor *into* home rather
+  than a link to it, and the footer's list does contain `/`. An href carrying a
+  fragment is never "the current page".
+- **The results table keeps its column headers at every width.** Below 860px the
+  sheet stacks, and the header row used to be `display: none`, which deletes the
+  node from the accessibility tree rather than only from the screen - measured,
+  the whole `thead` collapsed to six ignored nodes and three of the five columns
+  had no name at all. It is clipped now (`position: absolute` + `clip-path:
+  inset(50%)`), and the five `columnheader` nodes are present at 390, 768 and
+  1440. The `data-label` prefixes are scoped to `td` so they do not prefix the
+  headers themselves.
+- **Print is a real mode.** Browsers drop background colours and keep text
+  colour, so a dark site prints near-white ink on white paper. One `@media print`
+  block inverts the token set (teal becomes `#046b58`, 4.9:1 on white), drops the
+  fixed header, the skip link, the hero photo, the texture and the controls
+  nobody can press, and prints the destination after every external link.
+- **`.driver-number` will keep failing automated contrast checks, and it is
+  fine.** It is `color: transparent` with `-webkit-text-stroke`, so every tool
+  reads 1:1 and defers. As rendered it is a 7.8:1 teal hairline at 36-64px, the
+  element is `aria-hidden`, and the number is printed again as plain text in
+  `.driver-meta`. Do not "fix" it.
+- **`html-validate` reports ~72 `no-redundant-role` errors and they are not
+  errors.** The explicit `role="table|rowgroup|row|columnheader|cell"` on
+  `ResultsTable` is the entire mechanism keeping the stacked mobile layout
+  announced as a table. If the repo ever adopts html-validate in CI, turn the
+  rule off for that file rather than removing the attributes.
 - Mobile menu: `aria-expanded`, `aria-controls`, Escape closes and returns focus,
   the page behind it cannot scroll, and it closes itself on resize to desktop.
 - The garage track is `tabindex="0"` with `role="region"` and a label, so it can be
@@ -386,8 +445,34 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
   working in `astro dev`. Anything using a scroll-driven timeline is written as
   longhands, and verified against the built file, never the dev server.
 - **Stylesheets are inlined** (`build.inlineStylesheets: 'always'`). The whole CSS
-  budget is about 6 KB gzipped; three render-blocking round trips cost more than
-  the bytes.
+  budget is about 7 KB gzipped; three render-blocking round trips cost more than
+  the bytes. Measured with Lighthouse, 33-44% of what is inlined is never matched
+  during load - but most of that is state CSS that has to ship (`forced-colors`,
+  `prefers-contrast`, `@media print`, the =<820px menu, `.is-stuck`, every
+  `:hover` and `:focus-visible` block). The genuinely dead part is ~2-4 KB
+  gzipped per route. Recorded here so a future pass does not re-litigate it: the
+  recommendation is to leave it.
+- **The LCP element is not always the hero image.** Traced directly with a
+  `PerformanceObserver`: unthrottled at 1350px it is the `<img>` at ~180ms; on a
+  throttled phone profile it is `p.hero-lead` on `/` and `p.lead` on `/team`,
+  because the photograph is still arriving. Either way it is not the bottleneck -
+  the image is preloaded, `fetchpriority="high"` and 31 KB. What *was* the
+  bottleneck is fixed: with the entrance faded from `opacity: 0` the LCP text
+  arrived 680ms after it could have, and the measured FCP -> LCP gap on `/team`
+  is now **0ms** over brotli and 144ms uncompressed.
+- **Compression is the difference between 98 and 99.** The local audit server
+  sends the documents uncompressed, and the home document is 108 KB raw against
+  17.8 KB brotli. Lighthouse's simulator weights the render-blocking document at
+  the throttled bandwidth, so the uncompressed harness reports Perf 98 on `/`
+  while the same build served the way `vercel.json` serves it reports 99. Measure
+  against `audit-tool/server-vercel.mjs`, not `audit-tool/server.mjs`, when the
+  number is the point.
+- **`jetbrains-mono-700` is preloaded per page, not everywhere.** It sets
+  above-the-fold text on `/`, `/team` and the 404 (the position marker and the
+  roster numbers) and below the fold on `/about` and `/partners`, where a fourth
+  font preload only competes with the LCP image. `Base.astro` takes a `monoBold`
+  prop. Pass 2's note that "its first use `.pos` is below the fold" was out of
+  date the moment the hero gained a position marker.
 - **Never read layout before first paint.** Measuring every `.reveal` on load, or
   the garage track's `scrollWidth`, forced a full layout of a 5,000px page ahead
   of the first frame and was the largest single main-thread cost on the home page.
@@ -396,6 +481,77 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 ## 9. Decision log
 
 Newest first. Only decisions that changed the system, not every edit.
+
+### Pass 4, 14 Sep 2026
+
+**The site got a signature moment, and it is not the wordmark.** The masked
+two-line lockup rise is the most-reproduced "designed hero" of the last five
+years; drop a law firm's name into it and it is unchanged. It is also used on
+three of five pages, which makes it a grammar rather than a signature. The
+device that is genuinely only this site's is the **P-marker**: `P2 / of 41` on a
+teal rule. It now arrives the way a result arrives on a timing tower - counting
+down from the field size to the finish over 420ms with an exponential ease-out,
+then the podium rule drawing left to right underneath in 200ms, built from the
+same `scaleX` primitive as the nav underline. It animates the evidence, not the
+logo; it is the one thing on the first screen a sponsor doing a 60-second check
+is looking for; and it happens once per load on one element on one page. The
+masked rise stays as the house entrance. **This is the only signature moment.
+Nothing else gets new decorative motion.**
+
+**The entrance stopped lying about the invariant.** §5 has said "nothing is ever
+animated from `opacity: 0`" since pass 2, and it was true of `.reveal` and of
+`[data-enter-media]` and false of `[data-enter]`. Frozen at document-timeline
+t=0 the home first screen was a photograph and nothing else - no headline, no
+claim, no proof row, no CTAs - and `/team`, `/about` and `/partners` shipped an
+invisible `<h1>`. It cost real LCP: Lighthouse named `p.lead` as the largest
+paint on `/team`, arriving exactly `120ms + 560ms` late. `enter-up` is now a
+16px transform and nothing else. Measured at t=0: every `[data-enter]` element
+at opacity 1, both headline lines mid-mask, and the FCP -> LCP gap on `/team`
+down to 0ms over brotli.
+
+**Five duration tokens and three curves became three and two.** A system that
+offers four answers to "how long is a press" is not a system. `--dur-1 / -2 / -3`
+(120 / 200 / 320) and `--ease-out-expo` for arrivals, `--ease-out-quart` for
+hovers. The entrance is not exempt: it settles at 520ms instead of 840ms.
+`--press-scale: 0.97` replaced a `0.97` on buttons and a `0.94` on the garage
+arrows - two scales for one gesture.
+
+**Press and focus are states, not afterthoughts.** Eight of ten pressable
+families acknowledged nothing at all, and the nav underline - the affordance that
+says "this one" - was behind `@media (hover: hover)`, so a keyboard user got the
+ring and never the mark. Every family now has hover, press and focus, and the
+focus state carries the same affordance the mouse gets. Controls scale; text
+links take an opacity step, because a scaling text link re-flows words under the
+finger.
+
+**The mobile menu and the bar move together.** The full-screen panel snapped in
+0ms while the header above it cross-faded for 240ms, so for a quarter of a second
+they were different colours with hero foliage showing between them. The panel's
+closed state is now `visibility: hidden` rather than `display: none` - which is
+what lets it transition at all while still leaving the accessibility tree and the
+tab order - and it and the bar share one tier and one curve. The `hidden`
+attribute stays the single source of truth; only the way it is expressed changed.
+
+**The garage arrows step to a real snap point.** They used to take the *first*
+slide's width plus a hard-coded 32px gap and scroll by that every time, for
+slides of three widths and a real gap of 24. It landed correctly only because
+Chrome resolves mandatory snap in the direction of travel. The first rewrite read
+`scroll-padding-inline-start` from `getComputedStyle`, which Chrome hands back as
+the unresolved `max(56px, 50% - 644px)` - parsing that gave a pad of 0, every
+stop landed 76px past its own snap point, and snap pulled the track straight
+back: six presses, zero pixels. The stops are measured against the first slide
+instead, which *is* scrollLeft 0 by construction.
+
+**A hover zoom on a figure that is not a link was the same mistake the results
+table refuses.** `ResultsTable` has no row hover and the comment says why: "a
+background change promises a click that does not exist". The garage slides and
+the About collage were making that promise with a 3% scale. The zoom is gone.
+
+**The deployment is configured, not assumed.** `vercel.json` is in the repo root:
+security headers including a CSP verified against the built output, `immutable`
+on the hashed assets and the fonts, the five legacy redirects that only ever
+existed as an `.htaccess` snippet Vercel does not read, and one slash policy so
+the canonical, the sitemap and every internal link are the same string.
 
 ### Pass 3, 14 Sep 2026
 

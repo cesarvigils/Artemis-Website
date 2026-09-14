@@ -1,11 +1,11 @@
 ---
 import nav from '../data/nav.json';
-import { CTA_INTENTS } from '../lib/links';
+import { CTA_INTENTS, isCurrent } from '../lib/links';
 import Mark from './Mark.astro';
 import Icon from './Icon.astro';
 
-const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const isCurrent = (href: string) => (href.replace(/\/+$/, '') || '/') === path;
+const pathname = Astro.url.pathname;
+const path = pathname.replace(/\/+$/, '') || '/';
 
 /* The header button is the page's own primary action. On every page but one
    that is "Join the team"; on /partners the page exists to start a partnership
@@ -26,7 +26,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
           <a
             href={link.href}
             class="nav-link"
-            aria-current={isCurrent(link.href) ? 'page' : undefined}
+            aria-current={isCurrent(link.href, pathname) ? 'page' : undefined}
           >
             {link.label}
           </a>
@@ -73,7 +73,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     <nav class="mobile-links" aria-label="Primary, mobile">
       {
         nav.primary.map((link) => (
-          <a href={link.href} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+          <a href={link.href} aria-current={isCurrent(link.href, pathname) ? 'page' : undefined}>
             {link.label}
             <Icon name="arrow-right" size={20} />
           </a>
@@ -100,8 +100,12 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     top: 0;
     z-index: var(--z-nav);
     border-bottom: 1px solid transparent;
-    transition: background-color var(--dur-ui) var(--ease-out),
-      border-color var(--dur-ui) var(--ease-out);
+    /* Same tier as the panel below it. The bar used to cross-fade for 240ms
+       while the full-screen menu it belongs to appeared in 0ms, so for a
+       quarter of a second the header and the panel were different colours
+       with hero foliage showing between them. */
+    transition: background-color var(--dur-2) var(--ease-out-expo),
+      border-color var(--dur-2) var(--ease-out-expo);
   }
 
   /* Scrim so the mark and the toggle stay readable over the hero photo. */
@@ -111,7 +115,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     inset: 0;
     background: linear-gradient(to bottom, rgba(0, 10, 8, 0.72), transparent);
     pointer-events: none;
-    transition: opacity var(--dur-ui) var(--ease-out);
+    transition: opacity var(--dur-2) var(--ease-out-expo);
   }
 
   /* Fully opaque, no blur. At 94% the display type behind the bar ghosted
@@ -160,7 +164,8 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     min-height: 44px;
     color: var(--ink);
     --mark-size: 28px;
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
   }
 
   @media (min-width: 821px) {
@@ -195,7 +200,8 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     color: var(--ink-dim);
     /* 44px of pointer target without changing --nav-h. */
     padding-block: 0.95rem;
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
   }
 
   .nav-link::after {
@@ -208,7 +214,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     background: var(--teal);
     transform: scaleX(0);
     transform-origin: left center;
-    transition: transform var(--dur-hover) var(--ease-out);
+    transition: transform var(--dur-2) var(--ease-out-quart);
   }
 
   .nav-link[aria-current='page'] {
@@ -216,6 +222,17 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
   }
 
   .nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
+  /* Outside the hover query on purpose. The underline is the affordance that
+     says "this one"; behind `@media (hover: hover)` it was mouse-only, so a
+     keyboard user got the focus ring and never the mark. */
+  .nav-link:focus-visible {
+    color: var(--ink);
+  }
+
+  .nav-link:focus-visible::after {
     transform: scaleX(1);
   }
 
@@ -255,6 +272,18 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     }
   }
 
+  .nav-cta:focus-visible {
+    border-color: var(--teal);
+    color: var(--teal);
+  }
+
+  .site-nav.is-stuck .nav-cta:focus-visible,
+  :global(html.menu-open) .nav-cta:focus-visible {
+    background: var(--teal-hover);
+    border-color: var(--teal-hover);
+    color: var(--teal-ink);
+  }
+
   /* Order of yielding in the bar, from most to least protected: hamburger,
      lockup, CTA. This is the one item allowed to shrink, so the control that
      opens the navigation can never be pushed off the device. */
@@ -270,10 +299,12 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     letter-spacing: var(--track-link);
   }
 
+  /* The only way to reach navigation on a phone, and until this pass the one
+     control on the site that gave nothing back: no hover, no press, no
+     transition, while the compact CTA 10px to its left pressed. */
   .menu-toggle {
     display: none;
-    align-items: center;
-    justify-content: center;
+    place-items: center;
     /* `width` alone is advisory on a flex item: the declared 44px measured
        33px on a 320px phone because the default flex-shrink applied. */
     flex: 0 0 44px;
@@ -282,19 +313,39 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     margin-right: -10px;
     color: var(--ink);
     cursor: pointer;
+    transition: color var(--dur-2) var(--ease-out-quart),
+      transform var(--dur-1) var(--ease-out-quart);
   }
 
+  .menu-toggle:active {
+    transform: scale(var(--press-scale));
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .menu-toggle:hover {
+      color: var(--teal);
+    }
+  }
+
+  .menu-toggle:focus-visible {
+    color: var(--teal);
+  }
+
+  /* Both glyphs share one grid cell and cross-fade. A `display` swap cannot
+     transition, so the icon teleported while the panel it opens moved. */
   .menu-icon {
     display: flex;
+    grid-area: 1 / 1;
+    transition: opacity var(--dur-1) var(--ease-out-quart);
   }
 
   .menu-icon-close,
   .menu-toggle[aria-expanded='true'] .menu-icon-open {
-    display: none;
+    opacity: 0;
   }
 
   .menu-toggle[aria-expanded='true'] .menu-icon-close {
-    display: flex;
+    opacity: 1;
   }
 
   .mobile-menu {
@@ -324,7 +375,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     }
 
     .menu-toggle {
-      display: flex;
+      display: grid;
     }
 
     .mobile-menu {
@@ -343,10 +394,30 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
          own to scroll and every drag on it used to scroll the page behind.
          Paired with the scroll lock in scripts/site.ts. */
       overscroll-behavior: contain;
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+      /* Same tier and same curve as the bar above it, so the header and the
+         panel are one surface arriving rather than two. */
+      transition: opacity var(--dur-2) var(--ease-out-expo),
+        transform var(--dur-2) var(--ease-out-expo);
     }
 
+    /* `visibility`, not `display`. The panel has to leave the accessibility
+       tree and the tab order the instant it closes - which `visibility:
+       hidden` does and `opacity: 0` does not - while still being able to
+       animate out. A `display: none` closed state cannot transition at all,
+       which is why this used to snap. The `hidden` attribute stays the single
+       source of truth; only the way it is expressed changes. */
     .mobile-menu[hidden] {
-      display: none;
+      display: flex;
+      visibility: hidden;
+      pointer-events: none;
+      opacity: 0.6;
+      transform: translateY(-8px);
+      transition: opacity var(--dur-2) var(--ease-out-expo),
+        transform var(--dur-2) var(--ease-out-expo),
+        visibility 0s linear var(--dur-2);
     }
 
     .mobile-links {
@@ -367,9 +438,15 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       padding-block: 1.125rem;
       border-bottom: 1px solid var(--line);
       color: var(--ink);
+      transition: color var(--dur-2) var(--ease-out-quart),
+        opacity var(--dur-1) var(--ease-out-quart);
     }
 
     .mobile-links a[aria-current='page'] {
+      color: var(--teal);
+    }
+
+    .mobile-links a:focus-visible {
       color: var(--teal);
     }
 
@@ -384,8 +461,14 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       opacity: 0;
     }
     .nav-link[aria-current='page']::after,
+    .nav-link:focus-visible::after,
     .nav-link:hover::after {
       opacity: 1;
+    }
+    /* The panel still fades, it just does not travel. */
+    .mobile-menu,
+    .mobile-menu[hidden] {
+      transform: none;
     }
   }
 

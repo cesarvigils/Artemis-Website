@@ -187,7 +187,7 @@ const list = partners.map((partner) => {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
-    transition: opacity var(--dur-hover) var(--ease-out);
+    transition: opacity var(--dur-2) var(--ease-out-quart);
   }
 
   .is-row .partner-marks :global(img) {
@@ -286,6 +286,23 @@ const list = partners.map((partner) => {
     .partner-marks a:hover .partner-since {
       color: var(--teal);
     }
+  }
+
+  /* One hover, one clock: the colour step had no transition of its own and
+     snapped while the anchor around it eased. */
+  .partner-name,
+  .partner-since {
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  .partner-item > a:focus-visible .partner-name,
+  .partner-marks a:focus-visible .partner-since {
+    color: var(--teal);
+  }
+
+  .partner-item > a:active,
+  .partner-marks a:active {
+    opacity: 0.65;
   }
 
   /* The only partner mark on the site is white-on-transparent, so on the

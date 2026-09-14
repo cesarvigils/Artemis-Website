@@ -25,6 +25,19 @@ interface Props {
 const { image, alt, proof, ctaHref } = Astro.props;
 
 const proofDate = proof ? raceDate(proof.date) : '';
+
+/* The position marker is the signature moment: on load it counts down from
+   the field size to the finish, the way a timing tower resolves a result.
+   Two things make that safe rather than clever:
+
+   1. The finished value is what is in the markup. No JS, a paused tab, a
+      headless render or reduced motion all show `P2` on the first frame; the
+      script only borrows the number, counts to it and hands it back.
+   2. The field is reserved at its widest ("P41", not "P2"), so counting
+      cannot shift a single pixel of the row beside it. `--font-mono` is
+      tabular, so the reservation is exactly this many character advances. */
+const posChars = proof ? String(proof.entries ?? proof.position).length + 1 : 3;
+const isPodium = !!proof && proof.position <= 3;
 ---
 
 <section class="hero">
@@ -51,15 +64,30 @@ const proofDate = proof ? raceDate(proof.date) : '';
         >
       </h1>
 
-      <p class="hero-lead lead" data-enter style="--enter-delay: 180ms">
+      <p class="hero-lead lead" data-enter style="--enter-delay: 120ms">
         {site.heroLead}
       </p>
 
       {
         proof && (
-          <p class="hero-proof" data-enter style="--enter-delay: 230ms">
+          <p class="hero-proof" data-enter style="--enter-delay: 160ms">
             <span class="hero-pos-block">
-              <span class="hero-pos data">P{proof.position}</span>
+              <span
+                class:list={['hero-pos', 'data', { 'is-podium': isPodium }]}
+                style={`--pos-chars: ${posChars}`}
+                data-pos-to={proof.position}
+                data-pos-from={proof.entries ?? undefined}
+              >
+                {/* The counting glyph is decorative while it counts, so it is
+                    hidden from assistive tech and the real value sits beside
+                    it as text that never changes. No `aria-live`: this is a
+                    load-time flourish, not an update the reader asked for. */}
+                <span class="hero-pos-value" aria-hidden="true">
+                  P{proof.position}
+                </span>
+                <span class="sr-only">P{proof.position}</span>
+                {isPodium && <span class="hero-pos-rule" aria-hidden="true" />}
+              </span>
               {proof.entries && <span class="hero-pos-field data">of {proof.entries}</span>}
             </span>
             <span class="hero-proof-body">
@@ -72,7 +100,7 @@ const proofDate = proof ? raceDate(proof.date) : '';
         )
       }
 
-      <div class="hero-actions" data-enter style="--enter-delay: 280ms">
+      <div class="hero-actions" data-enter style="--enter-delay: 200ms">
         <a class="btn btn-solid" href={ctaHref} target="_blank" rel="noopener">
           Join the team
           <Icon name="arrow-up-right" size={16} />
@@ -194,11 +222,50 @@ const proofDate = proof ? raceDate(proof.date) : '';
     border-right: 1px solid var(--line-teal);
   }
 
+  /* The field is reserved at the width of the largest number that can ever
+     appear in it, so the count cannot move the rule beside it. */
   .hero-pos {
+    position: relative;
+    display: block;
+    min-width: calc(var(--pos-chars, 3) * (1ch + 0.02em));
+    padding-bottom: 0.2em;
     font-weight: 700;
     font-size: var(--text-lg);
     line-height: 1.1;
     color: var(--teal);
+  }
+
+  /* The second half of the signature moment: once the number has settled,
+     the podium rule draws left to right underneath it. Same primitive as the
+     nav underline (scaleX from a left origin), same rule the results sheet
+     already puts under a podium position - so the move is new, the
+     vocabulary is not.
+
+     Written as a CSS animation with `both`, not a JS-toggled class, so the
+     finished state is reached whether or not the module ever runs. */
+  .hero-pos-rule {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: currentColor;
+    transform-origin: left center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .hero-pos-rule {
+      animation: draw-rule var(--dur-2) var(--ease-out-expo) both;
+      /* 160ms (the row's entrance) + 420ms (the count) - the rule lands the
+         moment the number stops. */
+      animation-delay: 580ms;
+    }
+  }
+
+  @keyframes draw-rule {
+    from {
+      transform: scaleX(0);
+    }
   }
 
   .hero-pos-field {

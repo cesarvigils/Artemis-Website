@@ -330,7 +330,7 @@ const channels = channelLinks(site.socials, site.store);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart);
   }
 
   .roster-name {
@@ -346,6 +346,14 @@ const channels = channelLinks(site.socials, site.store);
     .roster-line a:hover {
       color: var(--teal);
     }
+  }
+
+  .roster-line a:focus-visible {
+    color: var(--teal);
+  }
+
+  .roster-line a:active {
+    opacity: 0.65;
   }
 
   .reach-inner {
@@ -384,13 +392,21 @@ const channels = channelLinks(site.socials, site.store);
     letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .channel-list a:hover {
       color: var(--teal);
     }
+  }
+
+  .channel-list a:focus-visible {
+    color: var(--teal);
+  }
+
+  .channel-list a:active {
+    opacity: 0.65;
   }
 
   .contact-inner {
@@ -430,8 +446,8 @@ const channels = channelLinks(site.socials, site.store);
     line-height: var(--leading-tight);
     overflow-wrap: anywhere;
     border-bottom: 1px solid var(--line);
-    transition: color var(--dur-hover) var(--ease-out),
-      border-color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      border-color var(--dur-2) var(--ease-out-quart);
   }
 
   .contact-btn {
@@ -443,6 +459,15 @@ const channels = channelLinks(site.socials, site.store);
       color: var(--teal);
       border-color: var(--teal);
     }
+  }
+
+  .contact-email:focus-visible {
+    color: var(--teal);
+    border-color: var(--teal);
+  }
+
+  .contact-email:active {
+    opacity: 0.65;
   }
 
   /* Two columns rather than three between 901 and 1100: at 1024 the three

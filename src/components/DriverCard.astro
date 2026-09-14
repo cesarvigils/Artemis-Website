@@ -122,7 +122,8 @@ const stats = [
     gap: 0.35rem;
     height: 100%;
     padding: var(--space-m) var(--space-s) var(--space-m) var(--compact-inset, 0px);
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
   }
 
   .driver-compact .driver-number {
@@ -138,7 +139,12 @@ const stats = [
     color: transparent;
     -webkit-text-stroke: 1px var(--teal-soft);
     margin-bottom: var(--space-2xs);
-    transition: color var(--dur-ui) var(--ease-out);
+    /* All three properties one hover moves are on one clock. They used to run
+       on three: the fill eased over 240ms, the stroke colour snapped because
+       it was missing from the list, and the name snapped because it had no
+       list at all. */
+    transition: color var(--dur-2) var(--ease-out-quart),
+      -webkit-text-stroke-color var(--dur-2) var(--ease-out-quart);
   }
 
   .driver-compact .driver-name {
@@ -150,6 +156,7 @@ const stats = [
     line-height: var(--leading-tight);
     text-wrap: balance;
     overflow-wrap: anywhere;
+    transition: color var(--dur-2) var(--ease-out-quart);
   }
 
   .driver-compact .driver-focus {
@@ -176,6 +183,15 @@ const stats = [
     .driver-compact > a:hover .driver-name {
       color: var(--teal);
     }
+  }
+
+  .driver-compact > a:focus-visible .driver-number {
+    color: var(--teal);
+    -webkit-text-stroke-color: var(--teal);
+  }
+
+  .driver-compact > a:focus-visible .driver-name {
+    color: var(--teal);
   }
 
   /* Row: the full roster entry, laid out like a timing sheet line. */
@@ -291,12 +307,13 @@ const stats = [
     letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
   }
 
   .driver-socials a > span:first-child {
     border-bottom: 1px solid var(--line);
-    transition: border-color var(--dur-hover) var(--ease-out);
+    transition: border-color var(--dur-2) var(--ease-out-quart);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -306,6 +323,14 @@ const stats = [
     .driver-socials a:hover > span:first-child {
       border-color: var(--teal);
     }
+  }
+
+  .driver-socials a:focus-visible {
+    color: var(--teal);
+  }
+
+  .driver-socials a:focus-visible > span:first-child {
+    border-color: var(--teal);
   }
 
   /* The whole 761-1200px band - most tablets and small laptops - gave the

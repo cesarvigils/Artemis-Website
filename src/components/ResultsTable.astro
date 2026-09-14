@@ -29,8 +29,13 @@ const driverList = (names: string[]) =>
   </thead>
   <tbody role="rowgroup">
     {
-      results.map((result) => (
-        <tr role="row">
+      /* The timing tower fills row by row. This is the one entrance on the
+         site that is *about* what it reveals, and it is a genuine sibling
+         list rather than a wrapper - the distinction the reveal system has
+         always drawn. The stagger is capped at six rows (225ms total) so a
+         longer sheet never turns into a slideshow. */
+      results.map((result, i) => (
+        <tr role="row" class="reveal" style={`--reveal-delay: ${Math.min(i, 5) * 45}ms`}>
           <td role="cell" class="col-pos" data-label="Pos">
             {/* A podium is marked by a rule as well as by the teal, so it
                 survives forced colours and reads for a colour-blind visitor. */}
@@ -234,8 +239,20 @@ const driverList = (names: string[]) =>
       width: auto;
     }
 
+    /* Clipped, not deleted. `display: none` removes the node from the
+       accessibility tree as well as from the screen, and an explicit
+       `role="columnheader"` cannot survive that - measured at 390 and 768
+       the whole header rowgroup collapsed to six ignored nodes and three of
+       the five columns lost their name entirely. The row is absolutely
+       positioned inside a `display: block` table, so it leaves the flow and
+       costs no layout. */
     .results thead {
-      display: none;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
 
     /* The position gutter is capped as a share of the row as well as in rem:
@@ -268,8 +285,11 @@ const driverList = (names: string[]) =>
       margin-top: 0.6rem;
     }
 
-    .col-driver::before,
-    .col-date::before {
+    /* `td`, not the bare class: the header row carries the same classes and
+       no `data-label`, so an unscoped rule prefixed the clipped column
+       headers with a bare ": " and a screen reader read ": DRIVERS". */
+    td.col-driver::before,
+    td.col-date::before {
       content: attr(data-label) ': ';
       font-family: var(--font-mono);
       font-size: var(--text-2xs);

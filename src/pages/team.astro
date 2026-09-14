@@ -46,6 +46,7 @@ const crewCount = roster.length - racingDrivers.length;
 <Base
   title="Team | Artemis Esports"
   description="The Artemis Esports roster: road drivers, oval drivers and the pitwall behind the endurance and GT program on iRacing."
+  monoBold
 >
   <PageHead
     title="The crew"
@@ -153,7 +154,7 @@ const crewCount = roster.length - racingDrivers.length;
     flex-direction: column;
     gap: 0.2rem;
     padding: var(--space-s) var(--space-s) var(--space-s) 0;
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart);
   }
 
   .entry-strip li:nth-child(3n + 2) a,
@@ -193,6 +194,12 @@ const crewCount = roster.length - racingDrivers.length;
     max-width: var(--measure-lead);
   }
 
+  .entry-name,
+  .entry-number {
+    transition: color var(--dur-2) var(--ease-out-quart),
+      -webkit-text-stroke-color var(--dur-2) var(--ease-out-quart);
+  }
+
   @media (hover: hover) and (pointer: fine) {
     .entry-strip a:hover .entry-name {
       color: var(--teal);
@@ -200,6 +207,18 @@ const crewCount = roster.length - racingDrivers.length;
     .entry-strip a:hover .entry-number {
       -webkit-text-stroke-color: var(--teal);
     }
+  }
+
+  .entry-strip a:focus-visible .entry-name {
+    color: var(--teal);
+  }
+
+  .entry-strip a:focus-visible .entry-number {
+    -webkit-text-stroke-color: var(--teal);
+  }
+
+  .entry-strip a:active {
+    opacity: 0.65;
   }
 
   .roster-inner {

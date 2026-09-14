@@ -190,6 +190,17 @@ function initAnchors() {
 /* Next race countdown ------------------------------------------------
    The date is already in the markup as text. This only adds the
    "how long from now" line, which is meaningless without a clock.
+
+   Two things this is careful about, because a site built as a timing
+   tower cannot ship a clock that is wrong:
+   - The tick is scheduled to the next *minute boundary of the remaining
+     time*, not to a free-running 30s interval, and it re-renders the
+     moment the tab becomes visible again. A background tab throttles
+     timers to a minute or more, so without that a reader coming back to
+     the tab could read a value minutes old.
+   - The line never swaps hard. It arrives once with a short fade and
+     each new value fades up from 0.55, so the change is legible as a
+     change without the text popping.
 ------------------------------------------------------------------- */
 function initCountdown() {
   const el = document.querySelector<HTMLElement>('[data-countdown]');
@@ -198,24 +209,112 @@ function initCountdown() {
   const target = Date.parse(el.dataset.countdown ?? '');
   if (Number.isNaN(target)) return;
 
-  const render = () => {
+  let timer = 0;
+  let last = '';
+
+  const text = () => {
     const diff = target - Date.now();
-    if (diff <= 0) {
-      el.textContent = 'Under way';
-      el.hidden = false;
-      return false;
-    }
+    if (diff <= 0) return 'Under way';
     const minutes = Math.floor(diff / 60000);
     const days = Math.floor(minutes / 1440);
     const hours = Math.floor((minutes % 1440) / 60);
     const mins = minutes % 60;
     const pad = (n: number) => String(n).padStart(2, '0');
-    el.textContent = `In ${days}d ${pad(hours)}h ${pad(mins)}m`;
-    el.hidden = false;
-    return true;
+    return `In ${days}d ${pad(hours)}h ${pad(mins)}m`;
   };
 
-  if (render()) window.setInterval(render, 30000);
+  const fade = (from: number) => {
+    if (reduceMotion.matches || typeof el.animate !== 'function') return;
+    // Never from 0: an element that starts fully transparent is not a paint
+    // candidate, and the site's rule is that nothing animates out of nothing.
+    el.animate([{ opacity: from }, { opacity: 1 }], {
+      duration: 200,
+      easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    });
+  };
+
+  const render = () => {
+    const next = text();
+    if (next === last) return next !== 'Under way';
+    const first = last === '';
+    last = next;
+    el.textContent = next;
+    el.hidden = false;
+    fade(first ? 0.6 : 0.55);
+    return next !== 'Under way';
+  };
+
+  const tick = () => {
+    window.clearTimeout(timer);
+    if (!render()) return;
+    // The display changes when the remaining time crosses a minute
+    // boundary, so wait exactly that long rather than a fixed interval.
+    const remainder = (target - Date.now()) % 60000;
+    timer = window.setTimeout(tick, remainder > 0 ? remainder : 60000);
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tick();
+  });
+
+  tick();
+}
+
+/* Hero position marker ------------------------------------------------
+   The site's signature moment, and the only new one. The marker counts
+   from the field size down to the finishing position - P41 to P2 - eased
+   like a timing tower resolving a result, and the podium rule beneath it
+   is drawn by CSS the moment the number settles.
+
+   Everything here is an enhancement of finished markup: the real position
+   is already rendered, the glyph this touches is `aria-hidden` with the
+   value repeated as text beside it, and the field is reserved at its
+   widest so counting cannot shift the row. If the module runs late, the
+   tab is hidden, motion is reduced, or the record carries no field size,
+   the count is skipped and the marker is simply correct.
+------------------------------------------------------------------- */
+function initHeroCount() {
+  const el = document.querySelector<HTMLElement>('[data-pos-to][data-pos-from]');
+  const value = el?.querySelector<HTMLElement>('.hero-pos-value');
+  if (!el || !value) return;
+
+  const to = Number(el.dataset.posTo);
+  const from = Number(el.dataset.posFrom);
+  if (!Number.isFinite(to) || !Number.isFinite(from) || from <= to) return;
+  if (reduceMotion.matches || document.hidden) return;
+
+  const DELAY = 160;
+  const DURATION = 420;
+
+  // The rule under the number is a CSS animation on the document timeline
+  // with a fixed delay. If this module is already past that point there is
+  // nothing to be in step with, so the count is dropped rather than played
+  // out of order.
+  const now = Number(document.timeline?.currentTime ?? performance.now());
+  if (!Number.isFinite(now) || now > DELAY + DURATION - 100) return;
+
+  value.textContent = `P${from}`;
+
+  const run = (start: number) => {
+    const frame = (stamp: number) => {
+      const t = Math.min(1, (stamp - start) / DURATION);
+      // Exponential ease-out: the same shape as --ease-out-expo, so the
+      // number decelerates the way everything else on the site does.
+      const eased = t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+      value.textContent = `P${Math.round(from + (to - from) * eased)}`;
+      if (t < 1) requestAnimationFrame(frame);
+      else value.textContent = `P${to}`;
+    };
+    requestAnimationFrame(frame);
+  };
+
+  window.setTimeout(() => {
+    if (document.hidden) {
+      value.textContent = `P${to}`;
+      return;
+    }
+    run(performance.now());
+  }, Math.max(0, DELAY - now));
 }
 
 /* Garage: native scroll-snap carousel --------------------------------
@@ -233,6 +332,10 @@ function initGarage() {
   const controls = document.querySelector<HTMLElement>('[data-garage-controls]');
 
   let frame = 0;
+  // The thumb's width only changes when the viewport or the content does.
+  // It was being written on every frame of every scroll, to the value it
+  // already held - a layout-driving property inside a scroll handler.
+  let lastWidth = '';
 
   const update = () => {
     frame = 0;
@@ -248,7 +351,11 @@ function initGarage() {
     if (progress) {
       // The thumb is as wide as the share of the strip on screen, and
       // travels the rest, so it reads as "you are here, this much is left".
-      progress.style.width = `${(visible * 100).toFixed(3)}%`;
+      const width = `${(visible * 100).toFixed(3)}%`;
+      if (width !== lastWidth) {
+        progress.style.width = width;
+        lastWidth = width;
+      }
       progress.style.transform = `translateX(${(ratio * (1 / visible - 1) * 100).toFixed(3)}%)`;
     }
     if (prev) prev.disabled = left < 8;
@@ -263,11 +370,37 @@ function initGarage() {
     frame = requestAnimationFrame(update);
   };
 
+  /* Step to the next slide's own snap position, not by a fixed amount.
+     This used to take the *first* slide's width plus a hard-coded 32px gap
+     and scroll by that every time, for slides of three different widths
+     (276 / 614 / 806) and a real gap of 24. It landed correctly only
+     because Chrome resolves mandatory snap in the direction of travel; a
+     browser that snapped to the nearest point would have left one press
+     moving nothing. */
   const step = (direction: 1 | -1) => {
-    const slide = track.querySelector<HTMLElement>('.garage-slide');
-    const amount = slide ? slide.getBoundingClientRect().width + 32 : track.clientWidth * 0.8;
-    track.scrollBy({
-      left: direction * amount,
+    const slides = Array.from(track.querySelectorAll<HTMLElement>('.garage-slide'));
+    if (!slides.length) return;
+
+    /* The stops are measured against the first slide rather than against the
+       computed `scroll-padding-inline-start`. The track's scroll padding and
+       the list's inline padding are the same CSS expression on purpose (the
+       strip lines up with the container gutter, not the viewport edge), so
+       the first slide *is* scrollLeft 0 - and reading it that way avoids
+       `getComputedStyle` on a `max()` with a percentage in it, which Chrome
+       hands back unresolved. Parsing that gave a pad of 0, which put every
+       stop 76px past its own snap point, and mandatory snap then pulled the
+       track straight back: six presses, zero pixels. */
+    const origin = slides[0].offsetLeft;
+    const stops = slides.map((slide) => slide.offsetLeft - origin);
+    const here = track.scrollLeft;
+    const max = track.scrollWidth - track.clientWidth;
+    const target =
+      direction === 1
+        ? stops.find((stop) => stop > here + 4)
+        : [...stops].reverse().find((stop) => stop < here - 4);
+
+    track.scrollTo({
+      left: Math.max(0, Math.min(max, target ?? (direction === 1 ? max : 0))),
       behavior: reduceMotion.matches ? 'auto' : 'smooth',
     });
   };
@@ -296,6 +429,7 @@ function init() {
   initMenu();
   initAnchors();
   initCountdown();
+  initHeroCount();
   initGarage();
   initYear();
 }

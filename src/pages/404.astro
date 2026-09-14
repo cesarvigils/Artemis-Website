@@ -12,19 +12,26 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
 <Base
   title="Page not found | Artemis Esports"
   description="That page does not exist. Head back to the Artemis Esports home page or join the team on Discord."
+  monoBold
+  noindex
 >
   <section class="notfound">
     <div class="container notfound-inner">
       <span class="notfound-mark"><Mark variant="mark" /></span>
 
+      {/* The same `[data-enter]` grammar the other four pages use. This was
+          the one page on the site with no motion of any kind, which made it
+          read as unfinished rather than as calm - and an error page is the
+          one place where a little personality costs nothing, because nobody
+          sees it twice. */}
       <div class="notfound-copy">
-        <p class="notfound-code data">404</p>
-        <h1 class="display-lg">Off track.</h1>
-        <p class="lead">
+        <p class="notfound-code data" data-enter>404</p>
+        <h1 class="display-lg" data-enter>Off track.</h1>
+        <p class="lead" data-enter style="--enter-delay: 60ms">
           That page does not exist. Nothing was lost, the pit lane is this way.
         </p>
 
-        <div class="notfound-actions">
+        <div class="notfound-actions" data-enter style="--enter-delay: 120ms">
           <a class="btn btn-solid" href="/">
             Back to the paddock
             <Icon name="arrow-right" size={16} />
@@ -35,7 +42,7 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
           </a>
         </div>
 
-        <nav class="notfound-links" aria-label="Site pages">
+        <nav class="notfound-links" aria-label="Site pages" data-enter style="--enter-delay: 160ms">
           {pages.map((link) => <a href={link.href}>{link.label}</a>)}
         </nav>
       </div>
@@ -114,13 +121,18 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
     letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
-    transition: color var(--dur-hover) var(--ease-out);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      opacity var(--dur-1) var(--ease-out-quart);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .notfound-links a:hover {
       color: var(--teal);
     }
+  }
+
+  .notfound-links a:focus-visible {
+    color: var(--teal);
   }
 
   /* 860, not 760: at 768 the split survived into a 193px left column holding

@@ -27,8 +27,17 @@ const SIZES: Record<string, string> = {
   wide: '(min-width: 1467px) 821px, (min-width: 901px) 56vw, 84vw',
 };
 const sizesFor = (i: number) => SIZES[cars[i].shape] ?? SIZES.standard;
-const altFor = (i: number) =>
-  `${cars[i].car} in the Artemis livery at ${cars[i].track}`;
+
+/* `at ${track}` wants a circuit name. One record's track is the generic
+   "Short track", and "at Short track" reads to a screen-reader user like an
+   unfilled field, so a generic value takes a phrasing that is true of it. The
+   data file is the bot's to write; this is the renderer's job. */
+const altFor = (i: number) => {
+  const { car, track } = cars[i];
+  return /\btrack\b|\boval\b/i.test(track)
+    ? `${car} in the Artemis livery on a ${track.toLowerCase()}`
+    : `${car} in the Artemis livery at ${track}`;
+};
 ---
 
 <section class="garage rule-top" id="garage" aria-labelledby="garage-heading">
@@ -49,19 +58,23 @@ const altFor = (i: number) =>
   </div>
 
   {/* The scrollable region is the wrapper, not the list: `role="region"` on a
-      <ul> overrides its implicit list role and orphans every <li> in it. */}
-  <div
+      <ul> overrides its implicit list role and orphans every <li> in it. A
+      labelled <section> *is* `role="region"`, so the element says it rather
+      than asserting it with an attribute. */}
+  <section
     class="garage-viewport"
     id="garage-track"
     data-garage-track
     tabindex="0"
-    role="region"
     aria-label="Artemis liveries, scroll sideways"
   >
     <ul class="garage-track">
       <GarageSlide car={cars[0].car} track={cars[0].track} caption={cars[0].caption} shape={cars[0].shape}>
-        {/* Ladders stop at each source's own width so Astro never upscales. */}
-        <Image src={sebringMustangGt3} alt={altFor(0)} widths={[320, 480, 640, 1024]} sizes={sizesFor(0)} format="webp" quality={72} loading="lazy" decoding="async" />
+        {/* Ladders stop at each source's own width so Astro never upscales.
+            The two portrait slides carry a 560 rung: on the mobile profile the
+            frame needs 487px and the ladder jumped 480 -> 640, which pulled
+            35 KB for a 20 KB job. */}
+        <Image src={sebringMustangGt3} alt={altFor(0)} widths={[320, 480, 560, 640, 1024]} sizes={sizesFor(0)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
 
       <GarageSlide car={cars[1].car} track={cars[1].track} caption={cars[1].caption} shape={cars[1].shape}>
@@ -69,7 +82,7 @@ const altFor = (i: number) =>
       </GarageSlide>
 
       <GarageSlide car={cars[2].car} track={cars[2].track} caption={cars[2].caption} shape={cars[2].shape}>
-        <Image src={watkinsGlenGtp} alt={altFor(2)} widths={[320, 480, 640, 1024]} sizes={sizesFor(2)} format="webp" quality={72} loading="lazy" decoding="async" />
+        <Image src={watkinsGlenGtp} alt={altFor(2)} widths={[320, 480, 560, 640, 1024]} sizes={sizesFor(2)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
 
       <GarageSlide car={cars[3].car} track={cars[3].track} caption={cars[3].caption} shape={cars[3].shape}>
@@ -80,7 +93,7 @@ const altFor = (i: number) =>
         <Image src={indianapolisIr18} alt={altFor(4)} widths={[320, 480, 640, 960, 1280]} sizes={sizesFor(4)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
     </ul>
-  </div>
+  </section>
 
   <div class="container">
     <div class="garage-progress" aria-hidden="true">
@@ -113,19 +126,32 @@ const altFor = (i: number) =>
     border: 1px solid var(--line-strong);
     color: var(--ink);
     cursor: pointer;
-    transition: border-color var(--dur-hover) var(--ease-out),
-      color var(--dur-hover) var(--ease-out),
-      opacity var(--dur-hover) var(--ease-out),
-      transform var(--dur-press) var(--ease-out);
+    transition: border-color var(--dur-2) var(--ease-out-quart),
+      color var(--dur-2) var(--ease-out-quart),
+      transform var(--dur-1) var(--ease-out-quart);
   }
 
+  /* The glyph dims, the box does not. At 0.3 on the whole control the arrow
+     composited to 2.5:1 and read as *gone* rather than as unavailable, which
+     defeats the `visibility` handling above that deliberately keeps the row's
+     height. Disabled controls are exempt from 1.4.11; this is craft, not
+     compliance. */
   .garage-btn:disabled {
-    opacity: 0.3;
     cursor: default;
   }
 
+  .garage-btn:disabled :global(svg) {
+    opacity: 0.45;
+  }
+
+  .garage-btn :global(svg) {
+    transition: opacity var(--dur-2) var(--ease-out-quart);
+  }
+
+  /* One press scale for every control on the site: 0.94 was a second answer
+     to a question the buttons had already answered. */
   .garage-btn:active:not(:disabled) {
-    transform: scale(0.94);
+    transform: scale(var(--press-scale));
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -133,6 +159,11 @@ const altFor = (i: number) =>
       border-color: var(--teal);
       color: var(--teal);
     }
+  }
+
+  .garage-btn:focus-visible:not(:disabled) {
+    border-color: var(--teal);
+    color: var(--teal);
   }
 
   /* Native horizontal scroll on every device. No pinning, no hijack. */

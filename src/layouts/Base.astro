@@ -11,23 +11,64 @@ interface Props {
   ogImage?: string;
   /** LCP image to preload: pass the getImage() result fields for the hero */
   preload?: { href: string; srcset?: string; sizes?: string };
+  /**
+   * Set on pages that set tabular figures above the fold (the hero position
+   * marker, the roster numbers). The face is fetched on every route anyway,
+   * but preloading it where it is *not* above the fold only competes with
+   * the LCP image.
+   */
+  monoBold?: boolean;
+  /**
+   * A document that is not a page. `dist/404.html` is both Vercel's
+   * not-found document and a real file at `/404`, which a host serves with a
+   * 200, so without this it is an indexable soft-404 that is not in the
+   * sitemap. A not-found document also has no canonical URL and should not
+   * assert an organisation.
+   */
+  noindex?: boolean;
 }
 
-const { title, description, ogImage = '/og.png', preload } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+const {
+  title,
+  description,
+  ogImage = '/og.png',
+  preload,
+  monoBold = false,
+  noindex = false,
+} = Astro.props;
+
+/* One slash policy, everywhere. Astro emits `/team/` as the page's own
+   pathname while every internal link, the sitemap and vercel.json use the
+   bare form; served as-is that left two live URLs for one page with only the
+   canonical tag to de-duplicate them. The canonical is normalised to the
+   form the host actually serves. */
+const canonical = new URL(Astro.url.pathname.replace(/\/+$/, '') || '/', Astro.site);
 
 /* One structured-data block, built from the same data the page renders, so a
-   search result can show the team and its real channels rather than guessing. */
+   search result can show the team and its real channels rather than guessing.
+   The `@id` matters: without it the four copies are four anonymous nodes
+   instead of one entity described four times. Deliberately not here: the
+   roster (the names are flagged as placeholders and must not be published as
+   structured claims), the calendar, and any rating. */
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'SportsTeam',
+  '@id': new URL('/#organization', Astro.site).href,
   name: site.name,
-  sport: 'Sim racing',
+  alternateName: 'Artemis',
   url: Astro.site?.href,
-  logo: new URL('/favicon.png', Astro.site).href,
+  description: site.shortDescription,
+  sport: ['Sim racing', 'Esports'],
   foundingDate: String(site.founded),
   email: site.contactEmail,
-  description: site.shortDescription,
+  slogan: site.tagline,
+  image: new URL(ogImage, Astro.site).href,
+  logo: {
+    '@type': 'ImageObject',
+    url: new URL('/favicon.png', Astro.site).href,
+    width: 192,
+    height: 192,
+  },
   sameAs: [...Object.values(site.socials).filter(Boolean), site.store],
 };
 ---
@@ -42,7 +83,8 @@ const structuredData = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#000a08" />
-    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    {!noindex && <link rel="canonical" href={canonical} />}
 
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -50,7 +92,10 @@ const structuredData = {
 
     <link rel="preload" href="/fonts/nexa-bold.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/nexa-light.woff2" as="font" type="font/woff2" crossorigin />
-    <!-- Mono 400 sets the hero proof row above the fold; 700 is used first below it. -->
+    <!-- Mono 400 sets the hero proof row and the field labels above the fold
+         on every route. Mono 700 sets the position marker and the roster
+         numbers, which is above the fold on three routes and below it on two,
+         so it is preloaded per page rather than everywhere. -->
     <link
       rel="preload"
       href="/fonts/jetbrains-mono-400.woff2"
@@ -58,6 +103,17 @@ const structuredData = {
       type="font/woff2"
       crossorigin
     />
+    {
+      monoBold && (
+        <link
+          rel="preload"
+          href="/fonts/jetbrains-mono-700.woff2"
+          as="font"
+          type="font/woff2"
+          crossorigin
+        />
+      )
+    }
     {
       preload && (
         <link
@@ -75,12 +131,27 @@ const structuredData = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonical} />
+    {!noindex && <meta property="og:url" content={canonical} />}
+    <meta property="og:locale" content="en_GB" />
+    {/* Declared dimensions: Slack, Discord and LinkedIn render the card
+        faster when they do not have to fetch the file to size it, and some
+        of them skip a card they cannot size cheaply. */}
     <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta
+      property="og:image:alt"
+      content="Artemis Esports - an iRacing endurance, GT and NASCAR oval team"
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@EsportsArtemis" />
 
-    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    {
+      !noindex && (
+        <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+      )
+    }
 
     <script is:inline>
       document.documentElement.classList.add('js');
@@ -101,13 +172,17 @@ const structuredData = {
 </html>
 
 <style is:global>
-  /* The sentinel marks "page is at the top"; it must not affect layout. */
+  /* The sentinel marks "page is at the top"; it must not affect layout.
+     64px tall, not 1px: at 1px the header flipped to solid at roughly two
+     pixels of scroll and back again, which is a hair trigger on a 200ms
+     cross-fade. The bar now changes once the hero has actually begun to
+     leave. */
   [data-nav-sentinel] {
     position: absolute;
     top: 0;
     left: 0;
     width: 1px;
-    height: 1px;
+    height: 64px;
     pointer-events: none;
   }
 
