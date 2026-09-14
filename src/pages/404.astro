@@ -2,8 +2,11 @@
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import Icon from '../components/Icon.astro';
-import site from '../data/site.json';
 import nav from '../data/nav.json';
+
+/* The Results entry is an anchor into the home page and is already the
+   secondary action above, so the page list below stays the three real pages. */
+const pages = nav.primary.filter((link) => !link.href.includes('#'));
 ---
 
 <Base
@@ -26,14 +29,14 @@ import nav from '../data/nav.json';
             Back to the paddock
             <Icon name="arrow-right" size={16} />
           </a>
-          <a class="btn btn-ghost" href={site.socials.discord} target="_blank" rel="noopener">
-            Join the team
-            <Icon name="arrow-up-right" size={16} />
+          <a class="btn btn-ghost" href="/#results">
+            See results
+            <Icon name="arrow-right" size={16} />
           </a>
         </div>
 
         <nav class="notfound-links" aria-label="Site pages">
-          {nav.primary.map((link) => <a href={link.href}>{link.label}</a>)}
+          {pages.map((link) => <a href={link.href}>{link.label}</a>)}
         </nav>
       </div>
     </div>
@@ -56,10 +59,12 @@ import nav from '../data/nav.json';
     align-items: center;
   }
 
+  /* Committed rather than half-visible: at panel strength the mark read as a
+     smudge over 40% of the composition. */
   .notfound-mark {
     display: block;
-    --mark-size: min(13rem, 34vw);
-    color: var(--bg-panel);
+    --mark-size: min(18rem, 40vw);
+    color: var(--line-teal);
   }
 
   .notfound-code {
@@ -111,7 +116,7 @@ import nav from '../data/nav.json';
       gap: var(--space-l);
     }
     .notfound-mark {
-      --mark-size: 6rem;
+      --mark-size: min(11rem, 42vw);
     }
     .notfound-actions .btn {
       flex: 1 1 13rem;

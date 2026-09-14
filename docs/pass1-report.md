@@ -253,6 +253,14 @@ about 34.0, 404 26.7.
 7. **The CSS scroll-driven hero parallax is Chromium-and-newer only.** Firefox and
    Safari get a static hero. That is the intended graceful degradation, not a bug, but
    it means the parallax is invisible to a chunk of visitors.
+
+   **Corrected in pass 2:** this entry assumed the parallax worked in Chromium.
+   It did not work in any browser in a production build. The rule was written as
+   the `animation` shorthand plus `animation-timeline`, and the build minifier
+   folds those together; `animation-timeline` is not part of that shorthand, so
+   Chrome rejected the whole declaration and `.hero-media` had
+   `animation-name: none`. It only worked in `astro dev`, where the CSS is not
+   minified. It is longhands now and verified in `dist/`, not in dev.
 8. **The garage progress bar and arrow disabled-states could not be verified in a
    visible browser** - the automated pane reported `document.hidden === true`, which
    stops `requestAnimationFrame`. The initial state renders correctly in the captured

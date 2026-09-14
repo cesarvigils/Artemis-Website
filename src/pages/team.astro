@@ -4,6 +4,14 @@ import PageHead from '../components/PageHead.astro';
 import DriverCard from '../components/DriverCard.astro';
 import JoinCta from '../components/JoinCta.astro';
 import drivers from '../data/drivers.json';
+import results from '../data/results.json';
+import {
+  activeDrivers,
+  driversInGroup,
+  latestFinish,
+  type Driver,
+  type RaceResult,
+} from '../lib/data';
 
 const GROUPS = [
   {
@@ -23,13 +31,16 @@ const GROUPS = [
   },
 ];
 
+const roster = activeDrivers(drivers as Driver[]);
+const races = results as RaceResult[];
+
 const sections = GROUPS.map((group) => ({
   ...group,
-  members: drivers.filter((driver) => driver.group === group.key),
+  members: driversInGroup(roster, group.key),
 })).filter((section) => section.members.length > 0);
 
-const driverCount = drivers.filter((driver) => driver.group !== 'crew').length;
-const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
+const racingDrivers = roster.filter((driver) => driver.role === 'driver');
+const crewCount = roster.length - racingDrivers.length;
 ---
 
 <Base
@@ -38,13 +49,36 @@ const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
 >
   <PageHead
     title="The crew"
-    lead="Loyalty over attention. Everyone here earned the seat by showing up prepared, week after week."
-    meta={`${driverCount} drivers / ${crewCount} crew / road and oval`}
-  />
+    lead="Everyone here earned the seat by showing up prepared, week after week."
+    meta={`${racingDrivers.length} drivers / ${crewCount} crew / road and oval`}
+  >
+    {/* The right half of the first screen carries the entry list rather than
+        400px of flat ground. */}
+    <ul class="entry-strip" slot="aside" aria-label="Car numbers">
+      {
+        racingDrivers.map((driver) => (
+          <li>
+            <a href={`#${driver.id}`}>
+              <span class="entry-number" aria-hidden="true">
+                {driver.number}
+              </span>
+              <span class="entry-name">{driver.name}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </PageHead>
 
   {
     sections.map((section) => (
-      <section class="section roster rule-top" aria-labelledby={`group-${section.key}`}>
+      <section
+        class:list={[
+          'section roster rule-top',
+          { 'is-stacked': section.members.length < 3 },
+        ]}
+        aria-labelledby={`group-${section.key}`}
+      >
         <div class="container roster-inner">
           <div class="roster-head">
             <h2 class="display-sm" id={`group-${section.key}`}>
@@ -60,6 +94,7 @@ const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
               <DriverCard
                 driver={driver}
                 variant="row"
+                lastResult={latestFinish(races, driver.name)}
                 class="reveal"
                 style={`--reveal-delay: ${i * 60}ms`}
               />
@@ -72,11 +107,75 @@ const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
 
   <JoinCta
     heading="Race with us."
-    lead="We are open to drivers in both programs. Bring consistency and a working microphone."
+    lead="We are open to drivers in both programs. Bring consistency and a working microphone. The three steps are on the home page."
+    steps={false}
   />
 </Base>
 
 <style>
+  /* Entry list: the numbers, as a grid sheet reads them. */
+  .entry-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .entry-strip li {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .entry-strip li:nth-child(3n + 2),
+  .entry-strip li:nth-child(3n) {
+    border-left: 1px solid var(--line);
+  }
+
+  .entry-strip a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: var(--space-s) var(--space-s) var(--space-s) 0;
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .entry-strip li:nth-child(3n + 2) a,
+  .entry-strip li:nth-child(3n) a {
+    padding-left: var(--space-s);
+  }
+
+  .entry-number {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--teal-soft);
+  }
+
+  @supports not (-webkit-text-stroke: 1px currentColor) {
+    .entry-number {
+      color: var(--teal-soft);
+    }
+  }
+
+  .entry-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .entry-strip a:hover .entry-name {
+      color: var(--teal);
+    }
+    .entry-strip a:hover .entry-number {
+      -webkit-text-stroke-color: var(--teal);
+    }
+  }
+
   .roster-inner {
     display: grid;
     grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
@@ -112,6 +211,45 @@ const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
     border-top: 1px solid var(--line-strong);
   }
 
+  /* A sticky rail only earns its column when the list beside it is long
+     enough to scroll past. Two entries leave 500px of empty gutter, so those
+     groups run the head as a full-width bar with the count on the right. */
+  .roster.is-stacked .roster-inner {
+    display: block;
+  }
+
+  .roster.is-stacked .roster-head {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2xs) var(--space-l);
+    padding-bottom: var(--space-s);
+    margin-bottom: var(--space-m);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .roster.is-stacked .roster-blurb {
+    flex: 1 1 24ch;
+    margin-top: 0;
+    max-width: 46ch;
+  }
+
+  .roster.is-stacked .roster-count {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    text-align: right;
+  }
+
+  @media (max-width: 1200px) {
+    .roster-inner {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 2fr);
+      gap: var(--space-l);
+    }
+  }
+
   @media (max-width: 900px) {
     .roster-inner {
       grid-template-columns: 1fr;
@@ -119,6 +257,26 @@ const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
     }
     .roster-head {
       position: static;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .entry-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .entry-strip li:nth-child(3n + 2),
+    .entry-strip li:nth-child(3n) {
+      border-left: none;
+    }
+    .entry-strip li:nth-child(even) {
+      border-left: 1px solid var(--line);
+    }
+    .entry-strip li:nth-child(3n + 2) a,
+    .entry-strip li:nth-child(3n) a {
+      padding-left: 0;
+    }
+    .entry-strip li:nth-child(even) a {
+      padding-left: var(--space-s);
     }
   }
 </style>

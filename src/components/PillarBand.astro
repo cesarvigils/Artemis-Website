@@ -4,74 +4,65 @@ import site from '../data/site.json';
 interface Props {
   heading: string;
   lead?: string;
+  /**
+   * "row"  - four short rules across one band (home).
+   * "long" - the same four with a sentence each about a race weekend (about).
+   */
+  variant?: 'row' | 'long';
+  /** Print the team hashtags along the foot of the band. */
+  hashtags?: boolean;
 }
 
-const { heading, lead } = Astro.props;
+const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
 ---
 
-<section class="pillars rule-top" aria-labelledby="pillars-heading">
-  <div class="container pillars-inner">
-    <div class="pillars-copy">
-      <h2 class="display-md" id="pillars-heading">{heading}</h2>
+<section class:list={['pillars', `is-${variant}`]} aria-labelledby="pillars-heading">
+  <div class="container">
+    <div class="pillars-head">
+      <h2 class:list={[variant === 'long' ? 'display-md' : 'display-lg']} id="pillars-heading">
+        {heading}
+      </h2>
       {lead && <p class="lead">{lead}</p>}
     </div>
 
     <dl class="pillars-list">
       {
-        site.pillars.map((pillar) => (
-          <div class="pillar reveal">
+        site.pillars.map((pillar, i) => (
+          <div class="pillar reveal" style={`--reveal-delay: ${i * 60}ms`}>
             <dt>{pillar.title}</dt>
             <dd>{pillar.line}</dd>
+            {variant === 'long' && pillar.detail && <dd class="pillar-detail">{pillar.detail}</dd>}
           </div>
         ))
       }
     </dl>
+
+    {
+      hashtags && (
+        <ul class="pillar-tags">
+          {site.hashtags.map((tag) => (
+            <li class="data">{tag}</li>
+          ))}
+        </ul>
+      )
+    }
   </div>
 </section>
 
 <style>
   .pillars {
+    background: var(--bg-raise);
     padding-block: var(--space-2xl);
   }
 
-  .pillars-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
-    gap: var(--space-xl);
-    align-items: start;
-  }
-
-  .pillars-copy h2 {
-    max-width: 12ch;
-  }
-
-  .pillars-copy .lead {
+  .pillars-head .lead {
     margin-top: var(--space-s);
-    max-width: 32ch;
-  }
-
-  .pillars-list {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .pillar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-    gap: var(--space-xs) var(--space-l);
-    align-items: baseline;
-    padding-block: var(--space-m);
-    border-top: 1px solid var(--line);
-  }
-
-  .pillar:last-child {
-    border-bottom: 1px solid var(--line);
+    max-width: 48ch;
   }
 
   .pillar dt {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: var(--text-xl);
     letter-spacing: 0.02em;
     text-transform: uppercase;
     line-height: 1.15;
@@ -79,18 +70,128 @@ const { heading, lead } = Astro.props;
 
   .pillar dd {
     color: var(--ink-dim);
-    font-size: var(--text-base);
     line-height: 1.55;
   }
 
-  @media (max-width: 900px) {
-    .pillars-inner {
-      grid-template-columns: 1fr;
-      gap: var(--space-l);
+  /* Row variant: the heading sits on its own line and the four rules run
+     across the band as one horizontal register. No narrow copy column,
+     no tall empty gutter beside a short list. */
+  .is-row .pillars-head h2 {
+    max-width: 20ch;
+  }
+
+  .is-row .pillars-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: var(--space-xl);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .is-row .pillar {
+    padding: var(--space-m) var(--space-m) 0 0;
+  }
+
+  .is-row .pillar + .pillar {
+    padding-left: var(--space-m);
+    border-left: 1px solid var(--line);
+  }
+
+  .is-row .pillar dt {
+    font-size: var(--text-lg);
+  }
+
+  .is-row .pillar dd {
+    margin-top: var(--space-2xs);
+    font-size: var(--text-sm);
+  }
+
+  /* Long variant: one entry per row, the title held against the sentence
+     that explains what it costs on a race weekend. */
+  .is-long .pillars-head h2 {
+    max-width: 14ch;
+  }
+
+  .is-long .pillars-list {
+    margin-top: var(--space-l);
+  }
+
+  .is-long .pillar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.6fr);
+    gap: var(--space-xs) var(--space-l);
+    align-items: baseline;
+    padding-block: var(--space-m);
+    border-top: 1px solid var(--line);
+  }
+
+  .is-long .pillar:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .is-long .pillar dt {
+    font-size: var(--text-xl);
+  }
+
+  .is-long .pillar dd {
+    font-size: var(--text-base);
+    color: var(--ink);
+  }
+
+  .is-long .pillar-detail {
+    grid-column: 2;
+    margin-top: 0.4rem;
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+  }
+
+  /* The tags belong to the values, so they run along the foot of the band
+     rather than filling a section of their own. */
+  .pillar-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-l);
+    margin-top: var(--space-l);
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line);
+  }
+
+  .pillar-tags li {
+    color: var(--teal-soft);
+    font-size: var(--text-xs);
+    letter-spacing: var(--track-label);
+  }
+
+  @media (max-width: 1024px) {
+    .is-row .pillars-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .pillar {
+    .is-row .pillar:nth-child(3),
+    .is-row .pillar:nth-child(4) {
+      margin-top: var(--space-m);
+      border-top: 1px solid var(--line);
+    }
+    .is-row .pillar:nth-child(3) {
+      padding-left: 0;
+      border-left: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .is-row .pillars-list {
+      grid-template-columns: 1fr;
+    }
+    .is-row .pillar + .pillar {
+      padding-left: 0;
+      margin-top: 0;
+      border-left: none;
+      border-top: 1px solid var(--line);
+    }
+    .is-long .pillar {
       grid-template-columns: 1fr;
       gap: 0.35rem;
+    }
+    .is-long .pillar-detail {
+      grid-column: 1;
     }
   }
 </style>

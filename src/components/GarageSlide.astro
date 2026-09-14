@@ -50,16 +50,24 @@ const { car, track, caption, shape = 'standard' } = Astro.props;
     background: var(--bg-raise);
   }
 
+  /* 200ms, not 600ms: a hover is a "tens of times a day" action, and a 2%
+     scale spread over 600ms reads as lag rather than as a response. */
   .garage-frame :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 600ms var(--ease-out);
+    transition: transform 200ms var(--ease-out);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .garage-slide:hover .garage-frame :global(img) {
-      transform: scale(1.02);
+      transform: scale(1.03);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .garage-slide:hover .garage-frame :global(img) {
+      transform: none;
     }
   }
 

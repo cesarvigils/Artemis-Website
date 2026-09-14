@@ -15,42 +15,49 @@ import portrait from '../assets/photos/member-portrait.jpg';
   title="About | Artemis Esports"
   description="Artemis Esports was founded in 2017 and has raced on iRacing since 2023. Work over words, progress over pride, precision over flash, culture over clout."
 >
-  <PageHead
-    title="Built in silence."
-    lead={site.mission}
-    meta={`Founded ${site.founded} / racing on iRacing since ${site.simRacingSince}`}
-  />
+  <PageHead title="Built in silence." lead={site.mission}>
+    <dl class="founding" slot="aside">
+      <div>
+        <dt class="field-label">Founded</dt>
+        <dd class="data">{site.founded}</dd>
+      </div>
+      <div>
+        <dt class="field-label">First iRacing season</dt>
+        <dd class="data">{site.simRacingSince}</dd>
+      </div>
+      <div>
+        <dt class="field-label">Programs</dt>
+        <dd class="data">Road and oval</dd>
+      </div>
+    </dl>
+  </PageHead>
 
   <section class="section origin rule-top" aria-labelledby="origin-heading">
-    <div class="container origin-inner">
-      <h2 class="display-md" id="origin-heading">Where this came from</h2>
-      <div class="origin-copy">
-        <p class="reveal">
-          Artemis started in {site.founded} as a small competitive gaming crew. The sim
-          racing program is newer: the first full iRacing season was {site.simRacingSince}.
-          What carried over was the way the team works, not the game it was playing.
-        </p>
-        <p class="reveal" style="--reveal-delay: 70ms">
-          Today the program runs two things at once. Endurance and GT on road courses,
-          where a result comes from four hours of not making the mistake. And NASCAR
-          ovals on Friday nights, where it comes from the last ten laps. The roster stays
-          small on purpose.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section people rule-top" aria-labelledby="people-heading">
     <div class="container">
-      <div class="section-head section-head-stack">
-        <h2 class="display-md" id="people-heading">Our people, in person</h2>
-        <p class="lead">
-          The tags come off and the crew is still a crew. What we build is for them.
-        </p>
+      <div class="origin-inner">
+        <h2 class="display-md" id="origin-heading">Where this came from</h2>
+        <div class="origin-copy">
+          <p class="reveal">
+            Artemis started in {site.founded} as a small competitive gaming crew. The sim
+            racing program is newer: the first full iRacing season was {site.simRacingSince}.
+            What carried over was the way the team works, not the game it was playing.
+          </p>
+          <p class="reveal" style="--reveal-delay: 60ms">
+            Today the program runs two things at once. Endurance and GT on road courses,
+            where a result comes from four hours of not making the mistake. And NASCAR
+            ovals on Friday nights, where it comes from the last ten laps. The roster stays
+            small on purpose.
+          </p>
+        </div>
       </div>
 
+      {/* The photographs are from the gaming side of the org, which is exactly
+          the point of this section, so they sit inside the origin story with a
+          caption saying what they are rather than under a heading about the
+          racing team. */}
       <div class="collage">
         <figure class="shot shot-wide reveal">
+          <div class="shot-frame">
           <Image
             src={huddle}
             alt="The Artemis Esports crew standing together outside an event in team jerseys"
@@ -61,8 +68,14 @@ import portrait from '../assets/photos/member-portrait.jpg';
             loading="lazy"
             decoding="async"
           />
+          </div>
+          <figcaption>
+            The crew outside an event, in team kit. Artemis was a gaming org before it
+            was a race team.
+          </figcaption>
         </figure>
-        <figure class="shot shot-tall reveal" style="--reveal-delay: 80ms">
+        <figure class="shot shot-tall reveal" style="--reveal-delay: 60ms">
+          <div class="shot-frame">
           <Image
             src={lan}
             alt="An Artemis player competing on stage at a LAN event"
@@ -73,8 +86,11 @@ import portrait from '../assets/photos/member-portrait.jpg';
             loading="lazy"
             decoding="async"
           />
+          </div>
+          <figcaption>On stage at a LAN. This is the side of the org the sim program grew out of.</figcaption>
         </figure>
-        <figure class="shot shot-small reveal" style="--reveal-delay: 140ms">
+        <figure class="shot shot-small reveal" style="--reveal-delay: 120ms">
+          <div class="shot-frame">
           <Image
             src={portrait}
             alt="An Artemis Esports member in the team jersey at an event"
@@ -85,6 +101,10 @@ import portrait from '../assets/photos/member-portrait.jpg';
             loading="lazy"
             decoding="async"
           />
+          </div>
+          <figcaption>
+            Off the clock. The roster is small enough that everyone knows everyone.
+          </figcaption>
         </figure>
       </div>
     </div>
@@ -92,24 +112,40 @@ import portrait from '../assets/photos/member-portrait.jpg';
 
   <PillarBand
     heading="What we stand for"
-    lead="Four lines that decide how a race weekend runs."
+    lead="Four lines, and what each one costs on a race weekend."
+    variant="long"
+    hashtags
   />
-
-  <section class="hashtags rule-top" aria-label="Team hashtags">
-    <div class="container">
-      <ul class="hashtag-list">
-        {site.hashtags.map((tag) => <li>{tag}</li>)}
-      </ul>
-    </div>
-  </section>
 
   <JoinCta
     heading="How to join."
-    lead="There is no form and no tryout weekend. It starts in the Discord, and most of it happens on track."
+    lead="There is no form and no tryout weekend. Open a ticket in the Discord, tell us what you race, and someone will put you in a practice session that week."
+    steps={false}
   />
 </Base>
 
 <style>
+  .founding {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .founding > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-m);
+    padding-block: var(--space-s);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .founding dd {
+    font-size: var(--text-xl);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
   .origin-inner {
     display: grid;
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
@@ -143,11 +179,12 @@ import portrait from '../assets/photos/member-portrait.jpg';
   .collage {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.85fr) minmax(0, 1fr);
-    gap: var(--space-s);
+    gap: var(--space-m);
     align-items: start;
+    margin-top: var(--space-2xl);
   }
 
-  .shot {
+  .shot-frame {
     overflow: hidden;
     border: 1px solid var(--line);
     background: var(--bg-raise);
@@ -155,51 +192,52 @@ import portrait from '../assets/photos/member-portrait.jpg';
 
   /* :global is required: the <img> is rendered by Astro's Image
      component, so it does not carry this page's scope attribute. */
-  .shot :global(img) {
+  .shot-frame :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 600ms var(--ease-out);
+    transition: transform 200ms var(--ease-out);
   }
 
-  .shot-wide {
+  .shot figcaption {
+    margin-top: var(--space-xs);
+    max-width: 42ch;
+    color: var(--ink-dim);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .shot-wide .shot-frame {
     aspect-ratio: 3 / 2;
   }
 
   .shot-tall {
-    aspect-ratio: 3 / 4;
     margin-top: var(--space-xl);
   }
 
+  .shot-tall .shot-frame {
+    aspect-ratio: 3 / 4;
+  }
+
   .shot-small {
-    aspect-ratio: 4 / 3;
     margin-top: var(--space-2xl);
   }
 
+  .shot-small .shot-frame {
+    aspect-ratio: 4 / 3;
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .shot:hover :global(img) {
+    .shot:hover .shot-frame :global(img) {
       transform: scale(1.03);
     }
   }
 
-  .hashtags {
-    background: var(--bg-raise);
-    padding-block: var(--space-xl);
-  }
-
-  .hashtag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-s) var(--space-l);
-  }
-
-  .hashtag-list li {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: var(--text-xl);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--teal-soft);
+  @media (prefers-reduced-motion: reduce) {
+    .shot:hover .shot-frame :global(img) {
+      transform: none;
+    }
   }
 
   @media (max-width: 900px) {
@@ -209,6 +247,7 @@ import portrait from '../assets/photos/member-portrait.jpg';
     }
     .collage {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      margin-top: var(--space-xl);
     }
     .shot-wide {
       grid-column: 1 / -1;
@@ -217,10 +256,8 @@ import portrait from '../assets/photos/member-portrait.jpg';
     .shot-small {
       margin-top: 0;
     }
-    .shot-tall {
-      aspect-ratio: 3 / 4;
-    }
-    .shot-small {
+    .shot-tall .shot-frame,
+    .shot-small .shot-frame {
       aspect-ratio: 3 / 4;
     }
   }

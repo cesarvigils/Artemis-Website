@@ -39,10 +39,13 @@ One primary CTA per page, at most one quieter secondary action.
 | `/team` | Join the team (Discord) | - |
 | `/about` | Join the team (Discord) | - |
 | `/partners` | Partner with us (mailto) | All results / Full roster links |
-| `404` | Back to the paddock | Join the team |
+| `404` | Back to the paddock | See results |
 
-The nav button is site-wide chrome and always says **Join the team**. Label per
-intent is fixed: one "join" label, one "partner" label, nowhere else.
+The header button carries the **page's own** primary action. That is
+"Join the team" everywhere except `/partners`, where it is the same mailto as
+the page head and the contact card. One label per intent, used everywhere on
+that page: a sponsor never sees two different words for the same next step.
+`src/data/nav.json` holds the override and `src/lib/links.ts` the two intents.
 
 ## Information architecture
 
@@ -50,11 +53,15 @@ Flat. Four pages, no sub-navigation, no new top-level pages.
 
 ```
 /            Hero -> Next race -> Results -> Garage -> Drivers -> How we race -> Partners -> Join
-/team        Roster grouped road / oval / pitwall, then Race with us
-/about       Origin -> Photos -> Values -> Hashtags -> How to join
-/partners    What a partner gets -> Results -> Roster -> Channels -> Current partners -> Contact
-404          Branded, links home + Discord + the three pages
+/team        Entry list -> Roster grouped road / oval / pitwall -> Race with us
+/about       Origin + photos -> Values (with the hashtags) -> How to join
+/partners    Dossier + contact -> What a partner gets -> Results + who runs them
+             -> Channels -> Current partners -> Contact
+404          Branded, links home + results + the three pages
 ```
+
+Results are reachable from every page: the header nav and the footer both point
+at `/#results`.
 
 Results and the next race are **home-page modules**, not pages: the content volume
 of one small team's calendar does not justify the extra depth, and results are the
@@ -62,18 +69,27 @@ credibility asset, so they must be readable without a click.
 
 ## Content model
 
-Everything editable lives in `src/data/*.json`. See `CONTENT.md` for the schemas
-and the list of records that are still placeholders.
+Everything editable lives in `src/data/*.json`. See `CONTENT.md` for how to edit
+it and the list of records that are still placeholders.
 
-| File | Holds |
-|---|---|
-| `site.json` | Name, tagline, hero lead, mission, founding dates, contact, socials, store, hashtags, pillars, join steps |
-| `nav.json` | The single source of truth for nav links, the CTA and footer links |
-| `results.json` | Race results (newest first is not required; the site sorts) |
-| `events.json` | Calendar; the first entry not yet finished becomes "Next race" |
-| `drivers.json` | Roster, grouped `road` / `oval` / `crew` |
-| `cars.json` | Captions for the six garage slides |
-| `partners.json` | Partner name, logo file, link, blurb |
+Three of those files are **owned by the Artemis Data Bot**, which writes them
+from Discord straight to the deploy branch. Their shape is fixed by
+`docs/data-contract.md`, which the bot and the site implement identically; any
+change to it applies to both. `npm run check:data` validates them and runs as
+`prebuild`, so a bad write fails the build instead of deploying a broken page.
+
+| File | Holds | Written by |
+|---|---|---|
+| `results.json` | Race results: position, field size, series, class, drivers | The bot (`/result`) |
+| `drivers.json` | Roster, grouped `road` / `oval` / `crew`, with `active` and optional stats | The bot (`/driver`) |
+| `events.json` | Calendar, with `status` per entry | The bot (`/event`) |
+| `site.json` | Name, tagline, hero lead, mission, founding dates, contact, socials, store, hashtags, pillars, join steps | By hand |
+| `nav.json` | The single source of truth for nav links, the CTA intent and its per-path override | By hand |
+| `cars.json` | Captions for the five garage slides | By hand |
+| `partners.json` | Partner name, logo file, link, blurb | By hand |
+
+Sorting and selection live in `src/lib/data.ts`. No page assumes a file arrived
+in order, because a human edit can always break it.
 
 ## Constraints
 
@@ -87,10 +103,17 @@ and the list of records that are still placeholders.
 
 ## Open decisions for the owner
 
-1. Replace the placeholder roster and results with the real ones (`CONTENT.md`,
-   "Fill in").
+1. Replace the placeholder roster and results with the real ones. This is now a
+   Discord job: `/driver`, `/result`, `/event`. See `CONTENT.md`, "Fill in".
 2. Driver headshots do not exist yet. The roster is typographic until they do.
-3. The hero render carries a NordVPN decal on the car. If that partnership is not
-   current, swap the hero image.
+3. No photograph on the site shows a rig, a wheel or a screen with a car on it.
+   Every picture is from the gaming side of the org and is captioned as such.
+   One real photo of the sim setup would do more for `/about` than any edit.
 4. Confirm the About origin copy; it is a first draft written from the two known
    facts (founded 2017, iRacing since 2023).
+5. Driver `stats` (iRating, licence) render the moment they are filled in and
+   stay invisible until then. Nothing is invented to fill the slot.
+
+**Closed:** the hero render carried a NordVPN decal while the Partners page said
+GLYTCH was the only partner. The hero is now the Interlagos LMP2, which carries
+no third-party mark, and the Porsche is out of the garage as well.

@@ -1,58 +1,84 @@
 ---
-import { raceDateRange } from '../lib/format';
-
-interface RaceEvent {
-  name: string;
-  track: string;
-  date: string;
-  endDate?: string;
-  start?: string;
-  classes: string[];
-  status?: string;
-}
+import { raceDate, raceDateRange } from '../lib/format';
+import { countdownTarget, type RaceEvent } from '../lib/data';
 
 interface Props {
-  event: RaceEvent | undefined;
+  /** Upcoming entries, soonest first. The first one is the next race. */
+  upcoming: RaceEvent[];
+  /** Shown as the subtitle when the calendar has run out. */
+  lastDone?: RaceEvent;
 }
 
-const { event } = Astro.props;
+const { upcoming, lastDone } = Astro.props;
 
-const when = event ? raceDateRange(event.date, event.endDate) : '';
+const [next, ...alsoEntered] = upcoming;
+const when = next ? raceDateRange(next.start, next.end) : '';
 ---
 
-{
-  event && (
-    <section class="next-race rule-top" aria-labelledby="next-race-heading">
-      <div class="container next-race-inner">
-        <h2 class="next-race-heading" id="next-race-heading">
-          Next race
-        </h2>
+<section class="next-race rule-top" aria-labelledby="next-race-heading">
+  <div class="container">
+    <div class="next-race-inner">
+      <h2 class="next-race-heading" id="next-race-heading">Next race</h2>
 
-        <dl class="next-race-data">
-          <div class="race-cell race-cell-event">
-            <dt class="field-label">Event</dt>
-            <dd>{event.name}</dd>
-          </div>
-          <div class="race-cell">
-            <dt class="field-label">Track</dt>
-            <dd>{event.track}</dd>
-          </div>
-          <div class="race-cell race-cell-when">
-            <dt class="field-label">Date</dt>
-            <dd>
-              <span class="data">{when}</span>
-              <span class="race-countdown data" data-countdown={event.start} hidden />
-            </dd>
-          </div>
-          <div class="race-cell">
-            <dt class="field-label">Classes</dt>
-            <dd class="data">{event.classes.join(' / ')}</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-  )
-}
+      {
+        next ? (
+          <dl class="next-race-data">
+            <div class="race-cell race-cell-event">
+              <dt class="field-label">Event</dt>
+              <dd>
+                {next.name}
+                <span class="race-status">{next.status}</span>
+              </dd>
+            </div>
+            <div class="race-cell">
+              <dt class="field-label">Track</dt>
+              <dd>{next.track}</dd>
+            </div>
+            <div class="race-cell race-cell-when">
+              <dt class="field-label">Date</dt>
+              <dd>
+                <span class="data">{when}</span>
+                <span
+                  class="race-countdown data"
+                  data-countdown={countdownTarget(next.start)}
+                  hidden
+                />
+              </dd>
+            </div>
+            <div class="race-cell">
+              <dt class="field-label">Classes</dt>
+              <dd class="data">{next.classes.join(' / ')}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p class="race-empty">
+            No race scheduled.
+            {lastDone && (
+              <span class="race-empty-sub data">
+                Last out: {lastDone.name}, {raceDate(lastDone.start)}
+              </span>
+            )}
+          </p>
+        )
+      }
+    </div>
+
+    {
+      alsoEntered.length > 0 && (
+        <ul class="also-entered">
+          {alsoEntered.map((event) => (
+            <li>
+              <span class="also-date data">{raceDate(event.start)}</span>
+              <span class="also-name">{event.name}</span>
+              <span class="also-track">{event.track}</span>
+              <span class="also-status data">{event.status}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</section>
 
 <style>
   .next-race {
@@ -68,20 +94,10 @@ const when = event ? raceDateRange(event.date, event.endDate) : '';
   }
 
   .next-race-heading {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
     flex: 0 0 auto;
     font-size: var(--text-xs);
     letter-spacing: 0.18em;
     color: var(--teal);
-  }
-
-  .next-race-heading::before {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: var(--teal);
   }
 
   .next-race-data {
@@ -128,12 +144,95 @@ const when = event ? raceDateRange(event.date, event.endDate) : '';
     display: none;
   }
 
+  /* Whether an entry is locked in or still provisional is the one thing a
+     calendar has to be honest about. */
+  .race-cell dd .race-status {
+    display: inline-block;
+    margin-left: 0.55rem;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  .race-empty {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .race-empty-sub {
+    display: block;
+    margin-top: 0.3rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: var(--track-data);
+    color: var(--ink-faint);
+  }
+
+  /* The rest of the calendar: the reason to come back, one hairline each. */
+  .also-entered {
+    margin-top: var(--space-s);
+    border-top: 1px solid var(--line);
+  }
+
+  .also-entered li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem var(--space-m);
+    padding-block: 0.6rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .also-entered li:last-child {
+    border-bottom: none;
+  }
+
+  .also-date {
+    flex: 0 0 7rem;
+    font-size: var(--text-2xs);
+    color: var(--ink-faint);
+  }
+
+  .also-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .also-track {
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+  }
+
+  .also-status {
+    margin-left: auto;
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
   @media (max-width: 900px) {
     .next-race-data {
       gap: var(--space-s) var(--space-m);
     }
     .race-cell-event {
       flex: 1 0 100%;
+    }
+    .also-date {
+      flex: 0 0 auto;
+    }
+    .also-status {
+      margin-left: 0;
     }
   }
 </style>

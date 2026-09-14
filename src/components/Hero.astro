@@ -7,9 +7,14 @@ interface Props {
   /** Result of getImage() for the hero photo - also preloaded in <head>. */
   image: { src: string; srcSet: { attribute: string } };
   alt: string;
-  /** Most recent result, used as the single proof point. */
-  proof: {
+  /**
+   * Best finish among the three newest races: the single proof point.
+   * Absent only if results.json is emptied, in which case the row is skipped
+   * rather than printing a claim with nothing behind it.
+   */
+  proof?: {
     position: number;
+    entries?: number;
     event: string;
     class: string;
     date: string;
@@ -19,7 +24,7 @@ interface Props {
 
 const { image, alt, proof, ctaHref } = Astro.props;
 
-const proofDate = raceDate(proof.date);
+const proofDate = proof ? raceDate(proof.date) : '';
 ---
 
 <section class="hero">
@@ -41,27 +46,37 @@ const proofDate = raceDate(proof.date);
     <div class="hero-copy">
       <h1 class="hero-title display-xl">
         <span class="hero-line" data-enter-mask><span>Artemis</span></span>
-        <span class="hero-line hero-line-2" data-enter-mask style="--enter-delay: 90ms"
+        <span class="hero-line hero-line-2" data-enter-mask style="--enter-delay: 70ms"
           ><span>Esports</span></span
         >
       </h1>
 
-      <p class="hero-lead lead" data-enter style="--enter-delay: 260ms">
+      <p class="hero-lead lead" data-enter style="--enter-delay: 180ms">
         {site.heroLead}
       </p>
 
-      <p class="hero-proof" data-enter style="--enter-delay: 340ms">
-        <span class="hero-pos data">P{proof.position}</span>
-        <span class="hero-proof-body">
-          <span class="hero-proof-event">{proof.event}</span>
-          <span class="hero-proof-meta data">{proof.class} class, {proofDate}</span>
-        </span>
-      </p>
+      {
+        proof && (
+          <p class="hero-proof" data-enter style="--enter-delay: 230ms">
+            <span class="hero-pos-block">
+              <span class="hero-pos data">P{proof.position}</span>
+              {proof.entries && <span class="hero-pos-field data">of {proof.entries}</span>}
+            </span>
+            <span class="hero-proof-body">
+              <span class="hero-proof-event">{proof.event}</span>
+              <span class="hero-proof-meta data">
+                {proof.class} class, {proofDate}
+              </span>
+            </span>
+          </p>
+        )
+      }
 
-      <div class="hero-actions" data-enter style="--enter-delay: 420ms">
+      <div class="hero-actions" data-enter style="--enter-delay: 280ms">
         <a class="btn btn-solid" href={ctaHref} target="_blank" rel="noopener">
           Join the team
           <Icon name="arrow-up-right" size={16} />
+          <span class="sr-only"> (opens in a new tab)</span>
         </a>
         <a class="btn btn-ghost" href="#results">
           See results
@@ -96,7 +111,7 @@ const proofDate = raceDate(proof.date);
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 58% center;
+    object-position: 56% center;
   }
 
   /* Left-to-right scrim: the copy column sits on solid brand black,
@@ -142,9 +157,12 @@ const proofDate = raceDate(proof.date);
     color: var(--teal);
   }
 
+  /* The claim, not the wordmark, is the sentence that has to land. It sits at
+     full ink strength rather than the usual lead step. */
   .hero-lead {
     margin-top: var(--space-m);
     max-width: 34rem;
+    color: var(--ink);
   }
 
   /* Proof point: the single most recent result, in the data voice. */
@@ -158,14 +176,26 @@ const proofDate = raceDate(proof.date);
     max-width: 34rem;
   }
 
-  .hero-pos {
+  .hero-pos-block {
     display: flex;
-    align-items: center;
-    font-weight: 700;
-    font-size: var(--text-lg);
-    color: var(--teal);
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
     padding-right: var(--space-s);
     border-right: 1px solid var(--line-teal);
+  }
+
+  .hero-pos {
+    font-weight: 700;
+    font-size: var(--text-lg);
+    line-height: 1.1;
+    color: var(--teal);
+  }
+
+  .hero-pos-field {
+    font-size: var(--text-2xs);
+    line-height: 1.1;
+    color: var(--ink-faint);
   }
 
   .hero-proof-body {
@@ -197,11 +227,19 @@ const proofDate = raceDate(proof.date);
   }
 
   /* Light parallax, transform only, zero JS. Browsers without
-     scroll-driven animations simply get a static photo. */
+     scroll-driven animations simply get a static photo.
+
+     Longhands on purpose: written as the `animation` shorthand, the build
+     minifier folds `animation-timeline` into it, and `animation-timeline` is
+     not a component of that shorthand, so the browser rejects the whole
+     declaration and the parallax silently never runs in a production build. */
   @supports (animation-timeline: scroll()) {
     @media (prefers-reduced-motion: no-preference) {
       html.js .hero-media {
-        animation: hero-drift linear both;
+        animation-name: hero-drift;
+        animation-duration: auto;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
         animation-timeline: scroll(root block);
         animation-range: 0 100vh;
       }
@@ -230,17 +268,24 @@ const proofDate = raceDate(proof.date);
       clip-path: none;
     }
 
+    /* At 390 the frame is a narrow vertical slice of a 16:9 render. The
+       horizontal anchor decides whether the car or the run-off is on screen,
+       and a 1.3 crop trades the empty hillside at the top of the frame for a
+       car that reads at thumb distance. */
     .hero-media img {
-      object-position: 62% center;
+      --media-zoom: 1.3;
+      object-position: 52% center;
+      transform: scale(var(--media-zoom));
+      transform-origin: 52% 56%;
     }
 
     .hero-media::after {
       background: linear-gradient(
         to top,
-        var(--bg) 20%,
-        rgba(0, 10, 8, 0.9) 46%,
-        rgba(0, 10, 8, 0.42) 74%,
-        rgba(0, 10, 8, 0.62)
+        var(--bg) 18%,
+        rgba(0, 10, 8, 0.86) 42%,
+        rgba(0, 10, 8, 0.3) 72%,
+        rgba(0, 10, 8, 0.52)
       );
     }
 

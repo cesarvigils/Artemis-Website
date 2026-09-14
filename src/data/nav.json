@@ -1,16 +1,17 @@
 {
   "primary": [
+    { "href": "/#results", "label": "Results" },
     { "href": "/team", "label": "Team" },
     { "href": "/about", "label": "About" },
     { "href": "/partners", "label": "Partners" }
   ],
   "cta": {
-    "href": "https://discord.gg/ybSQQk9axG",
-    "label": "Join the team",
-    "external": true
+    "intent": "join"
   },
+  "ctaOverrides": [{ "path": "/partners", "intent": "partnership" }],
   "footer": [
     { "href": "/", "label": "Home" },
+    { "href": "/#results", "label": "Results" },
     { "href": "/team", "label": "Team" },
     { "href": "/about", "label": "About" },
     { "href": "/partners", "label": "Partners" }

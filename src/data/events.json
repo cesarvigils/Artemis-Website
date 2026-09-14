@@ -1,32 +1,31 @@
 [
   {
+    "id": "2026-09-25-petit-le-mans",
     "name": "Petit Le Mans",
-    "track": "Road Atlanta",
-    "date": "2026-09-25",
-    "endDate": "2026-09-27",
-    "start": "2026-09-25T16:00:00Z",
+    "track": "Michelin Raceway Road Atlanta",
+    "start": "2026-09-25",
+    "end": "2026-09-27",
     "classes": ["GTP", "LMP2", "GT3"],
-    "status": "entered",
+    "status": "confirmed",
+    "note": "Roster locks on 19 Sep.",
     "_placeholder": true
   },
   {
+    "id": "2026-10-02-friday-night-lights-round-12",
     "name": "Friday Night Lights, round 12",
     "track": "Richmond Raceway",
-    "date": "2026-10-02",
-    "endDate": "2026-10-02",
-    "start": "2026-10-02T23:30:00Z",
-    "classes": ["NASCAR Class B"],
-    "status": "entered",
+    "start": "2026-10-02",
+    "classes": ["NASCAR Xfinity"],
+    "status": "confirmed",
     "_placeholder": true
   },
   {
+    "id": "2026-10-08-ctc-truck-league-round-9",
     "name": "CTC truck league, round 9",
     "track": "Talladega Superspeedway",
-    "date": "2026-10-08",
-    "endDate": "2026-10-08",
-    "start": "2026-10-08T23:00:00Z",
-    "classes": ["Trucks"],
-    "status": "entered",
+    "start": "2026-10-08",
+    "classes": ["NASCAR Trucks"],
+    "status": "planned",
     "_placeholder": true
   }
 ]

@@ -12,13 +12,20 @@
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-/* Reveal on scroll -------------------------------------------------- */
+/* Reveal on scroll --------------------------------------------------
+   `.reveal` only offsets an element by 12px; it never hides it. Even so
+   the observer is deliberately eager, anything already scrolled past is
+   settled up front, and a timer settles whatever is left, so a reveal
+   can never be the reason something looks wrong.
+------------------------------------------------------------------- */
 function initReveals() {
-  const items = document.querySelectorAll<HTMLElement>('.reveal');
+  const items = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
   if (!items.length) return;
 
+  const settle = (el: Element) => el.classList.add('in-view');
+
   if (!('IntersectionObserver' in window)) {
-    items.forEach((el) => el.classList.add('in-view'));
+    items.forEach(settle);
     return;
   }
 
@@ -26,14 +33,21 @@ function initReveals() {
     (entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        entry.target.classList.add('in-view');
+        settle(entry.target);
         io.unobserve(entry.target);
       }
     },
-    { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
+    { threshold: 0, rootMargin: '0px 0px 10% 0px' }
   );
 
+  // No geometry is read here on purpose: measuring every reveal before first
+  // paint forced a full layout of a 5,000px page and was the single largest
+  // main-thread cost on the home page. Deep links are covered by the timer.
   items.forEach((el) => io.observe(el));
+
+  window.setTimeout(() => {
+    document.querySelectorAll('.reveal:not(.in-view)').forEach(settle);
+  }, 1500);
 }
 
 /* Nav: solid background once the page has left the top --------------- */
@@ -55,10 +69,30 @@ function initMenu() {
   const menu = document.getElementById('mobile-menu');
   if (!toggle || !menu) return;
 
+  const label = toggle.querySelector<HTMLElement>('.sr-only');
+  const behind = [document.getElementById('main'), document.querySelector('.site-footer')];
+
+  const focusables = () =>
+    [toggle, ...menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')].filter(
+      (el): el is HTMLElement => !!el
+    );
+
   const setOpen = (open: boolean) => {
     toggle.setAttribute('aria-expanded', String(open));
     menu.hidden = !open;
     document.documentElement.classList.toggle('menu-open', open);
+    if (label) label.textContent = open ? 'Close menu' : 'Menu';
+
+    // The panel covers the page; keep what is behind it out of the tab
+    // order and out of the accessibility tree.
+    for (const el of behind) {
+      if (!el) continue;
+      (el as HTMLElement & { inert: boolean }).inert = open;
+      if (open) el.setAttribute('aria-hidden', 'true');
+      else el.removeAttribute('aria-hidden');
+    }
+
+    if (open) menu.querySelector<HTMLElement>('a[href]')?.focus();
   };
 
   toggle.addEventListener('click', () => {
@@ -70,15 +104,62 @@ function initMenu() {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
     if (toggle.getAttribute('aria-expanded') !== 'true') return;
-    setOpen(false);
-    toggle.focus();
+
+    if (event.key === 'Escape') {
+      setOpen(false);
+      toggle.focus();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+    const stops = focusables();
+    if (!stops.length) return;
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (event.shiftKey && (active === first || !active || !stops.includes(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 
   const desktop = window.matchMedia('(min-width: 821px)');
   desktop.addEventListener('change', (event) => {
     if (event.matches) setOpen(false);
+  });
+}
+
+/* In-page anchors ---------------------------------------------------
+   Smooth scrolling is applied per click rather than globally, so a link
+   arriving from another page (/#results) jumps straight there instead of
+   animating across several thousand pixels.
+------------------------------------------------------------------- */
+function initAnchors() {
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+    const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href*="#"]');
+    if (!link || link.target === '_blank') return;
+    // Same document only: /#results from /team is a real navigation.
+    if (link.pathname.replace(/\/+$/, '') !== location.pathname.replace(/\/+$/, '')) return;
+
+    const id = link.hash.slice(1);
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+
+    event.preventDefault();
+    target.scrollIntoView({
+      behavior: reduceMotion.matches ? 'auto' : 'smooth',
+      block: 'start',
+    });
+    history.pushState(null, '', `#${id}`);
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
   });
 }
 
@@ -131,12 +212,26 @@ function initGarage() {
 
   const update = () => {
     frame = 0;
-    const max = track.scrollWidth - track.clientWidth;
-    const ratio = max > 4 ? Math.min(1, Math.max(0, track.scrollLeft / max)) : 0;
-    if (progress) progress.style.transform = `scaleX(${ratio || 0.001})`;
-    if (prev) prev.disabled = track.scrollLeft < 8;
-    if (next) next.disabled = track.scrollLeft > max - 8;
-    if (controls) controls.hidden = max <= 4;
+    // Every read first, then every write: mixing them re-forces layout on
+    // each scroll frame.
+    const scrollWidth = track.scrollWidth;
+    const clientWidth = track.clientWidth;
+    const left = track.scrollLeft;
+    const max = scrollWidth - clientWidth;
+    const ratio = max > 4 ? Math.min(1, Math.max(0, left / max)) : 0;
+    const visible = scrollWidth > 0 ? Math.min(1, clientWidth / scrollWidth) : 1;
+
+    if (progress) {
+      // The thumb is as wide as the share of the strip on screen, and
+      // travels the rest, so it reads as "you are here, this much is left".
+      progress.style.width = `${(visible * 100).toFixed(3)}%`;
+      progress.style.transform = `translateX(${(ratio * (1 / visible - 1) * 100).toFixed(3)}%)`;
+    }
+    if (prev) prev.disabled = left < 8;
+    if (next) next.disabled = left > max - 8;
+    // visibility, not `hidden`: the control row keeps its height either way,
+    // so revealing the arrows never nudges the heading beside them.
+    if (controls) controls.style.visibility = max > 4 ? 'visible' : 'hidden';
   };
 
   const schedule = () => {
@@ -157,7 +252,9 @@ function initGarage() {
   next?.addEventListener('click', () => step(1));
   track.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule, { passive: true });
-  update();
+  // Measured after first paint, not before it: reading scrollWidth here
+  // synchronously forces a full layout of the page ahead of the first frame.
+  schedule();
 }
 
 /* Footer year -------------------------------------------------------
@@ -173,6 +270,7 @@ function init() {
   initReveals();
   initNavState();
   initMenu();
+  initAnchors();
   initCountdown();
   initGarage();
   initYear();

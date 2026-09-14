@@ -1,19 +1,9 @@
 ---
 import { raceDate } from '../lib/format';
-
-interface Result {
-  date: string;
-  event: string;
-  track: string;
-  series: string;
-  class: string;
-  position: number;
-  driver: string;
-  note?: string;
-}
+import type { RaceResult } from '../lib/data';
 
 interface Props {
-  results: Result[];
+  results: RaceResult[];
   caption: string;
 }
 
@@ -39,9 +29,13 @@ const { results, caption } = Astro.props;
             <span class:list={['pos', { 'is-podium': result.position <= 3 }]}>
               P{result.position}
             </span>
+            {/* Field size is what turns a position into evidence. It only
+                prints when the record carries it. */}
+            {result.entries && <span class="pos-field">of {result.entries}</span>}
           </td>
           <td role="cell" class="col-event" data-label="Event">
             <span class="event-name">{result.event}</span>
+            <span class="event-series">{result.series}</span>
             <span class="event-sub">
               {result.track}.{result.note ? ` ${result.note}` : ''}
             </span>
@@ -50,7 +44,7 @@ const { results, caption } = Astro.props;
             <span class="chip">{result.class}</span>
           </td>
           <td role="cell" class="col-driver" data-label="Drivers">
-            {result.driver}
+            {result.drivers.join(' / ')}
           </td>
           <td role="cell" class="col-date" data-label="Date">
             {raceDate(result.date)}
@@ -78,7 +72,6 @@ const { results, caption } = Astro.props;
     padding-block: 1.1rem;
     border-bottom: 1px solid var(--line);
     vertical-align: top;
-    transition: background-color var(--dur-hover) var(--ease-out);
   }
 
   .results tbody tr:last-child td {
@@ -86,19 +79,20 @@ const { results, caption } = Astro.props;
   }
 
   .col-pos {
-    width: 5.5rem;
+    width: 6rem;
   }
   .col-class {
-    width: 10.5rem;
+    width: 9.5rem;
   }
   .col-driver {
-    width: 30%;
+    width: 26%;
   }
   .col-date {
     width: 8.5rem;
   }
 
   .pos {
+    display: block;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
@@ -111,6 +105,16 @@ const { results, caption } = Astro.props;
     color: var(--teal);
   }
 
+  .pos-field {
+    display: block;
+    margin-top: 0.35rem;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-data);
+    color: var(--ink-faint);
+  }
+
   .event-name {
     display: block;
     font-family: var(--font-display);
@@ -119,15 +123,31 @@ const { results, caption } = Astro.props;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     line-height: 1.25;
+    /* `text-wrap: balance` is set on h1-h4 globally; this heading is a span
+       inside a cell, so it needs saying here or it orphans a word. */
+    text-wrap: balance;
   }
 
-  .event-sub {
+  .event-series {
     display: block;
     margin-top: 0.3rem;
-    max-width: 46ch;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* The track and the one-line story of the race: this is why the module
+     exists, so it sits at the readable ink step, not the faintest one. */
+  .event-sub {
+    display: block;
+    margin-top: 0.4rem;
+    max-width: 56ch;
     font-size: var(--text-sm);
     line-height: 1.5;
-    color: var(--ink-faint);
+    color: var(--ink-dim);
+    text-wrap: pretty;
   }
 
   .chip {
@@ -137,7 +157,7 @@ const { results, caption } = Astro.props;
     font-size: var(--text-2xs);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--ink-dim);
+    color: var(--ink-faint);
     padding: 0.3rem 0.5rem;
     border: 1px solid var(--line);
   }
@@ -157,11 +177,8 @@ const { results, caption } = Astro.props;
     white-space: nowrap;
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    .results tbody tr:hover td {
-      background: var(--bg-raise);
-    }
-  }
+  /* No row hover: nothing in a row is clickable, and a background change
+     promises a click that does not exist. */
 
   /* Under 860px the timing sheet becomes stacked entries. Explicit ARIA
      roles above keep the table semantics when display changes. */
@@ -180,7 +197,7 @@ const { results, caption } = Astro.props;
 
     .results tr {
       position: relative;
-      padding: var(--space-m) 0 var(--space-m) 4.25rem;
+      padding: var(--space-m) 0 var(--space-m) 4.75rem;
       border-bottom: 1px solid var(--line);
     }
 

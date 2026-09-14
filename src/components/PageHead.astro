@@ -7,23 +7,46 @@ interface Props {
 }
 
 const { title, lead, meta } = Astro.props;
+
+/* The inner pages used to open with a heading in the left 45% and a flat void
+   beside it. Each page now puts something real in the right column: an entry
+   list, the founding dates, the season summary. */
+const hasAside = Astro.slots.has('aside');
+const hasAction = Astro.slots.has('action');
 ---
 
-<section class="page-head">
-  <div class="container">
-    <h1 class="display-xl" data-enter>{title}</h1>
+<section class:list={['page-head', { 'has-aside': hasAside }]}>
+  <div class="container page-head-inner">
+    <div class="page-head-copy">
+      <h1 class="display-xl" data-enter>{title}</h1>
+      {
+        lead && (
+          <p class="lead page-lead" data-enter style="--enter-delay: 120ms">
+            {lead}
+          </p>
+        )
+      }
+      {
+        meta && (
+          <p class="page-meta data" data-enter style="--enter-delay: 180ms">
+            {meta}
+          </p>
+        )
+      }
+      {
+        hasAction && (
+          <div class="page-action" data-enter style="--enter-delay: 240ms">
+            <slot name="action" />
+          </div>
+        )
+      }
+    </div>
+
     {
-      lead && (
-        <p class="lead page-lead" data-enter style="--enter-delay: 120ms">
-          {lead}
-        </p>
-      )
-    }
-    {
-      meta && (
-        <p class="page-meta data" data-enter style="--enter-delay: 200ms">
-          {meta}
-        </p>
+      hasAside && (
+        <div class="page-head-aside" data-enter style="--enter-delay: 220ms">
+          <slot name="aside" />
+        </div>
       )
     }
   </div>
@@ -32,6 +55,10 @@ const { title, lead, meta } = Astro.props;
 <style>
   .page-head {
     padding-top: calc(var(--nav-h) + var(--space-2xl));
+    padding-bottom: var(--space-l);
+  }
+
+  .page-head.has-aside {
     padding-bottom: var(--space-xl);
   }
 
@@ -44,14 +71,36 @@ const { title, lead, meta } = Astro.props;
     max-width: 44ch;
   }
 
+  /* Not `ch`: this line is tracked mono, and `ch` under-measures tracked text
+     by roughly a fifth, which orphaned the last two words on every page. */
   .page-meta {
     margin-top: var(--space-m);
     padding-top: var(--space-s);
     border-top: 1px solid var(--line);
-    max-width: 44ch;
+    max-width: 34rem;
     color: var(--ink-faint);
     text-transform: uppercase;
     letter-spacing: var(--track-label);
     font-size: var(--text-2xs);
+    text-wrap: balance;
+  }
+
+  .page-action {
+    margin-top: var(--space-l);
+  }
+
+  @media (min-width: 901px) {
+    .page-head.has-aside .page-head-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+      gap: var(--space-xl);
+      align-items: end;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .page-head-aside {
+      margin-top: var(--space-l);
+    }
   }
 </style>

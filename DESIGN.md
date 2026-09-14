@@ -21,8 +21,14 @@ sheet. Not: an esports org template, not an editorial magazine, not a SaaS hero.
 ### What is deliberately absent
 
 Equal card grids. A tiny uppercase kicker above every section. Numbered section
-markers. Gradient text. Glass cards. A hero metric row. Marquee text. Scroll cues.
-Pinned or scroll-jacked sections. Decorative status dots. Em dashes.
+markers. Gradient text. Glass and `backdrop-filter` of any kind. A hero metric
+row. Marquee text. Scroll cues. Pinned or scroll-jacked sections. Decorative
+status dots. Em dashes. Hover states on rows that are not clickable.
+
+One more rule, added in pass 2: **no layout family twice on a page.** Home runs
+eight sections and seven compositions. If a new band would be "narrow heading
+column on the left, hairline rows on the right" and something above it already
+is, it gets a different shape.
 
 The one place numbers label a sequence is the three-step Join explainer, because
 it genuinely is a sequence.
@@ -137,9 +143,9 @@ two entrance animations.
 |---|---|---|
 | `--dur-press` | `120ms` | `:active` scale on buttons |
 | `--dur-hover` | `180ms` | Colour and border changes |
-| `--dur-ui` | `240ms` | Nav state, menu, skip link |
-| `--dur-reveal` | `460ms` | Scroll reveal |
-| `--dur-entrance` | `820ms` | Hero entrance |
+| `--dur-ui` | `240ms` | Nav state, menu |
+| `--dur-reveal` | `320ms` | Scroll reveal |
+| `--dur-entrance` | `560ms` | Hero entrance |
 | `--ease-out` | `cubic-bezier(.23, 1, .32, 1)` | Default |
 | `--ease-out-quart` | `cubic-bezier(.25, 1, .5, 1)` | Entrances and reveals |
 | `--ease-in-out` | `cubic-bezier(.77, 0, .175, 1)` | On-screen movement |
@@ -151,11 +157,11 @@ No bounce, no elastic, no `ease-in`, no `transition: all`. Only `transform`,
 
 | Move | Where | Why it earns its place |
 |---|---|---|
-| Masked line rise | Hero h1, two lines, 90ms apart | Sets the pace of the page once, at the only moment there is nothing to read yet |
+| Masked line rise | Hero h1, two lines, 70ms apart | Sets the pace of the page once, at the only moment there is nothing to read yet |
 | Fade + 16px rise | Hero lead, proof, actions, page h1 | Sequences the hero so the eye lands on the headline first |
-| Photo fade + 1.06 scale settle | Hero image | Keeps the photo from snapping in under the text |
+| Photo 1.04 scale settle, 640ms | Hero image | Keeps the photo from snapping in under the text. No opacity: see the log entry on the LCP |
 | Scroll parallax, 5% travel | Hero image | Depth between the copy plane and the photo plane; CSS scroll-driven, no JS |
-| Reveal (opacity + 14px) | Section content below the fold | Signals that a section is a new unit; it enhances content that is already visible |
+| Reveal (12px rise, no fade) | Sibling lists below the fold | Signals a new unit without ever being the reason content is not on screen |
 | Underline scale-x | Nav links, current page | Feedback, and it marks the current page without relying on colour alone |
 | `scale(0.97)` | Every button on `:active` | The interface confirms it heard the press |
 | `scale(1.02)` on a photo | Garage slide, About photo, hover only | Signals the frame is interactive |
@@ -163,11 +169,18 @@ No bounce, no elastic, no `ease-in`, no `transition: all`. Only `transform`,
 
 **Rules that hold everywhere:**
 
-- Nothing is invisible without JS. Reveal styles are gated behind `html.js`, which
-  an inline head script adds. With JS off, every element renders at its final state.
+- **Nothing is ever animated from `opacity: 0`.** Reveals move 12px and nothing
+  else, so a paused tab, a headless renderer or an observer that never fires can
+  only cost the reader an offset, not the section. Reveal styles are also gated
+  behind `html.js`, so with JS off every element renders at its final state, and
+  a 1.5s timer settles anything the observer has not reached.
 - `prefers-reduced-motion: reduce` collapses all of it: animations are cut to 1ms,
-  reveals become a 240ms opacity fade with no movement, the parallax is not
-  attached at all, and the garage arrows scroll instantly instead of smoothly.
+  reveals lose their transition entirely, the parallax is not attached at all, the
+  garage arrows scroll instantly, and the transition property list is clamped to
+  colour and opacity so no transform-based hover survives. Reduced motion is
+  gentler, not zero: colour still eases.
+- **Nothing on a keyboard-initiated path animates.** The skip link has no
+  transition; it arrives on the first frame of the first Tab.
 - No `window` scroll listener anywhere. Sticky nav state comes from an
   IntersectionObserver on a 1px sentinel; the garage progress bar listens to the
   *track element's* own scroll, passively, coalesced into one `requestAnimationFrame`.
@@ -186,17 +199,17 @@ went from 133 KB to about 2.9 KB.
 |---|---|---|
 | `Mark.astro` | The Gen3 mark, wordmark and lockup as inline SVG | `fill="currentColor"`; sized by the parent through `--mark-size` |
 | `Icon.astro` | The only icon set: arrow-right, arrow-left, arrow-up-right, menu, close | One stroke weight (1.5), square caps, mitred joins |
-| `Nav.astro` | Fixed header, lockup, three links, one CTA | Transparent over the hero, solid once scrolled; mobile panel with `aria-expanded` and Escape-to-close |
-| `Footer.astro` | Mark, tagline, contact, pages, channels | Social links are typographic labels, not hand-drawn brand glyphs |
-| `Hero.astro` | Diagonal split, headline, lead, proof row, two actions | Takes the `getImage()` result so the same URL can be preloaded |
-| `NextRace.astro` | One thin data strip | Static date always renders; the countdown is JS-only and its line is pre-reserved |
-| `ResultsTable.astro` | The timing sheet | Real `<table>` with explicit ARIA roles so semantics survive the mobile `display: block` |
-| `Garage.astro` + `GarageSlide.astro` | Native scroll-snap filmstrip | Six fixed slots; the `<Image>` stays in `Garage.astro` (see §8) |
-| `DriverCard.astro` | `compact` column or `row` roster entry | Stats and socials render only when present |
-| `PillarBand.astro` | The four values as one `<dl>` band | One band, not four screens |
-| `PartnerBand.astro` | Copy plus the partner list | Never renders an empty logo row |
-| `JoinCta.astro` | Discord CTA over the brand's spray texture | Optional three-step explainer |
-| `PageHead.astro` | h1, lead, one data meta line | Shared by team / about / partners |
+| `Nav.astro` | Fixed header, lockup, four links, one CTA | Ghost CTA over the hero, solid and fully opaque once scrolled; a compact CTA sits in the bar at phone widths; mobile panel with `aria-expanded`, Escape-to-close, a focus trap and `inert` behind it |
+| `Footer.astro` | Mark, tagline, contact, pages, channels | Three equal columns, channels flush right. Social links are typographic labels, not hand-drawn brand glyphs |
+| `Hero.astro` | Diagonal split, headline, lead, proof row, two actions | Takes the `getImage()` result so the same URL can be preloaded. The proof row prints field size when the record has it |
+| `NextRace.astro` | One thin data strip plus the rest of the calendar | Static date always renders; the countdown is JS-only and its line is pre-reserved. Falls back to "No race scheduled" with the last completed event |
+| `ResultsTable.astro` | The timing sheet | Real `<table>` with explicit ARIA roles so semantics survive the mobile `display: block`. Position, field size, series, class, drivers, date |
+| `Garage.astro` + `GarageSlide.astro` | Native scroll-snap filmstrip | Five fixed slots; the scrollable region is a wrapping `<div>` so the `<ul>` keeps its list role; the `<Image>` stays in `Garage.astro` (see §8) |
+| `DriverCard.astro` | `compact` column or `row` roster entry | Stats and socials render only when present; the row prints the driver's latest finish, derived from `results.json` |
+| `PillarBand.astro` | The four values, `row` or `long` | `row` is a four-across band (home), `long` one entry per row with a race-weekend sentence and the hashtags along the foot (about) |
+| `PartnerBand.astro` | `row` (logo-led register) or `stack` (dossier entries) | Never renders an empty logo row |
+| `JoinCta.astro` | Discord CTA over the brand's spray texture | Full-width heading, lead, button, then the three steps across the band. Steps on the home page only |
+| `PageHead.astro` | h1, lead, meta, optional `action` and `aside` slots | Shared by team / about / partners; the aside is what stops the first screen being half empty |
 
 Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 `.rule-top`, `.section-head` (+ `.section-head-stack`), `.roster-teaser`, `.btn`
@@ -236,3 +249,87 @@ Shared classes in `global.css`: `.container`, `.section`, `.section-tall`,
 - Astro's scoped styles do **not** reach a child component's root element. Sizing
   that has to cross a component boundary goes through an inherited custom property
   (`--mark-size`), and the `<img>` rendered by `<Image>` needs `:global(img)`.
+- **The minifier folds `animation` longhands into the shorthand.**
+  `animation-timeline` is not a component of that shorthand, so a browser rejects
+  the whole declaration and the effect silently dies in `dist/` while still
+  working in `astro dev`. Anything using a scroll-driven timeline is written as
+  longhands, and verified against the built file, never the dev server.
+- **Stylesheets are inlined** (`build.inlineStylesheets: 'always'`). The whole CSS
+  budget is about 6 KB gzipped; three render-blocking round trips cost more than
+  the bytes.
+- **Never read layout before first paint.** Measuring every `.reveal` on load, or
+  the garage track's `scrollWidth`, forced a full layout of a 5,000px page ahead
+  of the first frame and was the largest single main-thread cost on the home page.
+  The garage measures inside `requestAnimationFrame`; the reveals measure nothing.
+
+## 9. Decision log
+
+Newest first. Only decisions that changed the system, not every edit.
+
+### Pass 2, 14 Sep 2026
+
+**Data comes from a Discord bot now.** `results.json`, `drivers.json` and
+`events.json` implement `docs/data-contract.md` (stable `id`s, enumerated
+classes, ISO alpha-3 countries, `role` / `group` / `active`, event `status`,
+optional `entries` field size). `scripts/check-data.mjs` validates all three and
+runs as `prebuild`, so an invalid write fails the build and the previous
+deployment keeps serving. All sorting and selection moved into `src/lib/data.ts`
+and no reader assumes the file is in order.
+
+**Position without field size is an assertion, not evidence.** Results print
+`P2` over `of 41` whenever the record carries `entries`, and print `P2` alone
+when it does not. The series line was already in the data and is now rendered.
+Each roster row shows that driver's most recent finish, matched on name.
+
+**Hero render swapped to the Interlagos LMP2.** The Daytona Porsche carries a
+legible NordVPN door decal, and the Partners page says GLYTCH is the only
+partner. The Interlagos render is the only one in the set with no third-party
+mark on the car or the scenery. The Porsche is out of the garage too, because
+the decal still reads at slide width. The Nordschleife shot came back in as a
+re-crop of the original: the uncropped frame is dominated by two AMG hoardings.
+The garage is five slots, not six.
+
+**One layout family per section.** Three bands on the home page were the same
+"narrow heading column left, hairline rows right" skeleton in a row. The pillars
+became a four-across register, the partner band a logo-led horizontal row, and
+the join band a full-width statement with the three steps running underneath it.
+Heading scale now ladders: `display-lg` on results and the values, `display-xl`
+on the join band, `display-md` elsewhere. `PageHead` gained `aside` and `action`
+slots so the inner pages open with an entry list, the founding dates or the
+season dossier instead of a flat void.
+
+**The reveal system no longer animates opacity.** A tall block gated on
+`opacity: 0` plus an IntersectionObserver shipped a blank screen on mobile. It
+now moves 12px and nothing else, the observer fires at `threshold: 0`, and a
+1.5s timer settles anything left. Reveals were removed from whole-section
+wrappers and kept only on genuine sibling lists.
+
+**The hero image is a paint candidate from its first frame.** The entrance
+animated `opacity` from 0 over 1100ms, which cost 2.26s of measured LCP because
+a transparent image is not a candidate at all. The keyframe is a 640ms scale
+settle now, and the width ladder gained 828 and 1536 steps so a phone stops
+pulling the 1280 file and a retina laptop stops pulling the 1920 one.
+
+**The stuck nav is fully opaque and has no blur.** At 94% opacity display type
+ghosted through the bar; the 14px `backdrop-filter` behind it was invisible,
+cost a compositing layer on every scroll, and the unprefixed property was being
+dropped by the minifier anyway. The header CTA is a ghost button while the bar
+is transparent over the hero and solid once it is stuck, so the page's own
+primary button is never competing with an identical teal block.
+
+**The header button follows the page, not the site.** `/partners` exists to
+start a partnership, so its header CTA, its first-screen action and its contact
+button are the same mailto with the same label. Every other page keeps
+"Join the team". `nav.json` carries the override; `src/lib/links.ts` owns the
+two intents so the address is written once.
+
+**Smooth scrolling is per click.** A global `scroll-behavior: smooth` turned a
+cross-page anchor into a long animated flight that landed mid-page. In-page
+anchors are smoothed in script, with the reduced-motion query respected.
+
+**Deliberately not done, and why:** the h1 stays the two-weight ARTEMIS /
+ESPORTS lockup rather than the value proposition, because the lockup is a
+protected decision; the claim was promoted to full ink strength instead. Driver
+iRating and licence stay empty rather than being invented. The mobile menu still
+appears and disappears instantly, which is cohesive with a square, radius-free
+system and is the one motion note that wanted a real phone before changing it.

@@ -1,123 +1,100 @@
 # Updating the site
 
-Everything you would normally edit lives in `src/data/`. Change a file, rebuild,
-upload. No code required.
+Two ways in:
 
-After any edit, run:
+- **Results, drivers and events** are managed from Discord by the Artemis Data
+  Bot. You do not touch the files.
+- **Everything else** (hero photo, garage, partners, navigation, copy) is a
+  small edit in `src/data/` or one line in a component, described below.
+
+Either way, after a change:
 
 ```
 npm run build
 ```
 
-and upload the `dist/` folder (see DEPLOY.md).
+The build runs `npm run check:data` first. If any of the three bot-owned files
+breaks the contract the build stops with a list of `file[index].field: message`
+lines and nothing is deployed, so the previous version stays live.
 
 ---
 
 ## Fill in
 
 These records are **placeholders**. They are realistic, but they are not real.
-Every one of them carries `"_placeholder": true` in the JSON (that flag is never
-rendered; it is a marker for you). Replace the content and delete the flag.
+Every one carries `"_placeholder": true` in the JSON (never rendered; the bot
+shows `(placeholder)` beside them so you can spot them). Replace them and drop
+the flag.
 
 | Where | What is fake | How to replace |
 |---|---|---|
-| `src/data/drivers.json` | All 8 entries: names, countries, car numbers, focus lines and bios | Replace `name`, `country`, `number`, `focus` and `bio` with the real roster. Keep `group` as `road`, `oval` or `crew`. Delete `"_placeholder": true` from each entry you fix. |
-| `src/data/drivers.json` -> `stats` | `irating` and `licence` are empty on purpose | Fill them in only if you want them public. Empty values do not render, so a half-filled roster still looks right. |
-| `src/data/drivers.json` -> `socials` | Empty on every driver | Add `{"x": "https://...", "twitch": "https://..."}` per driver. Only non-empty links render. |
-| `src/data/results.json` | All 6 results: finishing positions, driver names and the note lines | The **events, tracks and dates are real** and can stay. Replace `position`, `driver` and `note` with what actually happened, then delete the flag. |
-| `src/data/events.json` | All 3 entries: the specific rounds and start times | Petit Le Mans at Road Atlanta (25-27 Sep 2026) is real. The two league rounds after it are invented. Replace them, or delete them. |
+| `src/data/drivers.json` | All 8 entries: names, countries, car numbers, focus lines and bios | `/driver edit` in Discord, or edit the file. Keep `group` as `road`, `oval` or `crew`. |
+| `src/data/drivers.json` -> `stats` | Not present on anyone | Optional. `irating` is a whole number, `licence` looks like `A 4.20`. Nothing renders until you add them. |
+| `src/data/drivers.json` -> `socials` | Not present on anyone | Optional. Keys are `x`, `twitch`, `youtube`, `instagram`; https URLs only. |
+| `src/data/results.json` | All 6 results: finishing positions, field sizes, driver names, note lines | The **events, tracks and dates are real** and can stay. Replace `position`, `entries`, `drivers` and `note` with what actually happened. |
+| `src/data/events.json` | All 3 entries | Petit Le Mans at Road Atlanta (25-27 Sep 2026) is real. The two league rounds after it are invented. |
 | `src/pages/about.astro` | The two paragraphs under "Where this came from" | Draft copy written from the two facts we had (founded 2017, iRacing since 2023). Rewrite in your own words. |
-| Hero photo | The car carries a **NordVPN** decal | If that is not a current partner, swap the hero image (see "Change the hero photo"). |
 
-**Not placeholders, already correct:** the tagline, mission, the four pillars, the
-hashtags, the contact email, every social and store URL, the Discord invite, and
-the GLYTCH Energy partner entry.
+**Not placeholders, already correct:** the tagline, mission, the four pillars
+and their detail lines, the hashtags, the contact email, every social and store
+URL, the Discord invite, the GLYTCH Energy partner entry, and all five garage
+renders.
 
 ---
 
-## Add or edit a driver / crew member
+## Results, drivers and events (the Discord bot)
 
-Edit `src/data/drivers.json`. Copy an existing block:
+`src/data/results.json`, `drivers.json` and `events.json` are written by the
+Artemis Data Bot. Anyone with **Manage Server** in the Discord can run:
 
-```json
-{
-  "name": "Handle or Name",
-  "group": "road",
-  "number": "24",
-  "country": "USA",
-  "focus": "GT3 / Endurance",
-  "bio": "One short line about them.",
-  "socials": {},
-  "stats": { "irating": "", "licence": "" }
-}
-```
+- `/result` - add, edit or remove a race result
+- `/driver` - add, edit or remove a roster entry
+- `/event` - add, edit or remove a calendar entry
 
-- `group` is one of `road`, `oval`, `crew`. The Team page makes one section per
-  group that has at least one member, in that order. A group with nobody in it
-  does not render.
-- `number` shows as the large outlined car number. Leave `""` for crew; their row
-  simply starts at the name instead.
-- `focus` is the short teal line (discipline, role). Keep it to a few words.
-- `bio` is one line. Short reads stronger.
-- `socials` and `stats` render only when they have values, so you can leave them
-  empty and fill them in later.
-- The home page shows the **first four non-crew entries** as a teaser. Order the
-  file so the four you want up front come first.
+The bot commits one change at a time straight to the deploy branch, the host
+rebuilds, and the change is live in about a minute. It replies with what
+changed and the commit it made.
 
-## Add or change a race result
+**Hand edits are still allowed.** The bot re-reads the file before every write,
+so it will not overwrite your change. If you edit by hand, the rules in
+`docs/data-contract.md` apply exactly as they do to the bot, and
+`npm run check:data` has to pass before the site will build. The short version:
 
-Edit `src/data/results.json`. Order does not matter; the site sorts newest first
-and the home page shows six, the Partners page four.
+- `id` is a lowercase slug, unique in its file, and never edited. To change an
+  id, remove the record and add it again.
+- Dates are `YYYY-MM-DD`. No times.
+- `results.json`: `class` must be one of GTP, LMP2, GT3, GT4, TCR, NASCAR Cup,
+  NASCAR Xfinity, NASCAR Trucks, ARCA, Formula, Other. `position` is 1-99.
+  `entries` is the field size and is optional; when it is there the site prints
+  `P2 / of 41`, when it is not it prints `P2` and says nothing more.
+  `drivers` is a list of names, and each name has to match a `name` in
+  `drivers.json` for that driver's "Last drive" line to appear on the Team page.
+- `drivers.json`: `role` is `driver`, `pitwall` or `staff`; `group` is `road`,
+  `oval` or `crew`; `country` is a three-letter code (`USA`, `GBR`, `BRA`).
+  `active: false` hides someone from the site without deleting their record.
+- `events.json`: `status` is `planned`, `confirmed`, `done` or `skipped`. The
+  "Next race" strip shows the first `planned` or `confirmed` entry that has not
+  finished, and lists the ones after it underneath. With none left it says
+  "No race scheduled".
 
-```json
-{
-  "date": "2026-09-06",
-  "event": "Suzuka 1000",
-  "track": "Suzuka International Racing Course",
-  "series": "iRacing Special Event",
-  "class": "GT3",
-  "position": 2,
-  "driver": "Ferreira / Kowalczyk / Callaghan",
-  "note": "Two stops on strategy, no contact all race."
-}
-```
+Where each file shows up:
 
-- `date` must be `YYYY-MM-DD`.
-- `position` is a number. 1, 2 and 3 are shown in teal as podiums; the rest are grey.
-- `track` and `note` are printed together as the small line under the event name.
-  Keep `note` to one sentence, or leave it out.
-- The **newest result is also the hero proof point** on the home page, so make sure
-  the top of this file is something you are happy to lead with.
+| File | On the site |
+|---|---|
+| `results.json` | Home "Recent results" (first 6), the hero proof line (best finish among the newest three), the Partners dossier and its snapshot (first 3), each driver's "Last drive" line |
+| `drivers.json` | Home "Who drives" (first 4 active drivers), the whole Team page, the Partners entry-list line |
+| `events.json` | Home "Next race" strip and the entries listed under it |
 
-## Add or change a calendar entry
+`docs/data-contract.md` is the full specification and is kept identical to the
+copy the bot uses. If it changes, both sides change together.
 
-Edit `src/data/events.json`. The site shows the first entry whose end date has not
-passed as "Next race". When the list runs out, the whole strip disappears rather
-than showing something stale, so keep one or two future entries in it.
+---
 
-```json
-{
-  "name": "Petit Le Mans",
-  "track": "Road Atlanta",
-  "date": "2026-09-25",
-  "endDate": "2026-09-27",
-  "start": "2026-09-25T16:00:00Z",
-  "classes": ["GTP", "LMP2", "GT3"],
-  "status": "entered"
-}
-```
+## Change the garage photos
 
-- `date` / `endDate` are `YYYY-MM-DD`. Set `endDate` the same as `date` for a
-  one-day race, or leave it out.
-- `start` is the green-flag time in UTC (`Z`). It only drives the "In 11d 04h 22m"
-  countdown, which is added by JavaScript. Without it, the date still shows.
-- `classes` is a list; it prints as `GTP / LMP2 / GT3`.
-
-## Change the six garage photos
-
-The garage has **six fixed slots** by design. Changing a caption is a data edit;
-changing a photo is a two-line code edit (this is deliberate, see DESIGN.md §8 -
-it is what keeps the build from shipping 70 MB of full-size originals).
+The garage has **five fixed slots**. Changing a caption is a data edit; changing
+a photo is a two-line code edit (deliberate, see DESIGN.md section 8 - it is
+what keeps the build from shipping 70 MB of full-size originals).
 
 **To change a caption only**, edit `src/data/cars.json`:
 
@@ -143,18 +120,31 @@ the filmstrip. It does not crop the photo; it chooses the frame.
    the new import name.
 3. Update the same row in `cars.json` (`image`, `car`, `track`, `caption`, `shape`).
 
+**Check the render for other people's logos.** The Daytona Porsche shot is out
+of rotation because a NordVPN door decal is legible at slide size and we do not
+list NordVPN as a partner. The Nordschleife shot is in rotation as a crop,
+because the original frame is dominated by two trackside AMG hoardings.
+
 ## Change the hero photo
 
-1. Put the new render in `src/assets/racing/`.
+1. Put the new render in `src/assets/racing/` (up to 1920px on the long edge).
 2. In `src/pages/index.astro`, change the `import heroSource from ...` line.
 3. Change the `alt` text on the `<Hero ... alt="..." />` line just below it to
    describe the new shot.
+4. Look at it at 1440 and at 390 before shipping. The first screen must not show
+   a logo belonging to anyone who is not on the Partners page, and the car has to
+   be recognisable at phone width. `src/components/Hero.astro` has an
+   `object-position` and a `--media-zoom` in its `max-width: 900px` block for
+   exactly that.
 
 ## Change the About photos
 
 The three photos are imported at the top of `src/pages/about.astro`. Drop new
-files in `src/assets/photos/`, change the import paths, and update each `alt`.
-Sizes: the wide one is used at up to 1920px, the other two at up to 1280px.
+files in `src/assets/photos/`, change the import paths, and update each `alt`
+**and its `<figcaption>`**. The captions exist because the pictures are from the
+gaming side of the org, not the race team, and they sit in the origin story for
+that reason. Sizes: the wide one is used at up to 1920px, the other two at up to
+1280px.
 
 ## Add a partner
 
@@ -185,19 +175,30 @@ All in `src/data/site.json`:
 - `shortDescription` is spare copy for meta descriptions.
 - `founded` and `simRacingSince` print on the About page.
 - `contactEmail` feeds the footer and every "Partner with us" button.
-- `socials` and `store`: any entry with a URL appears in the footer and on the
-  Partners page. Empty ones disappear. `socials.discord` is what every
-  "Join the team" button points at, so do not empty it.
-- `hashtags` feed the About band and the footer line.
-- `pillars` are the four values, used on both the home page and About.
-- `join.lead` and `join.steps` are the Discord explainer. Three steps is what the
-  layout is built for.
+- `socials` and `store`: any entry with a URL appears in the footer, on the
+  Partners page and in the site's structured data. Empty ones disappear.
+  `socials.discord` is what every "Join the team" button points at, so do not
+  empty it.
+- `hashtags` feed the About values band and the footer line.
+- `pillars` are the four values. `title` and `line` show on both the home page
+  and About; `detail` shows only on About.
+- `join.lead` and `join.steps` are the Discord explainer. Three steps is what
+  the layout is built for, and they appear on the home page only.
 
 ## Change the navigation
 
-`src/data/nav.json` is the only place nav links are defined. `primary` is the
-header and the mobile menu, `footer` is the footer column, `cta` is the button.
-Adding a page means adding a file in `src/pages/` and a line here.
+`src/data/nav.json` is the only place nav links are defined.
+
+- `primary` is the header and the mobile menu.
+- `footer` is the footer "Pages" column.
+- `cta` names the site-wide header button by intent (`join`).
+- `ctaOverrides` swaps that button on one path. `/partners` uses `partnership`,
+  so the header on that page carries the mailto instead of the Discord invite.
+  The two intents live in `src/lib/links.ts`, which is also where the mailto
+  address and subject line come from.
+
+Adding a page means adding a file in `src/pages/`, a line in `primary`, a line
+in `footer`, and a `<url>` in `public/sitemap.xml`.
 
 ---
 
@@ -208,6 +209,11 @@ Adding a page means adding a file in `src/pages/` and a line here.
 - **Reach figures.** The Partners page deliberately says "ask us" instead of
   printing follower counts. If you want real numbers on the page, send them and
   they can be added with a date stamp.
+- **Driver stats.** `irating` and `licence` render the moment they are filled in,
+  and stay invisible until then. Nothing is made up to fill the slot.
+- **A photograph of the sim rigs.** Every photo on the site is from the gaming
+  side of the org. One picture of a wheel, a rig or a screen with a car on it
+  would do more for the About page than anything else on this list.
 - **Eastman font.** Only trial OTFs existed, so Nexa covers all display and body
   text and JetBrains Mono covers data. If Eastman is ever licensed, add the woff2
   to `public/fonts/` and update `--font-display` in `src/styles/global.css`.

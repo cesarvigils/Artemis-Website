@@ -11,30 +11,45 @@ import PartnerBand from '../components/PartnerBand.astro';
 import JoinCta from '../components/JoinCta.astro';
 import Icon from '../components/Icon.astro';
 
-import site from '../data/site.json';
 import results from '../data/results.json';
 import events from '../data/events.json';
 import drivers from '../data/drivers.json';
-import heroSource from '../assets/racing/daytona-porsche-911.jpg';
+import {
+  featuredDrivers,
+  heroProof,
+  lastCompletedEvent,
+  recentResults,
+  todayInTeamZone,
+  upcomingEvents,
+  type Driver,
+  type RaceEvent,
+  type RaceResult,
+} from '../lib/data';
+import { discordInvite } from '../lib/links';
 
+/* The Artemis LMP2 at Interlagos: the only render in the set that carries no
+   third-party decal, so the first screen makes no claim the Partners page has
+   to contradict. */
+import heroSource from '../assets/racing/interlagos-lmp2.jpg';
+
+/* The ladder has steps at 828 and 1536 because the old 640/1280/1920 one made
+   a 412px phone pull the 1280 file and a retina 1440 laptop pull the 1920. */
 const heroImg = await getImage({
   src: heroSource,
-  widths: [640, 1280, 1920],
+  widths: [640, 828, 1280, 1536, 1920],
   format: 'webp',
-  quality: 64,
+  quality: 58,
 });
 
-const recent = [...results]
-  .sort((a, b) => b.date.localeCompare(a.date))
-  .slice(0, 6);
-
-const today = new Date().toISOString().slice(0, 10);
-const nextEvent =
-  [...events]
-    .filter((event) => (event.endDate ?? event.date) >= today)
-    .sort((a, b) => a.date.localeCompare(b.date))[0] ?? undefined;
-
-const featured = drivers.filter((driver) => driver.group !== 'crew').slice(0, 4);
+const recent = recentResults(results as RaceResult[], 6);
+const proof = heroProof(results as RaceResult[]);
+const today = todayInTeamZone();
+const upcoming = upcomingEvents(events as RaceEvent[], today);
+const lastDone = lastCompletedEvent(events as RaceEvent[]);
+const featured = featuredDrivers(drivers as Driver[], 4);
+const driverCount = (drivers as Driver[]).filter(
+  (driver) => driver.active !== false && driver.role === 'driver'
+).length;
 ---
 
 <Base
@@ -48,25 +63,34 @@ const featured = drivers.filter((driver) => driver.group !== 'crew').slice(0, 4)
 >
   <Hero
     image={heroImg}
-    alt="An Artemis Porsche 911 GT3 R on the grid at Daytona under floodlights"
-    proof={recent[0]}
-    ctaHref={site.socials.discord}
+    alt="The Artemis Oreca 07 LMP2 running through the esses at Interlagos at dusk"
+    proof={proof}
+    ctaHref={discordInvite}
   />
 
-  <NextRace event={nextEvent} />
+  <NextRace upcoming={upcoming} lastDone={lastDone} />
 
   <section class="section rule-top" id="results" aria-labelledby="results-heading">
     <div class="container">
       <div class="section-head section-head-stack">
-        <h2 class="display-md" id="results-heading">Recent results</h2>
-        <p class="lead">The last six finishes, across endurance, GT and oval.</p>
+        <h2 class="display-lg" id="results-heading">Recent results</h2>
+        <p class="lead">
+          The last six finishes, with the field size where we have it, across
+          endurance, GT and oval.
+        </p>
       </div>
-      <div class="reveal">
-        <ResultsTable
-          results={recent}
-          caption="The six most recent Artemis Esports race results"
-        />
-      </div>
+      {
+        recent.length > 0 ? (
+          <ResultsTable
+            results={recent}
+            caption="The six most recent Artemis Esports race results"
+          />
+        ) : (
+          <p class="lead">
+            No finishes published yet. The next entry is on the calendar above.
+          </p>
+        )
+      }
     </div>
   </section>
 
@@ -77,11 +101,11 @@ const featured = drivers.filter((driver) => driver.group !== 'crew').slice(0, 4)
       <div class="section-head">
         <h2 class="display-md" id="drivers-heading">Who drives</h2>
         <a class="text-link" href="/team">
-          Full roster
+          Full roster ({driverCount} drivers)
           <Icon name="arrow-right" size={16} />
         </a>
       </div>
-      <ul class="roster-teaser reveal">
+      <ul class="roster-teaser">
         {featured.map((driver) => <DriverCard driver={driver} variant="compact" />)}
       </ul>
     </div>

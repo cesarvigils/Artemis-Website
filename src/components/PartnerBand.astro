@@ -17,9 +17,14 @@ interface Props {
   lead: string;
   /** Where the quiet link goes, and what it says. */
   link?: { href: string; label: string };
+  /**
+   * "row"   - one horizontal register, logo first (home).
+   * "stack" - heading over the full partner entries (partners page).
+   */
+  variant?: 'row' | 'stack';
 }
 
-const { heading, lead, link } = Astro.props;
+const { heading, lead, link, variant = 'row' } = Astro.props;
 
 const list = partners.map((partner) => {
   const meta = partnerLogos[partner.logo];
@@ -32,44 +37,80 @@ const list = partners.map((partner) => {
 });
 ---
 
-<section class="partner-band rule-top" aria-labelledby="partner-band-heading">
+<section
+  class:list={['partner-band', `is-${variant}`]}
+  aria-labelledby="partner-band-heading"
+>
   <div class="container partner-inner">
-    <div class="partner-copy">
-      <h2 class="display-md" id="partner-band-heading">{heading}</h2>
-      <p class="lead">{lead}</p>
-      {
-        link && (
-          <a class="text-link" href={link.href}>
-            {link.label}
-            <Icon name="arrow-right" size={16} />
-          </a>
-        )
-      }
-    </div>
-
-    <ul class="partner-list">
-      {
-        list.map((partner) => (
-          <li class="partner-item">
-            <a href={partner.url} target="_blank" rel="noopener">
-              <Image
-                src={partner.meta}
-                alt={`${partner.name} logo`}
-                widths={[240, 480]}
-                sizes="220px"
-                format="webp"
-                loading="lazy"
-              />
-              <span class="partner-meta">
-                <span class="partner-name">{partner.name}</span>
-                <span class="partner-since data">Partner since {partner.since}</span>
-              </span>
-            </a>
-            <p class="partner-blurb">{partner.detail ?? partner.blurb}</p>
-          </li>
-        ))
-      }
-    </ul>
+    {
+      variant === 'row' ? (
+        <>
+          <ul class="partner-marks">
+            {list.map((partner) => (
+              <li>
+                <a href={partner.url} target="_blank" rel="noopener">
+                  <Image
+                    src={partner.meta}
+                    alt={`${partner.name} logo`}
+                    widths={[240, 480]}
+                    sizes="220px"
+                    format="webp"
+                    loading="lazy"
+                  />
+                  <span class="partner-since data">
+                    {partner.name}, partner since {partner.since}
+                  </span>
+                  <span class="sr-only"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div class="partner-copy">
+            <h2 class="display-sm" id="partner-band-heading">
+              {heading}
+            </h2>
+            <p class="partner-lead">{lead}</p>
+            {link && (
+              <a class="text-link" href={link.href}>
+                {link.label}
+                <Icon name="arrow-right" size={16} />
+              </a>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="partner-copy">
+            <h2 class="display-md" id="partner-band-heading">
+              {heading}
+            </h2>
+            <p class="partner-lead">{lead}</p>
+          </div>
+          <ul class="partner-list">
+            {list.map((partner) => (
+              <li class="partner-item">
+                <a href={partner.url} target="_blank" rel="noopener">
+                  <Image
+                    src={partner.meta}
+                    alt={`${partner.name} logo`}
+                    widths={[240, 480]}
+                    sizes="220px"
+                    format="webp"
+                    loading="lazy"
+                  />
+                  <span class="partner-meta">
+                    <span class="partner-name">{partner.name}</span>
+                    <span class="partner-since data">Partner since {partner.since}</span>
+                  </span>
+                  <span class="sr-only"> (opens in a new tab)</span>
+                </a>
+                <p class="partner-blurb">{partner.detail ?? partner.blurb}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
   </div>
 </section>
 
@@ -79,48 +120,89 @@ const list = partners.map((partner) => {
     padding-block: var(--space-2xl);
   }
 
-  .partner-inner {
+  .partner-lead {
+    margin-top: var(--space-s);
+    color: var(--ink-dim);
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
+
+  /* Row variant: one horizontal register. The mark comes first because it is
+     the evidence; the sentence and the link follow it on the same line. */
+  .is-row .partner-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2fr);
+    gap: var(--space-l) var(--space-xl);
+    align-items: center;
+    padding-block: var(--space-m);
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .is-row .partner-marks a {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    transition: opacity var(--dur-hover) var(--ease-out);
+  }
+
+  .is-row .partner-marks :global(img) {
+    width: min(200px, 100%);
+    height: auto;
+  }
+
+  .is-row .partner-since {
+    color: var(--ink-faint);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .is-row .partner-lead {
+    max-width: 54ch;
+  }
+
+  .is-row .partner-copy .text-link {
+    margin-top: var(--space-m);
+  }
+
+  /* Stack variant: the dossier page, where the partner entry carries its own
+     paragraph about what the deal actually is. */
+  .is-stack .partner-copy h2 {
+    max-width: 14ch;
+  }
+
+  .is-stack .partner-lead {
+    max-width: 40ch;
+  }
+
+  .is-stack .partner-inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
     gap: var(--space-xl);
     align-items: start;
   }
 
-  .partner-copy h2 {
-    max-width: 14ch;
-  }
-
-  .partner-copy .lead {
-    margin-top: var(--space-s);
-    max-width: 34ch;
-  }
-
-  .partner-copy .text-link {
-    margin-top: var(--space-m);
-  }
-
-  .partner-list {
+  .is-stack .partner-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-m);
   }
 
-  .partner-item {
+  .is-stack .partner-item {
     border: 1px solid var(--line);
     padding: var(--space-m);
     background: var(--bg);
   }
 
-  .partner-item > a {
+  .is-stack .partner-item > a {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-m);
-    transition: opacity var(--dur-hover) var(--ease-out);
   }
 
-  /* :global: the <img> comes from Astro's Image component. */
-  .partner-item :global(img) {
+  .is-stack .partner-item :global(img) {
     width: 180px;
     height: auto;
   }
@@ -139,7 +221,7 @@ const list = partners.map((partner) => {
     text-transform: uppercase;
   }
 
-  .partner-since {
+  .is-stack .partner-since {
     color: var(--ink-faint);
     font-size: var(--text-2xs);
   }
@@ -154,17 +236,19 @@ const list = partners.map((partner) => {
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .partner-item > a:hover .partner-name {
+    .partner-item > a:hover .partner-name,
+    .partner-marks a:hover .partner-since {
       color: var(--teal);
     }
   }
 
   @media (max-width: 900px) {
-    .partner-inner {
+    .is-row .partner-inner,
+    .is-stack .partner-inner {
       grid-template-columns: 1fr;
       gap: var(--space-l);
     }
-    .partner-item :global(img) {
+    .is-stack .partner-item :global(img) {
       width: 140px;
     }
   }

@@ -2,14 +2,25 @@
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import ResultsTable from '../components/ResultsTable.astro';
-import DriverCard from '../components/DriverCard.astro';
 import PartnerBand from '../components/PartnerBand.astro';
 import Icon from '../components/Icon.astro';
 
 import site from '../data/site.json';
 import results from '../data/results.json';
 import drivers from '../data/drivers.json';
+import {
+  activeDrivers,
+  podiumCount,
+  recentResults,
+  sortResults,
+  type Driver,
+  type RaceResult,
+} from '../lib/data';
+import { partnershipMailto } from '../lib/links';
 
+/* The first item is the headline of the offer, so it takes the full width and
+   the other three sit under it. Four equal cells made livery placement look
+   like an afterthought next to "the Discord". */
 const OFFER = [
   {
     title: 'Livery placement',
@@ -29,8 +40,16 @@ const OFFER = [
   },
 ];
 
-const snapshot = [...results].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
-const rosterSnapshot = drivers.filter((driver) => driver.group !== 'crew').slice(0, 4);
+const races = sortResults(results as RaceResult[]);
+const snapshot = recentResults(races, 3);
+const best = races.reduce((a, b) => (b.position < a.position ? b : a));
+const podiums = podiumCount(races);
+const tracks = [...new Set(races.map((race) => race.event))].slice(0, 4);
+const classes = [...new Set(races.map((race) => race.class))];
+
+const roster = activeDrivers(drivers as Driver[]).filter(
+  (driver) => driver.role === 'driver'
+);
 
 const SOCIAL_LABELS: Record<string, string> = {
   discord: 'Discord',
@@ -47,8 +66,6 @@ const channels = [
     .map(([key, url]) => ({ label: SOCIAL_LABELS[key] ?? key, url })),
   { label: 'Store', url: site.store },
 ];
-
-const podiums = results.filter((result) => result.position <= 3).length;
 ---
 
 <Base
@@ -56,10 +73,37 @@ const podiums = results.filter((result) => result.position <= 3).length;
   description="What a partner gets from Artemis Esports: livery placement, result posts, roster exposure and the Discord community. Recent results, roster and contact."
 >
   <PageHead
-    title="Partner with us"
-    lead="Everything a sponsor needs to make a decision is on this page: what you get, what we have finished recently, who drives, and where the audience is."
-    meta={`${results.length} results listed / ${podiums} podiums / contact below`}
-  />
+    title="Partner with Artemis"
+    lead="Everything a sponsor needs to decide is on this page: what you get, what we have finished recently, who drives, and where the audience is."
+    meta="2026 season / endurance, GT and oval"
+  >
+    {/* The action is in the first screen, not 3,600px down at the end. */}
+    <a class="btn btn-solid" slot="action" href={partnershipMailto}>
+      Partner with us
+      <Icon name="arrow-right" size={16} />
+    </a>
+
+    <dl class="dossier" slot="aside">
+      <div>
+        <dt class="field-label">Best finish</dt>
+        <dd class="data">
+          P{best.position}{best.entries ? ` of ${best.entries}` : ''}, {best.event}
+        </dd>
+      </div>
+      <div>
+        <dt class="field-label">Results listed</dt>
+        <dd class="data">{races.length}, {podiums} of them podiums</dd>
+      </div>
+      <div>
+        <dt class="field-label">Classes run</dt>
+        <dd class="data">{classes.join(' / ')}</dd>
+      </div>
+      <div>
+        <dt class="field-label">Recent events</dt>
+        <dd class="data">{tracks.join(' / ')}</dd>
+      </div>
+    </dl>
+  </PageHead>
 
   <section class="section offer rule-top" aria-labelledby="offer-heading">
     <div class="container">
@@ -91,24 +135,25 @@ const podiums = results.filter((result) => result.position <= 3).length;
           <Icon name="arrow-right" size={16} />
         </a>
       </div>
-      <div class="reveal">
-        <ResultsTable results={snapshot} caption="The four most recent Artemis Esports results" />
-      </div>
-    </div>
-  </section>
+      <ResultsTable results={snapshot} caption="The three most recent Artemis Esports results" />
 
-  <section class="section rule-top" aria-labelledby="roster-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 class="display-md" id="roster-heading">Who drives</h2>
-        <a class="text-link" href="/team">
-          Full roster
-          <Icon name="arrow-right" size={16} />
-        </a>
+      {/* Roster exposure without re-running the home page's teaser: the
+          numbers that would carry a partner mark, on one line. */}
+      <div class="roster-line">
+        <p class="field-label">Who runs these entries</p>
+        <ul>
+          {
+            roster.map((driver) => (
+              <li>
+                <a href={`/team#${driver.id}`}>
+                  <span class="roster-number data">{driver.number}</span>
+                  {driver.name}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
       </div>
-      <ul class="roster-teaser reveal">
-        {rosterSnapshot.map((driver) => <DriverCard driver={driver} variant="compact" />)}
-      </ul>
     </div>
   </section>
 
@@ -128,6 +173,7 @@ const podiums = results.filter((result) => result.position <= 3).length;
               <a href={channel.url} target="_blank" rel="noopener">
                 <span>{channel.label}</span>
                 <Icon name="arrow-up-right" size={15} />
+                <span class="sr-only"> (opens in a new tab)</span>
               </a>
             </li>
           ))
@@ -139,6 +185,7 @@ const podiums = results.filter((result) => result.position <= 3).length;
   <PartnerBand
     heading="Current partners"
     lead="The list is short because we only sign what we can service."
+    variant="stack"
   />
 
   <section class="section contact rule-top" id="contact" aria-labelledby="contact-heading">
@@ -153,7 +200,7 @@ const podiums = results.filter((result) => result.position <= 3).length;
       <div class="contact-card">
         <p class="field-label">Partnerships and general enquiries</p>
         <a class="contact-email" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
-        <a class="btn btn-solid contact-btn" href={`mailto:${site.contactEmail}?subject=Partnership%20enquiry`}>
+        <a class="btn btn-solid contact-btn" href={partnershipMailto}>
           Partner with us
           <Icon name="arrow-right" size={16} />
         </a>
@@ -163,20 +210,49 @@ const podiums = results.filter((result) => result.position <= 3).length;
 </Base>
 
 <style>
+  .dossier {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .dossier > div {
+    display: grid;
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.6fr);
+    gap: var(--space-m);
+    align-items: baseline;
+    padding-block: var(--space-xs);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dossier dd {
+    color: var(--ink);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  /* One headline item, then three. */
   .offer-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-m) var(--space-xl);
   }
 
   .offer-item {
     padding-top: var(--space-m);
-    border-top: 1px solid var(--line-strong);
+    border-top: 1px solid var(--line);
+  }
+
+  .offer-item:first-child {
+    grid-column: 1 / -1;
+    border-top-color: var(--line-strong);
   }
 
   .offer-title {
     font-size: var(--text-xl);
     letter-spacing: 0.02em;
+  }
+
+  .offer-item:first-child .offer-title {
+    font-size: var(--text-2xl);
   }
 
   .offer-line {
@@ -185,6 +261,48 @@ const podiums = results.filter((result) => result.position <= 3).length;
     font-size: var(--text-sm);
     line-height: 1.6;
     max-width: 40ch;
+  }
+
+  .offer-item:first-child .offer-line {
+    font-size: var(--text-base);
+    max-width: 52ch;
+  }
+
+  .roster-line {
+    margin-top: var(--space-l);
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line);
+  }
+
+  .roster-line ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-m);
+    margin-top: var(--space-xs);
+  }
+
+  .roster-line a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .roster-number {
+    color: var(--teal-soft);
+    font-size: var(--text-2xs);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .roster-line a:hover {
+      color: var(--teal);
+    }
   }
 
   .reach-inner {
@@ -203,9 +321,9 @@ const podiums = results.filter((result) => result.position <= 3).length;
     max-width: 40ch;
   }
 
+  /* Seven channels in a two-column grid left a visible hole in the last
+     row. One column of seven reads as a list, which is what it is. */
   .channel-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     border-top: 1px solid var(--line);
   }
 
@@ -223,11 +341,6 @@ const podiums = results.filter((result) => result.position <= 3).length;
     text-transform: uppercase;
     color: var(--ink-dim);
     transition: color var(--dur-hover) var(--ease-out);
-  }
-
-  .channel-list li:nth-child(even) a {
-    padding-left: var(--space-m);
-    border-left: 1px solid var(--line);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -286,13 +399,12 @@ const podiums = results.filter((result) => result.position <= 3).length;
   }
 
   @media (max-width: 900px) {
-    .offer-grid,
-    .channel-list {
+    .offer-grid {
       grid-template-columns: 1fr;
     }
-    .channel-list li:nth-child(even) a {
-      padding-left: 0;
-      border-left: none;
+    .dossier > div {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
     }
     .reach-inner,
     .contact-inner {

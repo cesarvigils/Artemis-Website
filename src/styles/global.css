@@ -108,8 +108,8 @@
   --dur-press: 120ms;
   --dur-hover: 180ms;
   --dur-ui: 240ms;
-  --dur-reveal: 460ms;
-  --dur-entrance: 820ms;
+  --dur-reveal: 320ms;
+  --dur-entrance: 560ms;
 
   /* Layers */
   --z-base: 0;
@@ -137,8 +137,10 @@
   box-sizing: border-box;
 }
 
+/* No global `scroll-behavior: smooth`: it turns a cross-page anchor
+   (/partners -> /#results) into a long animated flight that lands the reader
+   mid-page. In-page anchors are smoothed per click in scripts/site.ts instead. */
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: calc(var(--nav-h) + 1rem);
   -webkit-text-size-adjust: 100%;
 }
@@ -293,12 +295,19 @@ p {
   max-width: 44ch;
 }
 
-/* Roster teaser: four hairline columns, no card boxes.
-   Used on the home page; the full roster is a timing-sheet list. */
+/* Roster teaser: hairline columns, no card boxes. The first column is wider so
+   the row is a lead entry plus three, not four identical cells. */
 .roster-teaser {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--line-strong);
+}
+
+/* The lead cell carries a larger number, so the row reads as one entry plus
+   three rather than four identical cells. Lives here, not in DriverCard,
+   because the <ul> belongs to the page and component styles are scoped. */
+.roster-teaser > li:first-child .driver-number {
+  font-size: clamp(2.75rem, 5.2vw, 3.75rem);
 }
 
 .roster-teaser > li + li {
@@ -312,6 +321,9 @@ p {
 @media (max-width: 900px) {
   .roster-teaser {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .roster-teaser > li:first-child .driver-number {
+    font-size: clamp(2.25rem, 4vw, 3rem);
   }
   .roster-teaser > li:nth-child(n + 3) {
     border-top: 1px solid var(--line);
@@ -424,7 +436,8 @@ p {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 0.9rem 1.25rem;
-  transition: transform var(--dur-ui) var(--ease-out);
+  /* Deliberately not animated: the skip link is reached by Tab, and a
+     keyboard-initiated action should arrive instantly. */
 }
 
 .skip-link:focus-visible {
@@ -446,19 +459,18 @@ p {
 }
 
 /* Reveal-on-scroll -------------------------------------------------
-   Progressive enhancement only: without the `js` class (no JS) the
-   content renders at its final state, so nothing is ever invisible.
+   Transform only. Content is never faded from `opacity: 0`, so a paused
+   tab, a headless renderer or an observer that never fires can only ever
+   cost the reader 12px of offset, not the section itself. Without the
+   `js` class (no JS) the content renders at its final state.
 ------------------------------------------------------------------- */
 html.js .reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity var(--dur-reveal) var(--ease-out-quart),
-    transform var(--dur-reveal) var(--ease-out-quart);
+  transform: translateY(12px);
+  transition: transform var(--dur-reveal) var(--ease-out-quart);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
 html.js .reveal.in-view {
-  opacity: 1;
   transform: none;
 }
 
@@ -477,8 +489,11 @@ html.js .reveal.in-view {
     animation-delay: var(--enter-delay, 0ms);
   }
 
+  /* No opacity in this one. The hero photo is the LCP element, and an
+     image that starts transparent is not a paint candidate, so fading it
+     in pushed the largest paint out by 2.3s on a throttled connection. */
   html.js [data-enter-media] {
-    animation: enter-media 1100ms var(--ease-out-quart) both;
+    animation: enter-media 640ms var(--ease-out-quart) both;
   }
 }
 
@@ -495,19 +510,21 @@ html.js .reveal.in-view {
   }
 }
 
+/* `--media-zoom` lets a breakpoint art-direct the hero crop (the phone frame
+   is a narrow vertical slice of a 16:9 render) without the entrance animation
+   overwriting the transform. */
 @keyframes enter-media {
   from {
-    opacity: 0;
-    transform: scale(1.06);
+    transform: scale(calc(var(--media-zoom, 1) * 1.04));
   }
   to {
-    opacity: 1;
-    transform: scale(1);
+    transform: scale(var(--media-zoom, 1));
   }
 }
 
 /* Reduced motion ---------------------------------------------------
-   Motion sickness safety: keep opacity, drop movement.
+   Gentler, not zero: colour and opacity transitions stay because they
+   aid comprehension; everything that moves or scales is removed.
 ------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -515,13 +532,22 @@ html.js .reveal.in-view {
   }
   html.js .reveal {
     transform: none;
-    transition: opacity 240ms linear;
+    transition: none;
   }
+  /* `animation-duration` alone left every transform *transition* running, so
+     the property list is clamped here too: colour and opacity still ease,
+     nothing moves or scales. Components reset their own hover transforms. */
   *,
   *::before,
   *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+    transition-property: opacity, color, background-color, border-color, fill,
+      stroke !important;
+  }
+  .text-link:hover svg,
+  .btn:active {
+    transform: none;
   }
 }

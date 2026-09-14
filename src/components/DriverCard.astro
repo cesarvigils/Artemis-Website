@@ -1,37 +1,38 @@
 ---
-interface Driver {
-  name: string;
-  group: string;
-  number: string;
-  country: string;
-  focus: string;
-  bio?: string;
-  socials?: Record<string, string>;
-  stats?: { irating?: string; licence?: string };
-}
+import { raceDate } from '../lib/format';
+import type { Driver, RaceResult } from '../lib/data';
 
 interface Props {
   driver: Driver;
   /** "compact" is the home-page teaser column, "row" the full roster entry. */
   variant?: 'compact' | 'row';
   href?: string;
+  /** Their most recent race, matched on name in results.json. */
+  lastResult?: RaceResult;
   class?: string;
   style?: string;
 }
 
-const { driver, variant = 'compact', href, class: className, style } = Astro.props;
+const {
+  driver,
+  variant = 'compact',
+  href,
+  lastResult,
+  class: className,
+  style,
+} = Astro.props;
 
 const socials = Object.entries(driver.socials ?? {}).filter(([, url]) => url);
 const stats = [
   { label: 'iRating', value: driver.stats?.irating },
   { label: 'Licence', value: driver.stats?.licence },
-].filter((stat) => stat.value);
+].filter((stat) => stat.value !== undefined && stat.value !== '');
 ---
 
 {
   variant === 'compact' ? (
     <li class:list={['driver-compact', className]} style={style}>
-      <a href={href ?? '/team'}>
+      <a href={href ?? `/team#${driver.id}`}>
         {
           driver.number && (
             <span class="driver-number" aria-hidden="true">
@@ -45,7 +46,11 @@ const stats = [
       </a>
     </li>
   ) : (
-    <li class:list={['driver-row', className, { 'has-number': !!driver.number }]} style={style}>
+    <li
+      id={driver.id}
+      class:list={['driver-row', className, { 'has-number': !!driver.number }]}
+      style={style}
+    >
       {
         driver.number && (
           <span class="driver-number" aria-hidden="true">
@@ -63,6 +68,15 @@ const stats = [
       <div class="driver-detail">
         <p class="driver-focus">{driver.focus}</p>
         {driver.bio && <p class="driver-bio">{driver.bio}</p>}
+        {/* Evidence per person, derived from results.json rather than typed
+            twice: the one thing a prospective driver wants to see. */}
+        {lastResult && (
+          <p class="driver-last data">
+            Last drive: P{lastResult.position}
+            {lastResult.entries ? ` of ${lastResult.entries}` : ''}, {lastResult.event},{' '}
+            {raceDate(lastResult.date)}
+          </p>
+        )}
         {stats.length > 0 && (
           <dl class="driver-stats">
             {stats.map((stat) => (
@@ -120,6 +134,7 @@ const stats = [
     letter-spacing: 0.04em;
     text-transform: uppercase;
     line-height: 1.2;
+    text-wrap: balance;
   }
 
   .driver-compact .driver-focus {
@@ -179,6 +194,22 @@ const stats = [
   .driver-row .driver-name {
     font-size: var(--text-xl);
     letter-spacing: 0.03em;
+    text-wrap: balance;
+  }
+
+  /* `-webkit-text-stroke` is non-standard. Without it the number would be a
+     transparent glyph in an empty slot, so the fallback is a solid fill. */
+  @supports not (-webkit-text-stroke: 1px currentColor) {
+    .driver-number {
+      color: var(--teal-soft);
+    }
+  }
+
+  .driver-last {
+    margin-top: var(--space-s);
+    color: var(--ink-dim);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-data);
   }
 
   .driver-meta {

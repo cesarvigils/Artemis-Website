@@ -19,10 +19,26 @@
   },
   "hashtags": ["#OnTheHunt", "#CalledByTheHunt", "#ArtemisPitwall", "#FollowersOfTheHunt"],
   "pillars": [
-    { "title": "Work over words", "line": "Actions echo. Words don't." },
-    { "title": "Progress over pride", "line": "Improvement is the standard, not the reward." },
-    { "title": "Precision over flash", "line": "Accuracy over chaos. Every lap." },
-    { "title": "Culture over clout", "line": "Built for our people, not the noise." }
+    {
+      "title": "Work over words",
+      "line": "Actions echo. Words don't.",
+      "detail": "An entry is announced when the car is on the grid, not when somebody has the idea."
+    },
+    {
+      "title": "Progress over pride",
+      "line": "Improvement is the standard, not the reward.",
+      "detail": "A clean sixth that fixed last week's mistake is worth more here than a lucky podium."
+    },
+    {
+      "title": "Precision over flash",
+      "line": "Accuracy over chaos. Every lap.",
+      "detail": "Stint plan, fuel number and pit window are agreed before the green flag, not argued over during it."
+    },
+    {
+      "title": "Culture over clout",
+      "line": "Built for our people, not the noise.",
+      "detail": "The roster stays small so everyone gets seat time. Nobody is signed to sit out a season."
+    }
   ],
   "join": {
     "lead": "We take drivers who show up prepared and stay calm in traffic. Pace matters. So does the hour before the race.",

@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import site from '../data/site.json';
+import { discordInvite } from '../lib/links';
 import texture from '../assets/hunt-texture.jpg';
 
 interface Props {
@@ -29,25 +30,22 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
   </div>
 
   <div class="container join-inner">
-    <div class="join-copy">
-      <h2 class="display-lg" id="join-heading">{heading}</h2>
-      <p class="lead">{lead}</p>
-      <a class="btn btn-solid join-btn" href={site.socials.discord} target="_blank" rel="noopener">
-        Join the team
-        <Icon name="arrow-up-right" size={16} />
-      </a>
-    </div>
+    <h2 class="display-xl join-heading" id="join-heading">{heading}</h2>
+    <p class="lead join-lead">{lead}</p>
+    <a class="btn btn-solid join-btn" href={discordInvite} target="_blank" rel="noopener">
+      Join the team
+      <Icon name="arrow-up-right" size={16} />
+      <span class="sr-only"> (opens in a new tab)</span>
+    </a>
 
     {
       steps && (
         <ol class="join-steps">
           {site.join.steps.map((step, i) => (
-            <li class="reveal" style={`--reveal-delay: ${i * 70}ms`}>
+            <li class="reveal" style={`--reveal-delay: ${i * 60}ms`}>
               <span class="step-index data">{String(i + 1).padStart(2, '0')}</span>
-              <span class="step-body">
-                <span class="step-title">{step.title}</span>
-                <span class="step-line">{step.line}</span>
-              </span>
+              <span class="step-title">{step.title}</span>
+              <span class="step-line">{step.line}</span>
             </li>
           ))}
         </ol>
@@ -91,57 +89,53 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     );
   }
 
-  .join-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--space-xl);
-    align-items: center;
+  /* The band runs the full width: heading, then the sentence, then the
+     action, then what happens after it. No narrow copy column. */
+  .join-heading {
+    max-width: 12ch;
   }
 
-  .join-copy h2 {
-    max-width: 10ch;
-  }
-
-  .join-copy .lead {
-    margin-top: var(--space-s);
-    max-width: 36ch;
+  .join-lead {
+    margin-top: var(--space-m);
+    max-width: 46ch;
+    color: var(--ink);
   }
 
   .join-btn {
     margin-top: var(--space-l);
   }
 
-  /* A real three-step sequence, so the numbers carry information. */
+  /* A real three-step sequence, so the numbers carry information. It runs
+     left to right under the button, in the order it happens. */
   .join-steps {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: var(--space-2xl);
+    border-top: 1px solid var(--line-strong);
   }
 
   .join-steps li {
-    display: grid;
-    grid-template-columns: 2.5rem minmax(0, 1fr);
-    gap: var(--space-s);
-    padding-block: var(--space-m);
-    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: var(--space-m) var(--space-l) 0 0;
   }
 
-  .join-steps li:last-child {
-    border-bottom: 1px solid var(--line);
+  .join-steps li + li {
+    padding-left: var(--space-l);
+    border-left: 1px solid var(--line);
   }
 
   .step-index {
-    color: var(--teal);
+    font-size: var(--text-2xl);
     font-weight: 700;
-    padding-top: 0.2rem;
-  }
-
-  .step-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    line-height: 1;
+    color: var(--teal);
   }
 
   .step-title {
+    margin-top: var(--space-2xs);
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-base);
@@ -153,18 +147,46 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     color: var(--ink-dim);
     font-size: var(--text-sm);
     line-height: 1.55;
+    max-width: 32ch;
   }
 
   @media (max-width: 900px) {
-    .join-inner {
-      grid-template-columns: 1fr;
-      gap: var(--space-l);
-    }
     .join-texture::after {
-      background: linear-gradient(to top, var(--bg) 10%, rgba(0, 10, 8, 0.82) 55%, rgba(0, 10, 8, 0.7));
+      background: linear-gradient(
+        to top,
+        var(--bg) 10%,
+        rgba(0, 10, 8, 0.82) 55%,
+        rgba(0, 10, 8, 0.7)
+      );
     }
     .join-btn {
       width: 100%;
+    }
+    .join-steps {
+      grid-template-columns: 1fr;
+      margin-top: var(--space-xl);
+    }
+    .join-steps li {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.25rem var(--space-s);
+      padding: var(--space-m) 0;
+    }
+    .join-steps li + li {
+      padding-left: 0;
+      border-left: none;
+      border-top: 1px solid var(--line);
+    }
+    .step-index {
+      font-size: var(--text-lg);
+    }
+    .step-title {
+      margin-top: 0;
+    }
+    .step-line {
+      flex: 1 0 100%;
+      max-width: none;
     }
   }
 </style>

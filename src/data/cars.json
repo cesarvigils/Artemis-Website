@@ -7,25 +7,18 @@
     "shape": "portrait"
   },
   {
+    "image": "nordschleife-bmw-m4.jpg",
+    "car": "BMW M4 GT3",
+    "track": "Nordschleife",
+    "caption": "Off the banking on old tyres.",
+    "shape": "standard"
+  },
+  {
     "image": "watkins-glen-gtp.jpg",
     "car": "Cadillac V-Series.R",
     "track": "Watkins Glen",
     "caption": "GTP bodywork in Artemis teal.",
     "shape": "portrait"
-  },
-  {
-    "image": "nordschleife-bmw-m4.jpg",
-    "car": "BMW M4 GT3",
-    "track": "Nordschleife",
-    "caption": "Into the Karussell on old tyres.",
-    "shape": "standard"
-  },
-  {
-    "image": "interlagos-lmp2.jpg",
-    "car": "Oreca 07 LMP2",
-    "track": "Interlagos",
-    "caption": "Dusk stint, lights already on.",
-    "shape": "standard"
   },
   {
     "image": "nascar-xfinity-chevy.jpg",
