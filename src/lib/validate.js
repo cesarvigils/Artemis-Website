@@ -2,7 +2,7 @@
  * validate.js
  *
  * Full validation of the three record types and of whole files, following the
- * Artemis data contract (version 1).
+ * Artemis data contract (version 1.2).
  *
  * Every function that checks a whole file returns:
  *   { ok: boolean, errors: string[] }
@@ -23,11 +23,14 @@ import {
   FILES,
   GROUP_VALUES,
   ID_PATTERN,
+  IRACING_ID_MAX,
+  IRACING_ID_MIN,
   LICENCE_PATTERN,
   NOTE_MAX,
   NUMBER_PATTERN,
   ROLE_VALUES,
   SOCIAL_KEYS,
+  START_TIME_PATTERN,
   STATUS_VALUES,
 } from './schema.js';
 
@@ -134,6 +137,17 @@ function optionalString(bag, record, field, max, options = {}) {
     return;
   }
   if (value.length > max) bag.add(field, `must be at most ${max} characters`);
+}
+
+/**
+ * True when the text is a full ISO 8601 UTC timestamp with a real date and a
+ * real time, for example "2026-09-25T14:00:00Z".
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function isIsoUtcTimestamp(value) {
+  if (typeof value !== 'string' || !START_TIME_PATTERN.test(value)) return false;
+  return isIsoDate(value.slice(0, 10));
 }
 
 /**
@@ -307,6 +321,15 @@ export function validateDriver(record, options = {}) {
     bag.add('active', 'must be true or false');
   }
 
+  // iracingId: optional, the driver's iRacing customer id. When present, the
+  // nightly sync fills in stats.json for this driver (see docs/data-contract.md).
+  if (Object.prototype.hasOwnProperty.call(record, 'iracingId') && record.iracingId !== undefined) {
+    const iracingId = record.iracingId;
+    if (!Number.isInteger(iracingId) || iracingId < IRACING_ID_MIN || iracingId > IRACING_ID_MAX) {
+      bag.add('iracingId', `must be a whole number between ${IRACING_ID_MIN} and ${IRACING_ID_MAX} when present`);
+    }
+  }
+
   optionalPlaceholder(bag, record);
 
   return bag.errors;
@@ -333,6 +356,16 @@ export function validateEvent(record, options = {}) {
       bag.add('end', 'must be a real date in YYYY-MM-DD form when present');
     } else if (isIsoDate(record.start) && record.end < record.start) {
       bag.add('end', 'must not be earlier than start');
+    }
+  }
+
+  // startTime: optional green-flag time as a full ISO 8601 UTC timestamp. Its
+  // date part must equal start, so the countdown and the calendar day agree.
+  if (Object.prototype.hasOwnProperty.call(record, 'startTime') && record.startTime !== undefined) {
+    if (!isIsoUtcTimestamp(record.startTime)) {
+      bag.add('startTime', 'must be a real ISO 8601 UTC timestamp like 2026-09-25T14:00:00Z when present');
+    } else if (isIsoDate(record.start) && record.startTime.slice(0, 10) !== record.start) {
+      bag.add('startTime', 'date part must equal start');
     }
   }
 

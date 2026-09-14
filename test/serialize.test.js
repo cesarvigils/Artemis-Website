@@ -123,6 +123,46 @@ test('keys are written in contract order, with unknown keys kept at the end', ()
   ]);
 });
 
+test('iracingId is written after active, before an unknown key', () => {
+  const record = {
+    id: 'someone',
+    name: 'Someone',
+    group: 'road',
+    number: '7',
+    active: true,
+    iracingId: 745213,
+    helmetColour: 'teal',
+  };
+  assert.deepEqual(Object.keys(orderKeys('drivers', record)), [
+    'id',
+    'name',
+    'group',
+    'number',
+    'active',
+    'iracingId',
+    'helmetColour',
+  ]);
+});
+
+test('startTime is written after end, before classes', () => {
+  const record = {
+    id: 'an-event-id',
+    classes: ['GT3'],
+    start: '2026-09-25',
+    startTime: '2026-09-25T14:00:00Z',
+    name: 'An event',
+    end: '2026-09-27',
+  };
+  assert.deepEqual(Object.keys(orderKeys('events', record)), [
+    'id',
+    'name',
+    'start',
+    'end',
+    'startTime',
+    'classes',
+  ]);
+});
+
 test('serialize produces two space indent, LF endings and a trailing newline', () => {
   const text = serialize('events', [
     { id: 'b-event-id', name: 'Second', start: '2026-10-02', classes: ['GT3'], status: 'planned' },

@@ -15,6 +15,17 @@ It manages three files in `cesarvigils/Artemis-Website`:
 
 `/data` reports on all three without changing anything.
 
+There is a fourth file, `src/data/stats.json`, but the bot does not manage it:
+it is generated nightly by a separate iRacing sync job. `/data status` shows a
+one line summary of it when it exists; `/data validate` never checks it, and
+the bot never writes it. See `docs/data-contract.md` for the full shape.
+
+Two fields added in data contract version 1.2 are worth knowing about: a
+driver's `iracingId` (`/driver add` and `/driver edit`, option `iracingid`)
+links that driver to the nightly sync above, and an event's `startTime`
+(`/event add` and `/event edit`, option `starttime`) is the green flag time,
+entered as `HH:MM` UTC or a full ISO UTC timestamp. Both are optional.
+
 `SPEC.md` is the full command reference: every option, the embed layouts, the
 permission model and the write protocol. This file is the setup guide.
 
@@ -58,7 +69,10 @@ and in the audit channel if you set one.
 In Discord, open **User Settings, Advanced** and turn on **Developer Mode**.
 Then right click the server name and choose **Copy Server Id**: that is
 `DISCORD_GUILD_ID`. Right click a channel and choose **Copy Channel Id** for the
-optional `LOG_CHANNEL_ID`.
+optional `LOG_CHANNEL_ID` (the audit channel, ephemeral-style compact embeds)
+and the optional `RESULTS_CHANNEL_ID` (a public channel where `/result add`
+posts an announcement of the new result; see SPEC.md for the layout). Both can
+be the same channel, different channels, or left empty.
 
 ## 4. Create the GitHub token
 

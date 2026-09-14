@@ -6,6 +6,11 @@
  * Manages src/data/results.json, the race results the website shows on the home
  * page ("Recent results", the hero proof row) and on the partners page.
  *
+ * When RESULTS_CHANNEL_ID is set, /result add also posts a public (not
+ * ephemeral) announcement embed to that channel, in the brand's locked
+ * template (see lib/embeds.js resultAnnouncementEmbed). Edit and remove never
+ * post there.
+ *
  * Only members with Manage Server may use it: the permission is set on the
  * command here, and checked again at run time in src/index.js.
  */
@@ -14,6 +19,7 @@ import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { CLASS_VALUES, ENTRIES_MAX, ENTRIES_MIN, NOTE_MAX, isClearToken } from '../lib/schema.js';
 import { makeId, idSet } from '../lib/ids.js';
 import { BotError } from '../lib/errors.js';
+import { postResultAnnouncement } from '../lib/audit.js';
 import {
   parseDate,
   parseEntries,
@@ -272,7 +278,20 @@ export async function execute(interaction, ctx) {
         records.push(record);
         return { records, record, action: 'add', id };
       },
-      { title: 'Result added', summary: 'The result was written to results.json.' },
+      {
+        title: 'Result added',
+        summary: 'The result was written to results.json.',
+        // Public announcement, only for a new result and only when a channel
+        // is configured. A failure to post never fails the command; it is
+        // mentioned here instead (see lib/audit.js postResultAnnouncement).
+        announce: async (outcome) => {
+          if (!ctx.config.resultsChannelId) return null;
+          const { posted } = await postResultAnnouncement(ctx.client, ctx.config, outcome.record);
+          return posted
+            ? null
+            : 'The public results channel could not be reached. The result was still saved; see the bot log.';
+        },
+      },
     );
   }
 

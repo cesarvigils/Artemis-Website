@@ -14,7 +14,16 @@ import assert from 'node:assert/strict';
 import { PermissionFlagsBits } from 'discord.js';
 import { commandModules, commands, toJSON } from '../src/commands/index.js';
 import { CLASS_VALUES, GROUP_VALUES, ROLE_VALUES, STATUS_VALUES } from '../src/lib/schema.js';
-import { errorEmbed, finishText, listLine, recordFields, FOOTER_TEXT, BRAND_COLOUR } from '../src/lib/embeds.js';
+import {
+  errorEmbed,
+  finishText,
+  listLine,
+  recordFields,
+  resultAnnouncementEmbed,
+  ANNOUNCEMENT_FOOTER,
+  FOOTER_TEXT,
+  BRAND_COLOUR,
+} from '../src/lib/embeds.js';
 import { REFUSAL_TEXT } from '../src/lib/permissions.js';
 
 /** Discord limits, applied to every command, subcommand and option. */
@@ -174,6 +183,36 @@ test('the result options mirror the contract fields', () => {
   assert.equal(entries.max_value, 999);
 });
 
+test('driver add and edit offer iracingid, 1 to 99999999', () => {
+  const command = payload.find((entry) => entry.name === 'driver');
+  for (const subName of ['add', 'edit']) {
+    const sub = command.options.find((entry) => entry.name === subName);
+    const option = sub.options.find((entry) => entry.name === 'iracingid');
+    assert.equal(option.type, 4); // INTEGER
+    assert.equal(option.required ?? false, false);
+    assert.equal(option.min_value, 1);
+    assert.equal(option.max_value, 99999999);
+  }
+});
+
+test('the driver clear choices include iracingid, a number field', () => {
+  const command = payload.find((entry) => entry.name === 'driver');
+  const edit = command.options.find((entry) => entry.name === 'edit');
+  const clear = edit.options.find((entry) => entry.name === 'clear');
+  const values = clear.choices.map((choice) => choice.value);
+  assert.equal(values.includes('iracingid'), true);
+});
+
+test('event add and edit offer starttime as a string option', () => {
+  const command = payload.find((entry) => entry.name === 'event');
+  for (const subName of ['add', 'edit']) {
+    const sub = command.options.find((entry) => entry.name === subName);
+    const option = sub.options.find((entry) => entry.name === 'starttime');
+    assert.equal(option.type, 3); // STRING
+    assert.equal(option.required ?? false, false);
+  }
+});
+
 test('no command text contains an emoji or an exclamation mark', () => {
   const walk = (node, where) => {
     for (const text of [node.name, node.description]) {
@@ -209,6 +248,122 @@ test('record fields are labelled and never empty', () => {
     assert.equal(field.value.length > 0, true, `${field.name} has an empty value`);
     assert.equal(EMOJI_PATTERN.test(field.value), false);
   }
+});
+
+test('a driver record shows iRacing id only when it is present', () => {
+  const withId = recordFields('drivers', { id: 'someone', name: 'Someone', iracingId: 745213 });
+  const field = withId.find((entry) => entry.name === 'iRacing id');
+  assert.equal(field.value, '745213');
+
+  const without = recordFields('drivers', { id: 'someone', name: 'Someone' });
+  assert.equal(without.some((entry) => entry.name === 'iRacing id'), false);
+});
+
+test('an event record shows Start time only when it is present', () => {
+  const withTime = recordFields('events', { id: 'an-event', name: 'An event', startTime: '2026-09-25T14:00:00Z' });
+  const field = withTime.find((entry) => entry.name === 'Start time');
+  assert.equal(field.value, '2026-09-25T14:00:00Z');
+
+  const without = recordFields('events', { id: 'an-event', name: 'An event' });
+  assert.equal(without.some((entry) => entry.name === 'Start time'), false);
+});
+
+test('a driver list line adds the iRacing id only when it is present', () => {
+  const withId = listLine('drivers', { id: 'someone', name: 'Someone', group: 'road', number: '7', iracingId: 745213 });
+  assert.match(withId, /iRacing 745213/);
+
+  const without = listLine('drivers', { id: 'someone', name: 'Someone', group: 'road', number: '7' });
+  assert.equal(/iRacing/.test(without), false);
+});
+
+test('an event list line adds the start time only when it is present', () => {
+  const withTime = listLine('events', {
+    id: 'an-event',
+    name: 'An event',
+    track: 'A track',
+    status: 'confirmed',
+    start: '2026-09-25',
+    classes: ['GT3'],
+    startTime: '2026-09-25T14:00:00Z',
+  });
+  assert.match(withTime, /14:00 UTC/);
+
+  const without = listLine('events', {
+    id: 'an-event',
+    name: 'An event',
+    track: 'A track',
+    status: 'confirmed',
+    start: '2026-09-25',
+    classes: ['GT3'],
+  });
+  assert.equal(/UTC/.test(without), false);
+});
+
+test('the results announcement title adds "of <entries>" only when entries is set', () => {
+  const withEntries = resultAnnouncementEmbed({
+    position: 4,
+    entries: 41,
+    event: 'Suzuka 1000',
+    track: 'Suzuka International Racing Course',
+    class: 'GT3',
+    date: '2026-09-06',
+    drivers: ['Matthew Blackley', 'Nolan Walker'],
+  }).toJSON();
+  assert.equal(withEntries.title, 'P4 of 41 - Suzuka 1000');
+
+  const withoutEntries = resultAnnouncementEmbed({
+    position: 4,
+    event: 'Suzuka 1000',
+    track: 'Suzuka International Racing Course',
+    class: 'GT3',
+    date: '2026-09-06',
+    drivers: ['Matthew Blackley'],
+  }).toJSON();
+  assert.equal(withoutEntries.title, 'P4 - Suzuka 1000');
+});
+
+test('the results announcement carries the note only when one is present, and always lists drivers', () => {
+  const withNote = resultAnnouncementEmbed({
+    position: 4,
+    event: 'Suzuka 1000',
+    track: 'Suzuka International Racing Course',
+    class: 'GT3',
+    date: '2026-09-06',
+    note: 'Two stops on strategy, no contact all race.',
+    drivers: ['Matthew Blackley', 'Nolan Walker'],
+  }).toJSON();
+  assert.match(withNote.description, /Two stops on strategy, no contact all race\./);
+  assert.match(withNote.description, /Drivers: Matthew Blackley, Nolan Walker/);
+  assert.match(withNote.description, /Suzuka International Racing Course \| GT3 \| 2026-09-06/);
+
+  const withoutNote = resultAnnouncementEmbed({
+    position: 4,
+    event: 'Suzuka 1000',
+    track: 'Suzuka International Racing Course',
+    class: 'GT3',
+    date: '2026-09-06',
+    drivers: ['Matthew Blackley'],
+  }).toJSON();
+  assert.equal(withoutNote.description.split('\n').length, 2);
+});
+
+test('the results announcement uses its own footer, not the house one, and carries no emoji or exclamation mark', () => {
+  const embed = resultAnnouncementEmbed({
+    position: 1,
+    entries: 20,
+    event: 'Suzuka 1000',
+    track: 'Suzuka International Racing Course',
+    class: 'GT3',
+    date: '2026-09-06',
+    note: 'Clean race.',
+    drivers: ['Matthew Blackley'],
+  }).toJSON();
+  assert.equal(embed.footer.text, ANNOUNCEMENT_FOOTER);
+  assert.notEqual(embed.footer.text, FOOTER_TEXT);
+  assert.equal(embed.color, BRAND_COLOUR);
+  assert.equal(EMOJI_PATTERN.test(JSON.stringify(embed)), false);
+  assert.equal(embed.title.includes('!'), false);
+  assert.equal(embed.description.includes('!'), false);
 });
 
 test('a list line is compact, carries the id and marks placeholders', () => {

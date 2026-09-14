@@ -283,3 +283,18 @@ test('the local backend describes itself without leaking anything', async (t) =>
   assert.equal(storage.describe().includes(path.basename(dir)), true);
   assert.equal(await storage.lastCommit(), null);
 });
+
+test('readOptionalFile returns null for a file that is not there, such as stats.json', async (t) => {
+  const { storage, cleanup } = await makeStorage();
+  t.after(cleanup);
+  assert.equal(await storage.readOptionalFile('stats.json'), null);
+});
+
+test('readOptionalFile returns the text of a file that is present', async (t) => {
+  const { dir, storage, cleanup } = await makeStorage();
+  t.after(cleanup);
+  await writeFile(path.join(dir, 'stats.json'), '{"updated":"2026-09-14T09:00:12Z"}', 'utf8');
+  assert.deepEqual(await storage.readOptionalFile('stats.json'), {
+    text: '{"updated":"2026-09-14T09:00:12Z"}',
+  });
+});

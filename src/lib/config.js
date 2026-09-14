@@ -34,6 +34,7 @@ const BRANCH_PATTERN = /^[^\s~^:?*[\\]+$/;
  * @property {string} githubBranch
  * @property {string} githubApiBase
  * @property {string} logChannelId empty when auditing is off
+ * @property {string} resultsChannelId empty when the public results announcement is off
  * @property {string} logLevel
  */
 
@@ -72,6 +73,7 @@ export function buildConfig(options = {}) {
     githubBranch: read('GITHUB_BRANCH'),
     githubApiBase: read('GITHUB_API_BASE', 'https://api.github.com').replace(/\/+$/, ''),
     logChannelId: read('LOG_CHANNEL_ID'),
+    resultsChannelId: read('RESULTS_CHANNEL_ID'),
     logLevel: read('LOG_LEVEL', 'info').toLowerCase(),
   };
 
@@ -113,6 +115,10 @@ export function buildConfig(options = {}) {
 
   if (config.logChannelId && !SNOWFLAKE_PATTERN.test(config.logChannelId)) {
     errors.push('LOG_CHANNEL_ID must be a numeric Discord channel id, or left empty.');
+  }
+
+  if (config.resultsChannelId && !SNOWFLAKE_PATTERN.test(config.resultsChannelId)) {
+    errors.push('RESULTS_CHANNEL_ID must be a numeric Discord channel id, or left empty.');
   }
 
   if (!['debug', 'info', 'warn', 'error'].includes(config.logLevel)) {

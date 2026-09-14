@@ -13,9 +13,11 @@ import { makeId, idSet } from '../lib/ids.js';
 import { BotError } from '../lib/errors.js';
 import {
   checkDateRange,
+  checkStartTimeDate,
   parseClassList,
   parseDate,
   parseRequiredText,
+  parseStartTime,
   parseText,
   trimOption,
 } from '../lib/options.js';
@@ -56,6 +58,11 @@ export const data = new SlashCommandBuilder()
         option.setName('end').setDescription('Last day, YYYY-MM-DD. Leave empty for a one day event'),
       )
       .addStringOption((option) =>
+        option
+          .setName('starttime')
+          .setDescription('Green flag time, HH:MM UTC on the start date, or a full ISO UTC timestamp'),
+      )
+      .addStringOption((option) =>
         option.setName('note').setDescription(`One short line, up to ${NOTE_MAX} characters`).setMaxLength(NOTE_MAX),
       )
       .addStringOption((option) =>
@@ -74,6 +81,11 @@ export const data = new SlashCommandBuilder()
       .addStringOption((option) => option.setName('start').setDescription('New first day, YYYY-MM-DD'))
       .addStringOption((option) =>
         option.setName('end').setDescription('New last day, YYYY-MM-DD. Use a single hyphen to clear it'),
+      )
+      .addStringOption((option) =>
+        option
+          .setName('starttime')
+          .setDescription('New green flag time, HH:MM UTC or a full ISO UTC timestamp. Use a single hyphen to clear it'),
       )
       .addStringOption((option) =>
         option.setName('classes').setDescription('Replacement class list, separated by commas'),
@@ -128,6 +140,9 @@ function draftFromOptions(interaction) {
     record.end = checkDateRange(start, parseDate(end, { field: 'end' }));
   }
 
+  const startTime = trimOption(interaction.options.getString('starttime'));
+  if (startTime !== undefined) record.startTime = parseStartTime(startTime, start);
+
   const note = trimOption(interaction.options.getString('note'));
   if (note !== undefined) record.note = parseText(note, 'note', NOTE_MAX);
 
@@ -174,6 +189,20 @@ function applyEdits(interaction, record) {
 
   // Whichever of the two dates changed, the pair still has to make sense.
   if (next.end) checkDateRange(next.start, next.end);
+
+  const startTime = interaction.options.getString('starttime');
+  if (startTime !== null && startTime !== undefined) {
+    if (isClearToken(startTime)) {
+      delete next.startTime;
+      changed.push('starttime cleared');
+    } else {
+      next.startTime = parseStartTime(startTime, next.start);
+      changed.push('starttime');
+    }
+  }
+
+  // Editing start alone can leave a stored startTime on the wrong day.
+  if (next.startTime) checkStartTimeDate(next.start, next.startTime);
 
   const classes = trimOption(interaction.options.getString('classes'));
   if (classes !== undefined) {

@@ -15,10 +15,15 @@ import {
   DATE_PATTERN,
   ENTRIES_MAX,
   ENTRIES_MIN,
+  IRACING_ID_MAX,
+  IRACING_ID_MIN,
   LICENCE_PATTERN,
   NUMBER_PATTERN,
 } from './schema.js';
-import { isIsoDate, maxResultDate } from './validate.js';
+import { isIsoDate, isIsoUtcTimestamp, maxResultDate } from './validate.js';
+
+/** An operator may type the green-flag time as a plain "HH:MM", UTC on `start`. */
+const HHMM_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 /**
  * Refuse an option value.
@@ -169,6 +174,43 @@ export function checkDateRange(start, end) {
 }
 
 /**
+ * Check that a startTime's date part still agrees with its event's start
+ * date. Used both when a new startTime is typed and when start alone is
+ * edited on a record that already carries a startTime.
+ * @param {string} start ISO date
+ * @param {string} startTime full ISO UTC timestamp
+ * @returns {string} the startTime
+ */
+export function checkStartTimeDate(start, startTime) {
+  if (startTime.slice(0, 10) !== start) {
+    reject('starttime', `must fall on the event's start date, which is ${start}.`);
+  }
+  return startTime;
+}
+
+/**
+ * Check the optional green-flag time option of an event.
+ *
+ * Accepts either "HH:MM", treated as UTC on the event's `start` date, or a
+ * full ISO 8601 UTC timestamp whose date part already matches `start`.
+ * Anything else is refused.
+ *
+ * @param {unknown} value
+ * @param {string} start ISO date the event starts on
+ * @returns {string} a full ISO UTC timestamp, for example "2026-09-25T14:00:00Z"
+ */
+export function parseStartTime(value, start) {
+  const raw = String(value ?? '').trim();
+  const hhmm = HHMM_PATTERN.exec(raw);
+  if (hhmm) return `${start}T${hhmm[1]}:${hhmm[2]}:00Z`;
+
+  if (!isIsoUtcTimestamp(raw)) {
+    reject('starttime', 'must be HH:MM, or a full ISO 8601 UTC timestamp such as 2026-09-25T14:00:00Z.');
+  }
+  return checkStartTimeDate(start, raw);
+}
+
+/**
  * Check a finishing position.
  * @param {unknown} value
  * @returns {number}
@@ -243,6 +285,19 @@ export function parseIrating(value) {
     reject('irating', 'must be a whole number between 0 and 15000.');
   }
   return irating;
+}
+
+/**
+ * Check a driver's iRacing customer id.
+ * @param {unknown} value
+ * @returns {number}
+ */
+export function parseIracingId(value) {
+  const iracingId = Number(value);
+  if (!Number.isInteger(iracingId) || iracingId < IRACING_ID_MIN || iracingId > IRACING_ID_MAX) {
+    reject('iracingid', `must be a whole number between ${IRACING_ID_MIN} and ${IRACING_ID_MAX}.`);
+  }
+  return iracingId;
 }
 
 /**

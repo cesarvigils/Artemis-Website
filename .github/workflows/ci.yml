@@ -1,0 +1,33 @@
+name: CI
+
+# Runs on the bot branch only: this worktree holds the Discord bot, a separate
+# deployable from the rest of the website. See README.md and SPEC.md.
+on:
+  push:
+    branches: [bot]
+  pull_request:
+    branches: [bot]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npm test
+
+      # register:dry never contacts Discord, so it runs without any secrets
+      # and catches a malformed command payload before it reaches production.
+      - run: npm run register:dry
+
+      # The bot and the website must implement the same data contract version
+      # (see docs/data-contract.md). This is a cheap guard against the two
+      # drifting apart: a bump on one side without the other fails CI here.
+      - name: Check the data contract is version 1.2
+        run: grep -q "Version 1.2" docs/data-contract.md

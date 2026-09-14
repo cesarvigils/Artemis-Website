@@ -2,7 +2,7 @@
  * schema.js
  *
  * Single source of truth for the shapes described in the Artemis data contract
- * (version 1, 14 Sep 2026). Enumerated values, file names and key order all live
+ * (version 1.2, 14 Sep 2026). Enumerated values, file names and key order all live
  * here so that validation, serialisation, the slash command builders and the
  * documentation can never drift apart.
  *
@@ -75,6 +75,13 @@ export const COUNTRY_PATTERN = /^[A-Z]{3}$/;
 export const NUMBER_PATTERN = /^\d{1,3}$/;
 
 /**
+ * events.startTime: a full ISO 8601 UTC timestamp, for example
+ * "2026-09-25T14:00:00Z". The date part must equal the event's `start`, which
+ * is checked separately because it needs the record, not just the string.
+ */
+export const START_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d:[0-5]\dZ$/;
+
+/**
  * Key order used when a record is written back to disk. Known keys are written
  * first in this order; any unknown key a human added by hand is preserved and
  * appended afterwards in its original order (see serialize.js).
@@ -105,9 +112,10 @@ export const KEY_ORDER = Object.freeze({
     'stats',
     'socials',
     'active',
+    'iracingId',
     '_placeholder',
   ],
-  events: ['id', 'name', 'track', 'start', 'end', 'classes', 'status', 'note', '_placeholder'],
+  events: ['id', 'name', 'track', 'start', 'end', 'startTime', 'classes', 'status', 'note', '_placeholder'],
 });
 
 /** Maximum length of the free-text note on results and events. */
@@ -122,6 +130,21 @@ export const ENTRIES_MAX = 999;
 
 /** Maximum length of a driver bio. */
 export const BIO_MAX = 140;
+
+/**
+ * drivers.iracingId: the driver's iRacing customer id. Optional; when present,
+ * the nightly iRacing sync (see stats.json below) fills in stats.json for this
+ * driver.
+ */
+export const IRACING_ID_MIN = 1;
+export const IRACING_ID_MAX = 99999999;
+
+/**
+ * The generated file the nightly iRacing sync writes. Not one of the KINDS:
+ * the bot never validates or writes it, and only /data status reads a summary
+ * of it. See docs/data-contract.md, version 1.2.
+ */
+export const STATS_FILE = 'stats.json';
 
 /**
  * Sentinel an operator types into an optional text option of an edit command to

@@ -7,6 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isIsoDate,
+  isIsoUtcTimestamp,
   maxResultDate,
   validateAll,
   validateArray,
@@ -187,6 +188,18 @@ test('a driver bio may be empty', () => {
   assert.deepEqual(validateDriver({ ...goodDriver(), bio: '' }), []);
 });
 
+test('iracingId is optional and bounded, 1 to 99999999', () => {
+  assert.deepEqual(validateDriver({ ...goodDriver(), iracingId: 745213 }), []);
+  assert.deepEqual(validateDriver({ ...goodDriver(), iracingId: 1 }), []);
+  assert.deepEqual(validateDriver({ ...goodDriver(), iracingId: 99999999 }), []);
+
+  for (const bad of [0, -1, 100000000, 4.5, '745213']) {
+    const errors = validateDriver({ ...goodDriver(), iracingId: bad });
+    assert.equal(errors.length, 1, `expected an error for iracingId ${bad}`);
+    assert.match(errors[0], /\.iracingId:/);
+  }
+});
+
 test('a valid event passes, with and without an end date', () => {
   assert.deepEqual(validateEvent(goodEvent()), []);
   const oneDay = goodEvent();
@@ -215,6 +228,32 @@ test('event rejects a bad range, status and class list', () => {
 
 test('an end date equal to the start is allowed', () => {
   assert.deepEqual(validateEvent({ ...goodEvent(), start: '2026-09-25', end: '2026-09-25' }), []);
+});
+
+test('isIsoUtcTimestamp accepts a real ISO UTC timestamp and rejects the rest', () => {
+  assert.equal(isIsoUtcTimestamp('2026-09-25T14:00:00Z'), true);
+  assert.equal(isIsoUtcTimestamp('2026-09-25T00:00:00Z'), true);
+  assert.equal(isIsoUtcTimestamp('2026-09-25T23:59:59Z'), true);
+  assert.equal(isIsoUtcTimestamp('2026-09-25T24:00:00Z'), false); // hour out of range
+  assert.equal(isIsoUtcTimestamp('2026-09-25T14:00:00'), false); // no Z
+  assert.equal(isIsoUtcTimestamp('2026-09-25T14:00:00+00:00'), false); // not the Z form
+  assert.equal(isIsoUtcTimestamp('2026-09-25 14:00:00Z'), false); // no T
+  assert.equal(isIsoUtcTimestamp('2026-02-30T14:00:00Z'), false); // not a real date
+  assert.equal(isIsoUtcTimestamp('2026-09-25'), false);
+  assert.equal(isIsoUtcTimestamp(''), false);
+  assert.equal(isIsoUtcTimestamp(null), false);
+});
+
+test('startTime is optional and must be a real ISO UTC timestamp on the start date', () => {
+  assert.deepEqual(validateEvent({ ...goodEvent(), startTime: '2026-09-25T14:00:00Z' }), []);
+
+  const badShape = validateEvent({ ...goodEvent(), startTime: '2026-09-25 14:00' });
+  assert.equal(badShape.length, 1);
+  assert.match(badShape[0], /\.startTime:/);
+
+  const wrongDate = validateEvent({ ...goodEvent(), start: '2026-09-25', startTime: '2026-09-26T14:00:00Z' });
+  assert.equal(wrongDate.length, 1);
+  assert.match(wrongDate[0], /\.startTime: date part must equal start/);
 });
 
 test('validateArray reports duplicate ids once, naming both places', () => {

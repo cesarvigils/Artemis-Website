@@ -7,11 +7,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   checkDateRange,
+  checkStartTimeDate,
   parseClassList,
   parseCountry,
   parseDate,
   parseDriverNumber,
   parseEntries,
+  parseIracingId,
   parseIrating,
   parseLicence,
   parseNameList,
@@ -19,6 +21,7 @@ import {
   parsePosition,
   parseRequiredText,
   parseSocialUrl,
+  parseStartTime,
   parseText,
   trimOption,
 } from '../src/lib/options.js';
@@ -163,6 +166,36 @@ test('iRating must be a whole number in range', () => {
   assert.throws(() => parseIrating(15001), /between 0 and 15000/);
 });
 
+test('an iRacing id must be a whole number between 1 and 99999999', () => {
+  assert.equal(parseIracingId(745213), 745213);
+  assert.equal(parseIracingId(1), 1);
+  assert.equal(parseIracingId(99999999), 99999999);
+  assert.throws(() => parseIracingId(0), /between 1 and 99999999/);
+  assert.throws(() => parseIracingId(100000000), /between 1 and 99999999/);
+  assert.throws(() => parseIracingId(1.5), /between 1 and 99999999/);
+  assert.throws(() => parseIracingId('nope'), /between 1 and 99999999/);
+});
+
+test('checkStartTimeDate accepts a matching date and refuses a mismatch', () => {
+  assert.equal(checkStartTimeDate('2026-09-25', '2026-09-25T14:00:00Z'), '2026-09-25T14:00:00Z');
+  assert.throws(() => checkStartTimeDate('2026-09-25', '2026-09-26T14:00:00Z'), /start date, which is 2026-09-25/);
+});
+
+test('an event start time accepts HH:MM, treated as UTC on the start date', () => {
+  assert.equal(parseStartTime('14:00', '2026-09-25'), '2026-09-25T14:00:00Z');
+  assert.equal(parseStartTime('00:00', '2026-09-25'), '2026-09-25T00:00:00Z');
+  assert.equal(parseStartTime(' 09:30 ', '2026-09-25'), '2026-09-25T09:30:00Z');
+  assert.throws(() => parseStartTime('24:00', '2026-09-25'), /HH:MM, or a full ISO/);
+  assert.throws(() => parseStartTime('9:30', '2026-09-25'), /HH:MM, or a full ISO/);
+});
+
+test('an event start time accepts a full ISO UTC timestamp on the start date', () => {
+  assert.equal(parseStartTime('2026-09-25T14:00:00Z', '2026-09-25'), '2026-09-25T14:00:00Z');
+  assert.throws(() => parseStartTime('2026-09-25T14:00:00', '2026-09-25'), /HH:MM, or a full ISO/);
+  assert.throws(() => parseStartTime('2026-09-26T14:00:00Z', '2026-09-25'), /start date, which is 2026-09-25/);
+  assert.throws(() => parseStartTime('not a time', '2026-09-25'), /HH:MM, or a full ISO/);
+});
+
 test('a social link must be https, and an empty value clears it', () => {
   assert.equal(parseSocialUrl('https://x.com/example', 'x'), 'https://x.com/example');
   assert.equal(parseSocialUrl('', 'x'), '');
@@ -204,6 +237,8 @@ test('every refusal is a BotError with a title and no exclamation mark', () => {
     () => parseEntries(1),
     () => parseCountry('x'),
     () => parseLicence('x'),
+    () => parseIracingId(0),
+    () => parseStartTime('nope', '2026-09-25'),
   ];
   for (const call of calls) {
     assert.throws(call, (error) => {

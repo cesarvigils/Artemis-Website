@@ -179,8 +179,13 @@ export async function handleIdAutocomplete(interaction, ctx, kind, describe) {
  * @param {{
  *   title: string,
  *   summary?: string | ((outcome: { changed: string[], id: string, total: number }) => string),
- *   respond?: (payload: object) => Promise<unknown>
- * }} options summary may be a function when the wording depends on what changed
+ *   respond?: (payload: object) => Promise<unknown>,
+ *   announce?: (outcome: object) => Promise<string | null | undefined>
+ * }} options summary may be a function when the wording depends on what changed.
+ *   announce runs after a successful write (used only by /result add to post
+ *   the public results announcement); its return value, if any, is appended
+ *   to the ephemeral confirmation as an extra line. A throwing or rejecting
+ *   announce hook is caught and logged, never allowed to fail the command.
  * @returns {Promise<void>}
  */
 export async function writeChange(interaction, ctx, kind, mutate, options) {
@@ -193,6 +198,15 @@ export async function writeChange(interaction, ctx, kind, mutate, options) {
   // The summary may depend on what the change turned out to be.
   const summary = typeof options.summary === 'function' ? options.summary(outcome) : options.summary;
 
+  let announceLine = '';
+  if (options.announce) {
+    try {
+      announceLine = (await options.announce(outcome)) || '';
+    } catch (error) {
+      log.warn('The announce hook failed', error?.message ?? error);
+    }
+  }
+
   const extraFields = [
     { name: 'File', value: `${FILES[kind]} (${outcome.total} record(s))`, inline: true },
     {
@@ -202,18 +216,12 @@ export async function writeChange(interaction, ctx, kind, mutate, options) {
     },
   ];
 
+  const description = [summary ?? '', liveNote(ctx.storage.mode), announceLine].filter(Boolean).join('\n');
+
   const embed =
     outcome.action === 'remove'
-      ? successEmbed({
-          title: options.title,
-          description: `${summary ?? ''}\n${liveNote(ctx.storage.mode)}`.trim(),
-          fields: extraFields,
-        })
-      : recordEmbed(kind, outcome.record, {
-          title: options.title,
-          description: `${summary ?? ''}\n${liveNote(ctx.storage.mode)}`.trim(),
-          extraFields,
-        });
+      ? successEmbed({ title: options.title, description, fields: extraFields })
+      : recordEmbed(kind, outcome.record, { title: options.title, description, extraFields });
 
   const respond = options.respond ?? ((payload) => replyEphemeral(interaction, payload));
   await respond({ embeds: [embed], components: [] });

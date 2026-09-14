@@ -2,9 +2,9 @@
 
 What every command does, what the replies look like, who may run them, how
 failures are reported, and how a change reaches the repository. The data shapes
-come from the Artemis data contract, version 1 (14 September 2026); the section
-"What the website does with each field" at the end restates the parts of it the
-operator needs.
+come from the Artemis data contract, version 1.2 (14 September 2026); the
+section "What the website does with each field" at the end restates the parts
+of it the operator needs.
 
 `README.md` is the setup guide. This file is the reference.
 
@@ -107,6 +107,37 @@ Confirm is pressed.
 
 Newest first, the same order as the file.
 
+#### Results announcement
+
+When the optional `RESULTS_CHANNEL_ID` environment variable is set, `/result
+add` (only add, never edit or remove) also posts a public embed to that
+channel: not ephemeral, visible to the whole channel. It follows the brand's
+locked template and is built by a separate function from every other embed in
+the bot (`resultAnnouncementEmbed` in `src/lib/embeds.js`), with its own
+footer, `The Scoreboard`, rather than `Artemis data bot`. No emojis, no
+exclamation marks, and the bot never adds an adjective of its own: only the
+record's own values, and the operator's own `note` when one was typed.
+
+```
+P4 of 41 - Suzuka 1000
+Suzuka International Racing Course | GT3 | 2026-09-06
+Two stops on strategy, no contact all race.
+Drivers: Matthew Blackley, Nolan Walker
+                                              The Scoreboard
+```
+
+The title is `P<position> - <event>`, with ` of <entries>` inserted after the
+position when `entries` is set on the record. The second line always carries
+track, class and date, in that order, separated by ` | `. The `note` appears
+as its own line only when the record has one; it is shown exactly as typed,
+the "factual detail" of the result, never rephrased or embellished. The
+drivers line always appears, in the order they were entered.
+
+If the channel cannot be reached (wrong id, the bot lacks access, a network
+error), the failure is logged as a warning and never fails the command: the
+result is still saved, and the normal ephemeral confirmation gets one extra
+line saying the public channel could not be reached.
+
 ### /driver
 
 Manages `src/data/drivers.json`.
@@ -124,12 +155,14 @@ Manages `src/data/drivers.json`.
 | `bio` | string | no | up to 140 characters |
 | `irating` | integer | no | 0 to 15000, stored under `stats.irating` |
 | `licence` | string | no | `A 4.20` shape, stored uppercase under `stats.licence` |
+| `iracingid` | integer | no | 1 to 99999999, stored as `iracingId`. The driver's iRacing customer id; when set, the nightly iRacing sync fills `stats.json` for this driver |
 | `x`, `twitch`, `youtube`, `instagram` | string | no | full `https` links, stored under `socials` |
 | `active` | boolean | no | defaults to yes. Inactive people stay in the file but are hidden on the site |
 | `id` | string | no | left empty, the id is `slug(name)` |
 
 `stats` and `socials` are only written when at least one of their values is
-supplied, so a record stays as small as the site needs.
+supplied, so a record stays as small as the site needs. `iracingId` is written
+only when supplied.
 
 #### /driver edit
 
@@ -138,11 +171,13 @@ supplied, so a record stays as small as the site needs.
 | Option | Type | Rules |
 |---|---|---|
 | `id` | string | required, autocomplete |
-| `name`, `role`, `group`, `country`, `focus`, `number`, `bio`, `irating`, `licence`, `x`, `twitch`, `youtube`, `instagram`, `active` | as in add | replace the stored value |
-| `clear` | string | choice: `bio`, `number`, `irating`, `licence`, `x`, `twitch`, `youtube`, `instagram` |
+| `name`, `role`, `group`, `country`, `focus`, `number`, `bio`, `irating`, `licence`, `iracingid`, `x`, `twitch`, `youtube`, `instagram`, `active` | as in add | replace the stored value |
+| `clear` | string | choice: `bio`, `number`, `irating`, `licence`, `iracingid`, `x`, `twitch`, `youtube`, `instagram` |
 
 A single hyphen clears `bio`, `number`, `licence` and any of the four links.
-`irating` is a number, so it can only be cleared with `clear:irating`.
+`irating` and `iracingid` are numbers, so each can only be cleared with
+`clear:irating` or `clear:iracingid`; a hyphen has no effect on a number
+option.
 
 #### /driver remove, /driver list
 
@@ -163,14 +198,18 @@ Manages `src/data/events.json`.
 | `classes` | string | yes | 1 to 4 classes separated by commas, from the `/result` class list. Matched without case |
 | `status` | string | yes | choice: `planned`, `confirmed`, `done`, `skipped` |
 | `end` | string | no | `YYYY-MM-DD`, not earlier than `start`. Leave empty for a one day event |
+| `starttime` | string | no | `HH:MM`, treated as UTC on the `start` date, or a full ISO 8601 UTC timestamp such as `2026-09-25T14:00:00Z` whose date part equals `start`. Anything else is refused. Stored as `startTime` |
 | `note` | string | no | up to 140 characters |
 | `id` | string | no | left empty, the id is `<start>-<slug(name)>` |
 
 #### /event edit
 
 `id` is required and offers autocomplete; every other option is optional. A
-single hyphen clears `end` or `note`. Editing `start` alone is still checked
-against the stored `end`.
+single hyphen clears `end`, `starttime` or `note`. Editing `start` alone is
+still checked against the stored `end` and, when one is stored, the stored
+`starttime`: if the new `start` no longer matches `startTime`'s date part, the
+edit is refused. Set a new `starttime` in the same command to move both
+together.
 
 #### /event remove, /event list
 
@@ -183,9 +222,16 @@ Read only. None of these change anything.
 
 | Subcommand | Options | What it shows |
 |---|---|---|
-| `/data status` | none | storage mode, repository, branch, folder, record count per file, the last commit that touched the data folder with its short sha and date, and whether an audit channel is set |
-| `/data validate` | none | every file checked against the contract; lists up to 20 problems as `file[index].field: message` |
+| `/data status` | none | storage mode, repository, branch, folder, record count per file, the last commit that touched the data folder with its short sha and date, a summary of `stats.json` when it is present (its `updated` value and how many drivers it covers), and whether an audit channel is set |
+| `/data validate` | none | every file checked against the contract; lists up to 20 problems as `file[index].field: message`. `stats.json` is never checked: it is not managed by the bot |
 | `/data placeholders` | none | the records still marked `_placeholder`, per file, with their ids so they can be removed |
+
+`stats.json` is a fourth file the website reads, generated nightly by a
+separate iRacing sync job outside this bot (see `docs/data-contract.md`,
+version 1.2). The bot only ever reads a summary of it for `/data status`; it
+is never validated and never written here. A missing or malformed
+`stats.json` is reported plainly in `/data status` and never fails the
+command.
 
 ## Shared behaviour
 
@@ -217,7 +263,14 @@ it again.
 
 Every embed has a title, labelled fields and the footer `Artemis data bot`. The
 colour is the team teal `0x0fffcf`, except errors, which are red. No emojis
-anywhere, and no exclamation marks.
+anywhere, and no exclamation marks. The one exception is the results
+announcement (see "Results announcement" above), a plain public message with
+its own footer, `The Scoreboard`.
+
+A driver embed and list line show `iRacing id` only when the record has an
+`iracingId`; an event embed and list line show `Start time` only when the
+record has a `startTime`. Every other field is always shown, "not set" when
+empty.
 
 ### After add or edit
 
@@ -416,6 +469,7 @@ ties going to the newest; the partners page snapshot shows the first 3.
 | `stats.licence` | string | optional, `A 4.20` shape |
 | `socials.*` | string | optional https links; keys `x`, `twitch`, `youtube`, `instagram` |
 | `active` | boolean | defaults to true; inactive people are hidden on the site but kept in the file |
+| `iracingId` | integer | optional, 1 to 99999999: the driver's iRacing customer id. When present, the nightly iRacing sync fills `stats.json` for this driver; when absent, the site shows only what is in `stats` above |
 
 Site usage: the home page "Who drives" shows the first 4 active records with
 `role: driver`; the team page shows all active records grouped by `group`;
@@ -430,6 +484,7 @@ Site usage: the home page "Who drives" shows the first 4 active records with
 | `track` | string | 2 to 80 characters |
 | `start` | string | ISO date |
 | `end` | string | optional ISO date, not earlier than `start` |
+| `startTime` | string | optional ISO 8601 UTC timestamp on the `start` date, for example `2026-09-25T14:00:00Z`. The site converts it to the visitor's local time and uses it for the countdown; without it the countdown targets 00:00 America/Chicago as before |
 | `classes` | string[] | 1 to 4 values from the class list |
 | `status` | string | `planned`, `confirmed`, `done` or `skipped` |
 | `note` | string | optional, up to 140 characters |
@@ -438,7 +493,14 @@ Site usage: the "Next race" strip is the first event whose `end` (or `start`) is
 today or later and whose status is `planned` or `confirmed`. If there is none,
 the strip reads "No race scheduled" with the last `done` event as a subtitle.
 The countdown targets `start` at 00:00 in the site's timezone,
-America/Chicago.
+America/Chicago, or `startTime` when the event has one.
+
+### stats.json, generated by the nightly iRacing sync, not managed by this bot
+
+`src/data/stats.json`, written by `scripts/fetch-iracing.mjs` from a GitHub
+Action, not by this bot. The bot never validates it and never writes it;
+`/data status` shows its `updated` value and how many drivers it covers, when
+the file is present. See `docs/data-contract.md` for the full shape.
 
 ### Rules that apply to all three
 

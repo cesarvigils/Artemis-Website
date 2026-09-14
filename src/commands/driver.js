@@ -12,12 +12,13 @@
  */
 
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { BIO_MAX, GROUP_VALUES, ROLE_VALUES, SOCIAL_KEYS, isClearToken } from '../lib/schema.js';
+import { BIO_MAX, GROUP_VALUES, IRACING_ID_MAX, IRACING_ID_MIN, ROLE_VALUES, SOCIAL_KEYS, isClearToken } from '../lib/schema.js';
 import { makeId, idSet } from '../lib/ids.js';
 import { BotError } from '../lib/errors.js';
 import {
   parseCountry,
   parseDriverNumber,
+  parseIracingId,
   parseIrating,
   parseLicence,
   parseRequiredText,
@@ -31,7 +32,7 @@ const ROLE_CHOICES = ROLE_VALUES.map((value) => ({ name: value, value }));
 const GROUP_CHOICES = GROUP_VALUES.map((value) => ({ name: value, value }));
 
 /** Fields the clear option can empty. */
-const CLEARABLE = ['bio', 'number', 'irating', 'licence', ...SOCIAL_KEYS];
+const CLEARABLE = ['bio', 'number', 'irating', 'licence', ...SOCIAL_KEYS, 'iracingid'];
 
 export const data = new SlashCommandBuilder()
   .setName('driver')
@@ -75,6 +76,13 @@ export const data = new SlashCommandBuilder()
         option.setName('irating').setDescription('iRating, 0 to 15000').setMinValue(0).setMaxValue(15000),
       )
       .addStringOption((option) => option.setName('licence').setDescription('Licence, for example A 4.20').setMaxLength(10))
+      .addIntegerOption((option) =>
+        option
+          .setName('iracingid')
+          .setDescription('iRacing customer id, so the nightly sync can find them')
+          .setMinValue(IRACING_ID_MIN)
+          .setMaxValue(IRACING_ID_MAX),
+      )
       .addStringOption((option) => option.setName('x').setDescription('Link to their X profile, https'))
       .addStringOption((option) => option.setName('twitch').setDescription('Link to their Twitch channel, https'))
       .addStringOption((option) => option.setName('youtube').setDescription('Link to their YouTube channel, https'))
@@ -107,6 +115,13 @@ export const data = new SlashCommandBuilder()
       )
       .addStringOption((option) =>
         option.setName('licence').setDescription('New licence. Use a single hyphen to clear it').setMaxLength(10),
+      )
+      .addIntegerOption((option) =>
+        option
+          .setName('iracingid')
+          .setDescription('New iRacing customer id')
+          .setMinValue(IRACING_ID_MIN)
+          .setMaxValue(IRACING_ID_MAX),
       )
       .addStringOption((option) => option.setName('x').setDescription('New X link, or a single hyphen to clear it'))
       .addStringOption((option) => option.setName('twitch').setDescription('New Twitch link, or a single hyphen to clear it'))
@@ -204,6 +219,9 @@ function draftFromOptions(interaction) {
   const active = interaction.options.getBoolean('active');
   record.active = active === null || active === undefined ? true : active;
 
+  const iracingId = interaction.options.getInteger('iracingid');
+  if (iracingId !== null && iracingId !== undefined) record.iracingId = parseIracingId(iracingId);
+
   return record;
 }
 
@@ -226,6 +244,10 @@ function clearField(record, field) {
       delete record.stats[field];
       if (Object.keys(record.stats).length === 0) delete record.stats;
     }
+    return;
+  }
+  if (field === 'iracingid') {
+    delete record.iracingId;
     return;
   }
   if (record.socials) {
@@ -320,6 +342,12 @@ function applyEdits(interaction, record) {
   if (active !== null && active !== undefined) {
     next.active = active;
     changed.push('active');
+  }
+
+  const iracingId = interaction.options.getInteger('iracingid');
+  if (iracingId !== null && iracingId !== undefined) {
+    next.iracingId = parseIracingId(iracingId);
+    changed.push('iracingid');
   }
 
   const clear = interaction.options.getString('clear');

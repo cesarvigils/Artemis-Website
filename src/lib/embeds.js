@@ -169,6 +169,9 @@ export function recordFields(kind, record) {
       { name: 'Bio', value: show(record.bio) },
       { name: 'Stats', value: stats.length ? stats.join(', ') : EMPTY },
       { name: 'Socials', value: socials.length ? socials.join('\n') : EMPTY },
+      // iracingId is only shown when set, unlike the fields above: it is the
+      // one field a person may never have (see docs/data-contract.md 1.2).
+      ...(record.iracingId !== undefined ? [{ name: 'iRacing id', value: show(record.iracingId), inline: true }] : []),
     ];
   }
   return [
@@ -178,6 +181,8 @@ export function recordFields(kind, record) {
     { name: 'Status', value: show(record.status), inline: true },
     { name: 'Start', value: show(record.start), inline: true },
     { name: 'End', value: show(record.end), inline: true },
+    // Shown only when present, same reasoning as iracingId above.
+    ...(record.startTime !== undefined ? [{ name: 'Start time', value: `${show(record.startTime)}`, inline: true }] : []),
     { name: 'Classes', value: show(record.classes) },
     { name: 'Note', value: show(record.note) },
   ];
@@ -218,10 +223,14 @@ export function listLine(kind, record) {
   } else if (kind === 'drivers') {
     const number = String(record.number ?? '').length ? `no ${record.number}` : 'no number';
     const active = record.active === false ? 'inactive' : 'active';
-    line = [show(record.name), number, show(record.group), show(record.role), show(record.focus), active].join(' | ');
+    const parts = [show(record.name), number, show(record.group), show(record.role), show(record.focus), active];
+    if (record.iracingId !== undefined) parts.push(`iRacing ${record.iracingId}`);
+    line = parts.join(' | ');
   } else {
     const span = record.end && record.end !== record.start ? `${show(record.start)} to ${show(record.end)}` : show(record.start);
-    line = [span, show(record.status), show(record.name), show(record.track), show(record.classes)].join(' | ');
+    const parts = [span, show(record.status), show(record.name), show(record.track), show(record.classes)];
+    if (record.startTime !== undefined) parts.push(`${record.startTime.slice(11, 16)} UTC`);
+    line = parts.join(' | ');
   }
   return truncate(`${line}${placeholder}\nid: ${show(record.id)}`, 300);
 }
@@ -255,4 +264,37 @@ export function liveNote(mode) {
   return mode === 'github'
     ? 'Live in about a minute once Vercel finishes building.'
     : 'Local storage mode. The file on disk was changed, nothing was pushed.';
+}
+
+/** Footer of the public results announcement, a different name from the rest of the bot on purpose. */
+export const ANNOUNCEMENT_FOOTER = 'The Scoreboard';
+
+/**
+ * The public results announcement, posted to RESULTS_CHANNEL_ID (when set) by
+ * /result add. This is the brand's locked template: the bot never adds an
+ * adjective of its own, only the values of the record and, when the operator
+ * typed one, the note.
+ *
+ *   P4 of 41 - Suzuka 1000
+ *   Suzuka International Racing Course | GT3 | 2026-09-06
+ *   Two stops on strategy, no contact all race.
+ *   Drivers: Matthew Blackley, Nolan Walker
+ *
+ * @param {Record<string, any>} record a result record
+ * @returns {EmbedBuilder}
+ */
+export function resultAnnouncementEmbed(record) {
+  const positionText = record.entries ? `P${record.position} of ${record.entries}` : `P${record.position}`;
+  const title = `${positionText} - ${record.event}`;
+
+  const lines = [`${record.track} | ${record.class} | ${record.date}`];
+  if (record.note) lines.push(record.note);
+  lines.push(`Drivers: ${(record.drivers ?? []).join(', ')}`);
+
+  return new EmbedBuilder()
+    .setColor(BRAND_COLOUR)
+    .setTitle(truncate(title, LIMITS.title))
+    .setDescription(truncate(lines.join('\n'), LIMITS.description))
+    .setFooter({ text: ANNOUNCEMENT_FOOTER })
+    .setTimestamp(new Date());
 }

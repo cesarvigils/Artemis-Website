@@ -230,6 +230,25 @@ export function createGithubStorage(config) {
         message: String(commit.commit?.message ?? '').split('\n')[0],
       };
     },
+
+    /**
+     * Read a file that is not one of the three managed data files, such as
+     * stats.json (see schema.js STATS_FILE). Unlike readFile this never
+     * throws for a missing file: it returns null, because the bot does not
+     * own this file and must tolerate it never having been generated yet.
+     * @param {string} name file name inside dataDir
+     * @returns {Promise<{ text: string } | null>}
+     */
+    async readOptionalFile(name) {
+      const file = dataDir ? `${dataDir}/${name}` : name;
+      const url = `${apiBase}/repos/${owner}/${repo}/contents/${encodeURI(file)}?ref=${encodeURIComponent(branch)}`;
+      const { status, body } = await call(url, { method: 'GET' });
+      if (status === 404) return null;
+      if (status !== 200) throw apiError(status, body, `read ${file}`);
+      if (body?.type !== 'file' || typeof body.content !== 'string') return null;
+      const text = Buffer.from(body.content.replace(/\s/g, ''), 'base64').toString('utf8');
+      return { text };
+    },
   };
 }
 
