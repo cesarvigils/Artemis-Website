@@ -1,4 +1,4 @@
-# Artemis data bot specification
+﻿# Artemis data bot specification
 
 What every command does, what the replies look like, who may run them, how
 failures are reported, and how a change reaches the repository. The data shapes
@@ -338,7 +338,7 @@ Page 1 of 2
 
 ...
 
-Source        cesarvigils/Artemis-Website on branch maintenance, folder src/data
+Source        cesarvigils/Artemis-Website on branch master, folder src/data
                                               Artemis data bot
 ```
 
@@ -508,7 +508,7 @@ the file is present. See `docs/data-contract.md` for the full shape.
 - Dates are `YYYY-MM-DD` strings with no times.
 - Strings are trimmed, and empty strings are only allowed where the table says
   so.
-- `_placeholder: true` marks sample data shipped with the redesign. The site
+- `_placeholder: true` marks sample data shipped with the preview. The site
   renders those records like any other; the bot marks them "(placeholder)" in
   lists and gathers them under `/data placeholders`. Records the bot writes
   never carry the field.

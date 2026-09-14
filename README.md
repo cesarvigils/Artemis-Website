@@ -1,4 +1,4 @@
-# Artemis data bot
+﻿# Artemis data bot
 
 A Discord bot that lets team staff edit the website's race results, driver
 roster and event calendar with slash commands. Each command writes one commit to
@@ -107,7 +107,7 @@ ones you must set:
 | `GITHUB_TOKEN` | the token from step 4 |
 | `GITHUB_OWNER` | `cesarvigils` |
 | `GITHUB_REPO` | `Artemis-Website` |
-| `GITHUB_BRANCH` | the branch Vercel deploys: `maintenance` for production |
+| `GITHUB_BRANCH` | the branch Vercel deploys: `master` for production |
 | `DATA_DIR` | `src/data` |
 
 `.env` is in `.gitignore`. Never commit it, and never paste a token into
