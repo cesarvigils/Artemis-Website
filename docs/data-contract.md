@@ -4,7 +4,7 @@ Version 1.2, 14 Sep 2026. Changes since 1.0: `results.entries` (1.1); `drivers.i
 
 ## Where the data lives
 
-Three JSON files in the website repo `cesarvigils/Artemis-Website`, on the branch that Vercel deploys (configurable in the bot as `GITHUB_BRANCH`; production is `master`, previews use `preview`):
+Three JSON files in the website repo `cesarvigils/Artemis-Website`, on the branch that Vercel deploys (configurable in the bot as `GITHUB_BRANCH`; production is `master`, testing uses `preview`):
 
 - `src/data/results.json`
 - `src/data/drivers.json`
