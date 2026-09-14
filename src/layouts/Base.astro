@@ -8,9 +8,11 @@ interface Props {
   description: string;
   /** Optional path to an OG image inside /public, defaults to the brand banner */
   ogImage?: string;
+  /** LCP image to preload: pass the getImage() result fields for the hero */
+  preload?: { href: string; srcset?: string; sizes?: string };
 }
 
-const { title, description, ogImage = '/og.png' } = Astro.props;
+const { title, description, ogImage = '/og.png', preload } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -21,77 +23,72 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#000a08" />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link
-      rel="preload"
-      href="/fonts/nexa-bold.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/nexa-light.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <link rel="preload" href="/fonts/nexa-bold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/nexa-light.woff2" as="font" type="font/woff2" crossorigin />
+    {
+      preload && (
+        <link
+          rel="preload"
+          as="image"
+          href={preload.href}
+          imagesrcset={preload.srcset}
+          imagesizes={preload.sizes}
+          fetchpriority="high"
+        />
+      )
+    }
+
+    <meta property="og:site_name" content="Artemis Esports" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={new URL(ogImage, Astro.site)} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@EsportsArtemis" />
+
     <script is:inline>
       document.documentElement.classList.add('js');
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <Nav />
-    <slot />
+    <span data-nav-sentinel aria-hidden="true"></span>
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
     <Footer />
     <script>
-      // Reveal-on-scroll: adds .in-view once, content is visible without JS.
-      const items = document.querySelectorAll('.reveal');
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) {
-              e.target.classList.add('in-view');
-              io.unobserve(e.target);
-            }
-          }
-        },
-        { threshold: 0.2, rootMargin: '0px 0px -40px 0px' }
-      );
-      items.forEach((el) => io.observe(el));
-    </script>
-    <script>
-      // Smooth scrolling (Lenis) + nav hide/reveal. Motion-permitting only;
-      // without it the site scrolls natively and the nav stays fixed.
-      if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
-        const { default: Lenis } = await import('lenis');
-        const lenis = new Lenis({ lerp: 0.115 });
-        document.documentElement.classList.add('lenis-smooth');
-
-        function raf(time: number) {
-          lenis.raf(time);
-          requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
-
-        const nav = document.querySelector('.site-nav');
-        const menuToggle = document.querySelector('.menu-toggle');
-        lenis.on('scroll', ({ scroll, direction }) => {
-          if (menuToggle?.getAttribute('aria-expanded') === 'true') return;
-          if (direction === 1 && scroll > 200) {
-            nav?.classList.add('nav-hidden');
-          } else if (direction === -1) {
-            nav?.classList.remove('nav-hidden');
-          }
-        });
-      }
+      import '../scripts/site';
     </script>
   </body>
 </html>
+
+<style is:global>
+  /* The sentinel marks "page is at the top"; it must not affect layout. */
+  [data-nav-sentinel] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+
+  #main:focus {
+    outline: none;
+  }
+
+  html.menu-open,
+  html.menu-open body {
+    overflow: hidden;
+  }
+</style>

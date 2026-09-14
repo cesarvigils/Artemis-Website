@@ -1,0 +1,139 @@
+---
+import { raceDateRange } from '../lib/format';
+
+interface RaceEvent {
+  name: string;
+  track: string;
+  date: string;
+  endDate?: string;
+  start?: string;
+  classes: string[];
+  status?: string;
+}
+
+interface Props {
+  event: RaceEvent | undefined;
+}
+
+const { event } = Astro.props;
+
+const when = event ? raceDateRange(event.date, event.endDate) : '';
+---
+
+{
+  event && (
+    <section class="next-race rule-top" aria-labelledby="next-race-heading">
+      <div class="container next-race-inner">
+        <h2 class="next-race-heading" id="next-race-heading">
+          Next race
+        </h2>
+
+        <dl class="next-race-data">
+          <div class="race-cell race-cell-event">
+            <dt class="field-label">Event</dt>
+            <dd>{event.name}</dd>
+          </div>
+          <div class="race-cell">
+            <dt class="field-label">Track</dt>
+            <dd>{event.track}</dd>
+          </div>
+          <div class="race-cell race-cell-when">
+            <dt class="field-label">Date</dt>
+            <dd>
+              <span class="data">{when}</span>
+              <span class="race-countdown data" data-countdown={event.start} hidden />
+            </dd>
+          </div>
+          <div class="race-cell">
+            <dt class="field-label">Classes</dt>
+            <dd class="data">{event.classes.join(' / ')}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .next-race {
+    background: var(--bg-raise);
+    padding-block: var(--space-m);
+  }
+
+  .next-race-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-s) var(--space-l);
+  }
+
+  .next-race-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 0 0 auto;
+    font-size: var(--text-xs);
+    letter-spacing: 0.18em;
+    color: var(--teal);
+  }
+
+  .next-race-heading::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--teal);
+  }
+
+  .next-race-data {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: var(--space-s) var(--space-l);
+  }
+
+  .race-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .race-cell dd {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.35;
+  }
+
+  .race-cell .data {
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    letter-spacing: var(--track-data);
+    text-transform: none;
+  }
+
+  /* Reserve the countdown line so filling it in shifts nothing. */
+  .race-cell-when dd {
+    min-height: 2.6em;
+  }
+
+  .race-countdown {
+    color: var(--teal);
+  }
+
+  .race-countdown[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .next-race-data {
+      gap: var(--space-s) var(--space-m);
+    }
+    .race-cell-event {
+      flex: 1 0 100%;
+    }
+  }
+</style>

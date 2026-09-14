@@ -1,31 +1,120 @@
 ---
 import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import Icon from '../components/Icon.astro';
+import site from '../data/site.json';
+import nav from '../data/nav.json';
 ---
 
 <Base
   title="Page not found | Artemis Esports"
-  description="This page does not exist."
+  description="That page does not exist. Head back to the Artemis Esports home page or join the team on Discord."
 >
   <section class="notfound">
-    <div class="container">
-      <h1 class="display-xl">Off track.</h1>
-      <p class="lead">This page does not exist. Rejoin at the pit exit.</p>
-      <a href="/" class="btn btn-solid">Back to the paddock</a>
+    <div class="container notfound-inner">
+      <span class="notfound-mark"><Mark variant="mark" /></span>
+
+      <div class="notfound-copy">
+        <p class="notfound-code data">404</p>
+        <h1 class="display-lg">Off track.</h1>
+        <p class="lead">
+          That page does not exist. Nothing was lost, the pit lane is this way.
+        </p>
+
+        <div class="notfound-actions">
+          <a class="btn btn-solid" href="/">
+            Back to the paddock
+            <Icon name="arrow-right" size={16} />
+          </a>
+          <a class="btn btn-ghost" href={site.socials.discord} target="_blank" rel="noopener">
+            Join the team
+            <Icon name="arrow-up-right" size={16} />
+          </a>
+        </div>
+
+        <nav class="notfound-links" aria-label="Site pages">
+          {nav.primary.map((link) => <a href={link.href}>{link.label}</a>)}
+        </nav>
+      </div>
     </div>
   </section>
 </Base>
 
 <style>
   .notfound {
-    min-height: 80dvh;
     display: flex;
     align-items: center;
-    padding-top: var(--nav-h);
+    min-height: calc(100dvh - var(--nav-h));
+    padding-top: calc(var(--nav-h) + var(--space-xl));
+    padding-bottom: var(--space-2xl);
   }
-  .notfound .lead {
-    margin-top: 1.25rem;
+
+  .notfound-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr);
+    gap: var(--space-xl);
+    align-items: center;
   }
-  .notfound .btn {
-    margin-top: 2.25rem;
+
+  .notfound-mark {
+    display: block;
+    --mark-size: min(13rem, 34vw);
+    color: var(--bg-panel);
+  }
+
+  .notfound-code {
+    color: var(--teal);
+    letter-spacing: var(--track-label);
+    margin-bottom: var(--space-s);
+  }
+
+  .notfound-copy .lead {
+    margin-top: var(--space-s);
+    max-width: 38ch;
+  }
+
+  .notfound-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-l);
+  }
+
+  .notfound-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-m);
+    margin-top: var(--space-l);
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line);
+  }
+
+  .notfound-links a {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .notfound-links a:hover {
+      color: var(--teal);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .notfound-inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-l);
+    }
+    .notfound-mark {
+      --mark-size: 6rem;
+    }
+    .notfound-actions .btn {
+      flex: 1 1 13rem;
+    }
   }
 </style>

@@ -1,0 +1,171 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import partners from '../data/partners.json';
+
+/* Static import per logo - see the note in Garage.astro. */
+import glytchWhite from '../assets/partners/glytch-white.png';
+
+const partnerLogos: Record<string, ImageMetadata> = {
+  'glytch-white.png': glytchWhite,
+};
+
+interface Props {
+  /** Heading for the band. */
+  heading: string;
+  /** One sentence of context above the partner list. */
+  lead: string;
+  /** Where the quiet link goes, and what it says. */
+  link?: { href: string; label: string };
+}
+
+const { heading, lead, link } = Astro.props;
+
+const list = partners.map((partner) => {
+  const meta = partnerLogos[partner.logo];
+  if (!meta) {
+    throw new Error(
+      `partners.json references "${partner.logo}", which has no import in PartnerBand.astro`
+    );
+  }
+  return { ...partner, meta };
+});
+---
+
+<section class="partner-band rule-top" aria-labelledby="partner-band-heading">
+  <div class="container partner-inner">
+    <div class="partner-copy">
+      <h2 class="display-md" id="partner-band-heading">{heading}</h2>
+      <p class="lead">{lead}</p>
+      {
+        link && (
+          <a class="text-link" href={link.href}>
+            {link.label}
+            <Icon name="arrow-right" size={16} />
+          </a>
+        )
+      }
+    </div>
+
+    <ul class="partner-list">
+      {
+        list.map((partner) => (
+          <li class="partner-item">
+            <a href={partner.url} target="_blank" rel="noopener">
+              <Image
+                src={partner.meta}
+                alt={`${partner.name} logo`}
+                widths={[240, 480]}
+                sizes="220px"
+                format="webp"
+                loading="lazy"
+              />
+              <span class="partner-meta">
+                <span class="partner-name">{partner.name}</span>
+                <span class="partner-since data">Partner since {partner.since}</span>
+              </span>
+            </a>
+            <p class="partner-blurb">{partner.detail ?? partner.blurb}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .partner-band {
+    background: var(--bg-raise);
+    padding-block: var(--space-2xl);
+  }
+
+  .partner-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  .partner-copy h2 {
+    max-width: 14ch;
+  }
+
+  .partner-copy .lead {
+    margin-top: var(--space-s);
+    max-width: 34ch;
+  }
+
+  .partner-copy .text-link {
+    margin-top: var(--space-m);
+  }
+
+  .partner-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+  }
+
+  .partner-item {
+    border: 1px solid var(--line);
+    padding: var(--space-m);
+    background: var(--bg);
+  }
+
+  .partner-item > a {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-m);
+    transition: opacity var(--dur-hover) var(--ease-out);
+  }
+
+  /* :global: the <img> comes from Astro's Image component. */
+  .partner-item :global(img) {
+    width: 180px;
+    height: auto;
+  }
+
+  .partner-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .partner-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .partner-since {
+    color: var(--ink-faint);
+    font-size: var(--text-2xs);
+  }
+
+  .partner-blurb {
+    margin-top: var(--space-s);
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line);
+    color: var(--ink-dim);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .partner-item > a:hover .partner-name {
+      color: var(--teal);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .partner-inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-l);
+    }
+    .partner-item :global(img) {
+      width: 140px;
+    }
+  }
+</style>

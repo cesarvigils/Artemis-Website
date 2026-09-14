@@ -1,22 +1,44 @@
 {
   "name": "Artemis Esports",
   "tagline": "Quiet. Precise. On the hunt.",
-  "heroSub": "A sim racing team built in silence, improved with intention, raced with discipline.",
+  "shortDescription": "An iRacing endurance, GT and NASCAR oval team.",
+  "heroLead": "An iRacing endurance, GT and NASCAR oval team. We run the long races, the short tracks, and we bring the car home.",
   "mission": "Artemis builds in silence, improves with intention, and competes with precision. We put people first, chase real progress, and let our results speak louder than the noise.",
   "focus": "Endurance and GT racing on iRacing",
+  "founded": 2017,
+  "simRacingSince": 2023,
   "contactEmail": "contact@artemisesports.com",
+  "store": "https://raven.gg/stores/esports-artemis",
   "socials": {
-    "twitter": "",
-    "instagram": "",
-    "twitch": "",
-    "youtube": "",
-    "discord": ""
+    "discord": "https://discord.gg/ybSQQk9axG",
+    "x": "https://x.com/EsportsArtemis",
+    "instagram": "https://instagram.com/esportsartemis",
+    "tiktok": "https://tiktok.com/@esportsartemis",
+    "youtube": "https://youtube.com/channel/UCE6v3WL651IvusgiD3dJzxg",
+    "twitch": "https://twitch.tv/esportsartemis"
   },
   "hashtags": ["#OnTheHunt", "#CalledByTheHunt", "#ArtemisPitwall", "#FollowersOfTheHunt"],
   "pillars": [
-    { "title": "Work Over Words", "line": "Actions echo. Words don't." },
-    { "title": "Progress Over Pride", "line": "Improvement is the standard." },
-    { "title": "Precision Over Flash", "line": "Accuracy over chaos. Every lap." },
-    { "title": "Culture Over Clout", "line": "Built for our people, not the noise." }
-  ]
+    { "title": "Work over words", "line": "Actions echo. Words don't." },
+    { "title": "Progress over pride", "line": "Improvement is the standard, not the reward." },
+    { "title": "Precision over flash", "line": "Accuracy over chaos. Every lap." },
+    { "title": "Culture over clout", "line": "Built for our people, not the noise." }
+  ],
+  "join": {
+    "lead": "We take drivers who show up prepared and stay calm in traffic. Pace matters. So does the hour before the race.",
+    "steps": [
+      {
+        "title": "Open a ticket",
+        "line": "Join the Discord and open a driver application in #recruitment."
+      },
+      {
+        "title": "Share your numbers",
+        "line": "Your iRacing name, iRating, safety rating and the classes you run."
+      },
+      {
+        "title": "Get in a car",
+        "line": "Run a practice session with the crew. Most drivers are placed within two weeks."
+      }
+    ]
+  }
 }

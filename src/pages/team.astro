@@ -1,66 +1,68 @@
 ---
 import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import DriverCard from '../components/DriverCard.astro';
+import JoinCta from '../components/JoinCta.astro';
 import drivers from '../data/drivers.json';
 
-const roles: { key: string; title: string; blurb: string }[] = [
+const GROUPS = [
   {
-    key: 'driver',
-    title: 'Drivers',
-    blurb: 'The ones on track. Measured in lap time, not volume.',
+    key: 'road',
+    title: 'Road',
+    blurb: 'Endurance, GT and prototype. The drivers who run the long ones.',
   },
   {
-    key: 'pitwall',
+    key: 'oval',
+    title: 'Oval',
+    blurb: 'Short tracks, superspeedways and the truck league.',
+  },
+  {
+    key: 'crew',
     title: 'Pitwall',
-    blurb: 'Strategy, timing, and the calls that win stints.',
-  },
-  {
-    key: 'staff',
-    title: 'Staff',
-    blurb: 'The people who keep the hunt moving.',
+    blurb: 'Strategy, engineering and the calendar behind every entry.',
   },
 ];
 
-const sections = roles
-  .map((role) => ({
-    ...role,
-    members: drivers.filter((d) => d.role === role.key),
-  }))
-  .filter((s) => s.members.length > 0);
+const sections = GROUPS.map((group) => ({
+  ...group,
+  members: drivers.filter((driver) => driver.group === group.key),
+})).filter((section) => section.members.length > 0);
+
+const driverCount = drivers.filter((driver) => driver.group !== 'crew').length;
+const crewCount = drivers.filter((driver) => driver.group === 'crew').length;
 ---
 
 <Base
   title="Team | Artemis Esports"
-  description="The Artemis Esports roster: drivers, pitwall, and staff behind our endurance and GT program on iRacing."
+  description="The Artemis Esports roster: road drivers, oval drivers and the pitwall behind the endurance and GT program on iRacing."
 >
-  <section class="page-head">
-    <div class="container">
-      <h1 class="display-xl reveal">The crew</h1>
-      <p class="lead reveal" style="--reveal-delay: 80ms">
-        Loyalty over attention. These are our people.
-      </p>
-    </div>
-  </section>
+  <PageHead
+    title="The crew"
+    lead="Loyalty over attention. Everyone here earned the seat by showing up prepared, week after week."
+    meta={`${driverCount} drivers / ${crewCount} crew / road and oval`}
+  />
 
   {
     sections.map((section) => (
-      <section class="section roster-section">
-        <div class="container">
-          <div class="roster-head reveal">
-            <h2 class="display-md">{section.title}</h2>
-            <p>{section.blurb}</p>
+      <section class="section roster rule-top" aria-labelledby={`group-${section.key}`}>
+        <div class="container roster-inner">
+          <div class="roster-head">
+            <h2 class="display-sm" id={`group-${section.key}`}>
+              {section.title}
+            </h2>
+            <p class="roster-blurb">{section.blurb}</p>
+            <p class="roster-count data">
+              {section.members.length} {section.members.length === 1 ? 'entry' : 'entries'}
+            </p>
           </div>
-          <ul class="roster-grid">
-            {section.members.map((m, i) => (
-              <li
-                class="roster-card reveal"
+          <ul class="roster-list">
+            {section.members.map((driver, i) => (
+              <DriverCard
+                driver={driver}
+                variant="row"
+                class="reveal"
                 style={`--reveal-delay: ${i * 60}ms`}
-              >
-                {m.number && <span class="car-number">{m.number}</span>}
-                <h3>{m.name}</h3>
-                <p class="member-focus">{m.focus}</p>
-                <p class="member-bio">{m.bio}</p>
-                <span class="member-country">{m.country}</span>
-              </li>
+              />
             ))}
           </ul>
         </div>
@@ -68,113 +70,55 @@ const sections = roles
     ))
   }
 
-  <section class="section join-band">
-    <div class="container">
-      <h2 class="display-lg reveal">Think you belong here?</h2>
-      <p class="lead reveal" style="--reveal-delay: 80ms">
-        We look for pace, consistency, and character. In that order of
-        difficulty, not importance.
-      </p>
-      <div class="reveal" style="--reveal-delay: 160ms">
-        <a href="/partners#contact" class="btn btn-solid">Get in touch</a>
-      </div>
-    </div>
-  </section>
+  <JoinCta
+    heading="Race with us."
+    lead="We are open to drivers in both programs. Bring consistency and a working microphone."
+  />
 </Base>
 
 <style>
-  .page-head {
-    padding-top: calc(var(--nav-h) + clamp(4rem, 10vh, 7rem));
-    padding-bottom: clamp(2rem, 6vh, 4rem);
-  }
-  .page-head .lead {
-    margin-top: 1.25rem;
-  }
-
-  .roster-section {
-    border-top: 1px solid var(--line);
-  }
-  .roster-section:nth-of-type(even) {
-    background: var(--bg-raise);
-  }
-  .roster-head {
-    display: flex;
-    align-items: baseline;
-    gap: 2rem;
-    flex-wrap: wrap;
-    margin-bottom: 3rem;
-  }
-  .roster-head p {
-    color: var(--ink-dim);
-  }
-
-  .roster-grid {
-    list-style: none;
+  .roster-inner {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-  }
-  .roster-card {
-    position: relative;
-    background: var(--bg);
-    padding: 2.5rem 2rem 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    transition: transform 200ms var(--ease-out), background-color 200ms ease;
-  }
-  .roster-section:nth-of-type(even) .roster-card {
-    background: var(--bg-raise);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .roster-card:hover {
-      transform: translateY(-4px);
-      background: var(--bg-panel);
-    }
-  }
-  .car-number {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 3.5rem;
-    line-height: 1;
-    color: transparent;
-    -webkit-text-stroke: 1px var(--teal-dim);
-  }
-  .roster-card h3 {
-    font-size: 1.375rem;
-    letter-spacing: 0.04em;
-  }
-  .member-focus {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.8125rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--teal);
-  }
-  .member-bio {
-    color: var(--ink-dim);
-    font-size: 0.9375rem;
-  }
-  .member-country {
-    margin-top: auto;
-    padding-top: 1rem;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.8125rem;
-    letter-spacing: 0.16em;
-    color: var(--ink-faint);
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
+    gap: var(--space-xl);
+    align-items: start;
   }
 
-  .join-band {
+  .roster-head {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--space-m));
+  }
+
+  .roster-blurb {
+    margin-top: var(--space-s);
+    color: var(--ink-dim);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    max-width: 28ch;
+  }
+
+  .roster-count {
+    margin-top: var(--space-s);
+    padding-top: var(--space-s);
     border-top: 1px solid var(--line);
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    font-size: var(--text-2xs);
+    max-width: 12rem;
   }
-  .join-band .lead {
-    margin-top: 1.25rem;
+
+  .roster-list {
+    border-top: 1px solid var(--line-strong);
   }
-  .join-band .btn {
-    margin-top: 2.25rem;
+
+  @media (max-width: 900px) {
+    .roster-inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-l);
+    }
+    .roster-head {
+      position: static;
+    }
   }
 </style>

@@ -1,42 +1,73 @@
 ---
-import { Image } from 'astro:assets';
-import logo from '../assets/logos/Logo_Layout_1.png';
+import nav from '../data/nav.json';
+import Mark from './Mark.astro';
+import Icon from './Icon.astro';
 
-const links = [
-  { href: '/', label: 'Home' },
-  { href: '/team', label: 'Team' },
-  { href: '/about', label: 'About' },
-  { href: '/partners', label: 'Partners' },
-];
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isCurrent = (href: string) => (href.replace(/\/+$/, '') || '/') === path;
 ---
 
 <header class="site-nav">
   <div class="nav-inner">
-    <a href="/" class="brand" aria-label="Artemis Esports home">
-      <Image src={logo} alt="Artemis Esports" height={44} densities={[1, 2]} />
+    <a href="/" class="brand" aria-label="Artemis Esports, home">
+      <Mark variant="lockup" />
     </a>
 
-    <nav class="links" aria-label="Primary">
+    <nav class="nav-links" aria-label="Primary">
       {
-        links.map((l) => (
-          <a href={l.href} aria-current={path === l.href.replace(/\/$/, '') || (l.href === '/' && path === '/') ? 'page' : undefined}>
-            {l.label}
+        nav.primary.map((link) => (
+          <a
+            href={link.href}
+            class="nav-link"
+            aria-current={isCurrent(link.href) ? 'page' : undefined}
+          >
+            {link.label}
           </a>
         ))
       }
-      <a href="/partners#contact" class="btn btn-solid nav-cta">Get in touch</a>
+      <a
+        href={nav.cta.href}
+        class="btn btn-solid btn-sm nav-cta"
+        target="_blank"
+        rel="noopener"
+      >
+        {nav.cta.label}
+        <Icon name="arrow-up-right" size={15} />
+      </a>
     </nav>
 
-    <button class="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu">
-      <span></span>
-      <span></span>
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <span class="sr-only">Menu</span>
+      <span class="menu-icon menu-icon-open"><Icon name="menu" size={22} /></span>
+      <span class="menu-icon menu-icon-close"><Icon name="close" size={22} /></span>
     </button>
   </div>
 
   <div class="mobile-menu" id="mobile-menu" hidden>
-    {links.map((l) => <a href={l.href}>{l.label}</a>)}
-    <a href="/partners#contact" class="btn btn-solid">Get in touch</a>
+    <nav class="mobile-links" aria-label="Primary, mobile">
+      {
+        nav.primary.map((link) => (
+          <a href={link.href} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+            {link.label}
+            <Icon name="arrow-right" size={20} />
+          </a>
+        ))
+      }
+    </nav>
+    <a
+      href={nav.cta.href}
+      class="btn btn-solid mobile-cta"
+      target="_blank"
+      rel="noopener"
+    >
+      {nav.cta.label}
+      <Icon name="arrow-up-right" size={16} />
+    </a>
   </div>
 </header>
 
@@ -46,80 +77,148 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
     inset-inline: 0;
     top: 0;
     z-index: var(--z-nav);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    border-bottom: 1px solid transparent;
+    transition: background-color var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out);
+  }
+
+  /* Scrim so the mark and the toggle stay readable over the hero photo. */
+  .site-nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 10, 8, 0.72), transparent);
+    pointer-events: none;
+    transition: opacity var(--dur-ui) var(--ease-out);
+  }
+
+  .site-nav.is-stuck {
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--line);
-    transition: transform 320ms var(--ease-out);
+    border-bottom-color: var(--line);
   }
-  .site-nav.nav-hidden {
-    transform: translateY(-100%);
+
+  .site-nav.is-stuck::before {
+    opacity: 0;
   }
+
+  /* With the menu open the header sits on the panel, not on the hero. */
+  :global(html.menu-open) .site-nav {
+    background: var(--bg);
+    border-bottom-color: var(--line);
+  }
+
+  :global(html.menu-open) .site-nav::before {
+    opacity: 0;
+  }
+
   .nav-inner {
-    max-width: 1400px;
+    position: relative;
+    max-width: var(--shell);
     margin-inline: auto;
     padding-inline: var(--pad-x);
     height: var(--nav-h);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2rem;
+    gap: var(--space-m);
   }
-  .brand img {
-    height: 44px;
-    width: auto;
-  }
-  .links {
+
+  .brand {
     display: flex;
     align-items: center;
-    gap: clamp(1.25rem, 2.5vw, 2.25rem);
+    color: var(--ink);
+    --mark-size: 28px;
+    transition: color var(--dur-hover) var(--ease-out);
   }
-  .links > a:not(.nav-cta) {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.875rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-dim);
-    transition: color 200ms ease;
-    padding-block: 0.5rem;
-  }
-  .links > a[aria-current='page'] {
-    color: var(--teal);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .links > a:not(.nav-cta):hover {
-      color: var(--ink);
+
+  @media (min-width: 821px) {
+    .brand {
+      --mark-size: 36px;
     }
   }
+
+  @media (hover: hover) and (pointer: fine) {
+    .brand:hover {
+      color: var(--teal);
+    }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(1.25rem, 2.4vw, 2.25rem);
+  }
+
+  .nav-link {
+    position: relative;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    padding-block: 0.5rem;
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--teal);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--dur-hover) var(--ease-out);
+  }
+
+  .nav-link[aria-current='page'] {
+    color: var(--teal);
+  }
+
+  .nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      color: var(--ink);
+    }
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
+  }
+
   .nav-cta {
-    padding: 0.7rem 1.25rem;
-    font-size: 0.8125rem;
+    letter-spacing: 0.1em;
   }
 
   .menu-toggle {
     display: none;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 7px;
     width: 44px;
     height: 44px;
-    background: none;
-    border: 1px solid var(--line);
+    margin-right: -10px;
+    color: var(--ink);
     cursor: pointer;
   }
-  .menu-toggle span {
-    display: block;
-    height: 2px;
-    margin-inline: 10px;
-    background: var(--ink);
-    transition: transform 220ms var(--ease-out), opacity 220ms ease;
+
+  .menu-icon {
+    display: flex;
   }
-  .menu-toggle[aria-expanded='true'] span:first-child {
-    transform: translateY(4.5px) rotate(45deg);
+
+  .menu-icon-close,
+  .menu-toggle[aria-expanded='true'] .menu-icon-open {
+    display: none;
   }
-  .menu-toggle[aria-expanded='true'] span:last-child {
-    transform: translateY(-4.5px) rotate(-45deg);
+
+  .menu-toggle[aria-expanded='true'] .menu-icon-close {
+    display: flex;
   }
 
   .mobile-menu {
@@ -127,46 +226,58 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
   }
 
   @media (max-width: 820px) {
-    .links {
+    .nav-links {
       display: none;
     }
+
     .menu-toggle {
       display: flex;
     }
+
     .mobile-menu {
+      position: fixed;
+      inset: var(--nav-h) 0 0;
+      z-index: var(--z-menu);
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
-      padding: 1rem var(--pad-x) 2rem;
-      border-top: 1px solid var(--line);
+      justify-content: space-between;
+      gap: var(--space-l);
+      padding: var(--space-m) var(--pad-x) calc(var(--space-xl) + env(safe-area-inset-bottom));
       background: var(--bg);
+      border-top: 1px solid var(--line);
+      overflow-y: auto;
     }
+
     .mobile-menu[hidden] {
       display: none;
     }
-    .mobile-menu > a:not(.btn) {
+
+    .mobile-links {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mobile-links a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-s);
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 1.25rem;
-      letter-spacing: 0.08em;
+      font-size: 1.375rem;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      padding-block: 0.9rem;
+      padding-block: 1.25rem;
       border-bottom: 1px solid var(--line);
       color: var(--ink);
     }
-    .mobile-menu .btn {
-      margin-top: 1.25rem;
-      justify-content: center;
+
+    .mobile-links a[aria-current='page'] {
+      color: var(--teal);
+    }
+
+    .mobile-cta {
+      width: 100%;
     }
   }
 </style>
-
-<script>
-  const toggle = document.querySelector('.menu-toggle');
-  const menu = document.getElementById('mobile-menu');
-  toggle?.addEventListener('click', () => {
-    const open = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', String(!open));
-    if (menu) menu.hidden = open;
-  });
-</script>

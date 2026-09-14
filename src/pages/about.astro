@@ -1,203 +1,227 @@
 ---
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import PillarBand from '../components/PillarBand.astro';
+import JoinCta from '../components/JoinCta.astro';
 import site from '../data/site.json';
-import huddle from '../assets/photos/DSC03992.jpg';
-import lan from '../assets/photos/DSC03590.jpeg';
-import portrait from '../assets/photos/IMG_1142.jpg';
+
+import huddle from '../assets/photos/crew-huddle.jpg';
+import lan from '../assets/photos/lan-stage.jpg';
+import portrait from '../assets/photos/member-portrait.jpg';
 ---
 
 <Base
   title="About | Artemis Esports"
-  description="What Artemis Esports stands for: work over words, progress over pride, precision over flash, culture over clout."
+  description="Artemis Esports was founded in 2017 and has raced on iRacing since 2023. Work over words, progress over pride, precision over flash, culture over clout."
 >
-  <section class="page-head">
-    <div class="container">
-      <p class="kicker reveal">Who we are</p>
-      <h1 class="display-xl reveal" style="--reveal-delay: 60ms">
-        Built in silence.
-      </h1>
-      <p class="lead about-mission reveal" style="--reveal-delay: 120ms">
-        {site.mission}
-      </p>
+  <PageHead
+    title="Built in silence."
+    lead={site.mission}
+    meta={`Founded ${site.founded} / racing on iRacing since ${site.simRacingSince}`}
+  />
+
+  <section class="section origin rule-top" aria-labelledby="origin-heading">
+    <div class="container origin-inner">
+      <h2 class="display-md" id="origin-heading">Where this came from</h2>
+      <div class="origin-copy">
+        <p class="reveal">
+          Artemis started in {site.founded} as a small competitive gaming crew. The sim
+          racing program is newer: the first full iRacing season was {site.simRacingSince}.
+          What carried over was the way the team works, not the game it was playing.
+        </p>
+        <p class="reveal" style="--reveal-delay: 70ms">
+          Today the program runs two things at once. Endurance and GT on road courses,
+          where a result comes from four hours of not making the mistake. And NASCAR
+          ovals on Friday nights, where it comes from the last ten laps. The roster stays
+          small on purpose.
+        </p>
+      </div>
     </div>
   </section>
 
-  <section class="section values">
+  <section class="section people rule-top" aria-labelledby="people-heading">
     <div class="container">
-      <ul class="values-list">
-        {
-          site.pillars.map((pillar, i) => (
-            <li class="reveal" style={`--reveal-delay: ${i * 60}ms`}>
-              <h2 class="display-md">{pillar.title}</h2>
-              <p>{pillar.line}</p>
-            </li>
-          ))
-        }
+      <div class="section-head section-head-stack">
+        <h2 class="display-md" id="people-heading">Our people, in person</h2>
+        <p class="lead">
+          The tags come off and the crew is still a crew. What we build is for them.
+        </p>
+      </div>
+
+      <div class="collage">
+        <figure class="shot shot-wide reveal">
+          <Image
+            src={huddle}
+            alt="The Artemis Esports crew standing together outside an event in team jerseys"
+            widths={[640, 1280, 1920]}
+            sizes="(max-width: 900px) 100vw, 45vw"
+            format="webp"
+            quality={72}
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+        <figure class="shot shot-tall reveal" style="--reveal-delay: 80ms">
+          <Image
+            src={lan}
+            alt="An Artemis player competing on stage at a LAN event"
+            widths={[640, 1280]}
+            sizes="(max-width: 900px) 50vw, 30vw"
+            format="webp"
+            quality={72}
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+        <figure class="shot shot-small reveal" style="--reveal-delay: 140ms">
+          <Image
+            src={portrait}
+            alt="An Artemis Esports member in the team jersey at an event"
+            widths={[640, 1280]}
+            sizes="(max-width: 900px) 50vw, 30vw"
+            format="webp"
+            quality={72}
+            loading="lazy"
+            decoding="async"
+          />
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <PillarBand
+    heading="What we stand for"
+    lead="Four lines that decide how a race weekend runs."
+  />
+
+  <section class="hashtags rule-top" aria-label="Team hashtags">
+    <div class="container">
+      <ul class="hashtag-list">
+        {site.hashtags.map((tag) => <li>{tag}</li>)}
       </ul>
     </div>
   </section>
 
-  <section class="section people">
-    <div class="container">
-      <div class="people-copy reveal">
-        <h2 class="display-lg">Our people, in person</h2>
-        <p class="lead">
-          The tags come off and the crew is still a crew. What we build is for
-          them.
-        </p>
-      </div>
-      <div class="photo-collage">
-        <figure class="photo-wide reveal">
-          <Image
-            src={huddle}
-            alt="The Artemis Esports crew gathered outside an event in team jerseys"
-            widths={[700, 1200, 1800]}
-            sizes="(max-width: 900px) 100vw, 66vw"
-            format="webp"
-            loading="lazy"
-          />
-        </figure>
-        <figure class="photo-tall reveal" style="--reveal-delay: 80ms">
-          <Image
-            src={lan}
-            alt="An Artemis player competing on stage at a LAN event"
-            widths={[500, 900]}
-            sizes="(max-width: 900px) 100vw, 32vw"
-            format="webp"
-            loading="lazy"
-          />
-        </figure>
-        <figure class="photo-small reveal" style="--reveal-delay: 140ms">
-          <Image
-            src={portrait}
-            alt="An Artemis Esports member in the team jersey"
-            widths={[500, 900]}
-            sizes="(max-width: 900px) 100vw, 40vw"
-            format="webp"
-            loading="lazy"
-          />
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <section class="section hashtag-band">
-    <div class="container">
-      <p class="hashtags">
-        {site.hashtags.map((tag) => <span>{tag}</span>)}
-      </p>
-    </div>
-  </section>
+  <JoinCta
+    heading="How to join."
+    lead="There is no form and no tryout weekend. It starts in the Discord, and most of it happens on track."
+  />
 </Base>
 
 <style>
-  .page-head {
-    padding-top: calc(var(--nav-h) + clamp(4rem, 10vh, 7rem));
-    padding-bottom: clamp(2rem, 6vh, 4rem);
-  }
-  .page-head .kicker {
-    margin-bottom: 1.25rem;
-  }
-  .about-mission {
-    margin-top: 1.75rem;
-    max-width: 46ch;
+  .origin-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+    gap: var(--space-xl);
+    align-items: start;
   }
 
-  .values {
-    border-top: 1px solid var(--line);
-    background: var(--bg-raise);
+  .origin-inner h2 {
+    max-width: 10ch;
   }
-  .values-list {
-    list-style: none;
+
+  .origin-copy {
     display: flex;
     flex-direction: column;
-  }
-  .values-list li {
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: 1rem 3rem;
-    align-items: baseline;
-    padding-block: 2.25rem;
-    border-bottom: 1px solid var(--line);
-  }
-  .values-list li:last-child {
-    border-bottom: none;
-  }
-  .values-list p {
-    color: var(--ink-dim);
+    gap: var(--space-m);
   }
 
-  .people {
-    border-top: 1px solid var(--line);
+  .origin-copy p {
+    font-size: var(--text-lg);
+    line-height: 1.6;
+    color: var(--ink-dim);
+    max-width: 52ch;
   }
-  .people-copy {
-    max-width: 40rem;
-    margin-bottom: 3rem;
+
+  .origin-copy p:first-child {
+    color: var(--ink);
   }
-  .people-copy .lead {
-    margin-top: 1.25rem;
-  }
-  .photo-collage {
+
+  /* Collage: three frames of different proportion, stepped down the page
+     rather than locked to a row. No empty cells, no equal grid. */
+  .collage {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.85fr) minmax(0, 1fr);
+    gap: var(--space-s);
+    align-items: start;
   }
-  .photo-collage figure {
+
+  .shot {
     overflow: hidden;
     border: 1px solid var(--line);
+    background: var(--bg-raise);
   }
-  .photo-collage img {
+
+  /* :global is required: the <img> is rendered by Astro's Image
+     component, so it does not carry this page's scope attribute. */
+  .shot :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 500ms var(--ease-out);
+    transition: transform 600ms var(--ease-out);
   }
+
+  .shot-wide {
+    aspect-ratio: 3 / 2;
+  }
+
+  .shot-tall {
+    aspect-ratio: 3 / 4;
+    margin-top: var(--space-xl);
+  }
+
+  .shot-small {
+    aspect-ratio: 4 / 3;
+    margin-top: var(--space-2xl);
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .photo-collage figure:hover img {
+    .shot:hover :global(img) {
       transform: scale(1.03);
     }
   }
-  .photo-wide {
-    grid-row: 1 / 3;
-  }
-  .photo-tall,
-  .photo-small {
-    aspect-ratio: 4 / 3;
+
+  .hashtags {
+    background: var(--bg-raise);
+    padding-block: var(--space-xl);
   }
 
-  .hashtag-band {
-    border-top: 1px solid var(--line);
-    background: var(--bg-raise);
-    padding-block: 3.5rem;
-  }
-  .hashtags {
+  .hashtag-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.5rem 3rem;
-    max-width: none;
+    gap: var(--space-s) var(--space-l);
   }
-  .hashtags span {
+
+  .hashtag-list li {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: clamp(1.125rem, 2.4vw, 1.75rem);
+    font-size: var(--text-xl);
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--teal-dim);
+    color: var(--teal-soft);
   }
 
   @media (max-width: 900px) {
-    .values-list li {
+    .origin-inner {
       grid-template-columns: 1fr;
-      gap: 0.5rem;
+      gap: var(--space-l);
     }
-    .photo-collage {
-      grid-template-columns: 1fr;
-      grid-template-rows: none;
+    .collage {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
-    .photo-wide {
-      grid-row: auto;
+    .shot-wide {
+      grid-column: 1 / -1;
+    }
+    .shot-tall,
+    .shot-small {
+      margin-top: 0;
+    }
+    .shot-tall {
+      aspect-ratio: 3 / 4;
+    }
+    .shot-small {
+      aspect-ratio: 3 / 4;
     }
   }
 </style>

@@ -1,0 +1,57 @@
+---
+interface Props {
+  title: string;
+  lead?: string;
+  /** Short data line under the lead, e.g. a roster count. */
+  meta?: string;
+}
+
+const { title, lead, meta } = Astro.props;
+---
+
+<section class="page-head">
+  <div class="container">
+    <h1 class="display-xl" data-enter>{title}</h1>
+    {
+      lead && (
+        <p class="lead page-lead" data-enter style="--enter-delay: 120ms">
+          {lead}
+        </p>
+      )
+    }
+    {
+      meta && (
+        <p class="page-meta data" data-enter style="--enter-delay: 200ms">
+          {meta}
+        </p>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .page-head {
+    padding-top: calc(var(--nav-h) + var(--space-2xl));
+    padding-bottom: var(--space-xl);
+  }
+
+  .page-head h1 {
+    max-width: 14ch;
+  }
+
+  .page-lead {
+    margin-top: var(--space-m);
+    max-width: 44ch;
+  }
+
+  .page-meta {
+    margin-top: var(--space-m);
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line);
+    max-width: 44ch;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    font-size: var(--text-2xs);
+  }
+</style>

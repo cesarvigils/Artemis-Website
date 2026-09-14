@@ -1,0 +1,170 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import site from '../data/site.json';
+import texture from '../assets/hunt-texture.jpg';
+
+interface Props {
+  heading?: string;
+  lead?: string;
+  /** Show the three-step explainer. Off on pages that already explain it. */
+  steps?: boolean;
+}
+
+const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.props;
+---
+
+<section class="join rule-top" aria-labelledby="join-heading" id="join">
+  <div class="join-texture" aria-hidden="true">
+    <Image
+      src={texture}
+      alt=""
+      widths={[640, 1280, 1920]}
+      sizes="100vw"
+      format="webp"
+      quality={55}
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+
+  <div class="container join-inner">
+    <div class="join-copy">
+      <h2 class="display-lg" id="join-heading">{heading}</h2>
+      <p class="lead">{lead}</p>
+      <a class="btn btn-solid join-btn" href={site.socials.discord} target="_blank" rel="noopener">
+        Join the team
+        <Icon name="arrow-up-right" size={16} />
+      </a>
+    </div>
+
+    {
+      steps && (
+        <ol class="join-steps">
+          {site.join.steps.map((step, i) => (
+            <li class="reveal" style={`--reveal-delay: ${i * 70}ms`}>
+              <span class="step-index data">{String(i + 1).padStart(2, '0')}</span>
+              <span class="step-body">
+                <span class="step-title">{step.title}</span>
+                <span class="step-line">{step.line}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .join {
+    position: relative;
+    overflow: clip;
+    padding-block: var(--space-3xl);
+    isolation: isolate;
+  }
+
+  /* The brand's own spray texture, not a decorative gradient. */
+  .join-texture {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  /* :global: the <img> comes from Astro's Image component. */
+  .join-texture :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
+
+  .join-texture::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      var(--bg) 12%,
+      rgba(0, 10, 8, 0.86) 46%,
+      rgba(0, 10, 8, 0.72)
+    );
+  }
+
+  .join-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  .join-copy h2 {
+    max-width: 10ch;
+  }
+
+  .join-copy .lead {
+    margin-top: var(--space-s);
+    max-width: 36ch;
+  }
+
+  .join-btn {
+    margin-top: var(--space-l);
+  }
+
+  /* A real three-step sequence, so the numbers carry information. */
+  .join-steps {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .join-steps li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: var(--space-s);
+    padding-block: var(--space-m);
+    border-top: 1px solid var(--line);
+  }
+
+  .join-steps li:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .step-index {
+    color: var(--teal);
+    font-weight: 700;
+    padding-top: 0.2rem;
+  }
+
+  .step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .step-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-base);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .step-line {
+    color: var(--ink-dim);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+  }
+
+  @media (max-width: 900px) {
+    .join-inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-l);
+    }
+    .join-texture::after {
+      background: linear-gradient(to top, var(--bg) 10%, rgba(0, 10, 8, 0.82) 55%, rgba(0, 10, 8, 0.7));
+    }
+    .join-btn {
+      width: 100%;
+    }
+  }
+</style>

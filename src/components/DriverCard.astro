@@ -1,0 +1,258 @@
+---
+interface Driver {
+  name: string;
+  group: string;
+  number: string;
+  country: string;
+  focus: string;
+  bio?: string;
+  socials?: Record<string, string>;
+  stats?: { irating?: string; licence?: string };
+}
+
+interface Props {
+  driver: Driver;
+  /** "compact" is the home-page teaser column, "row" the full roster entry. */
+  variant?: 'compact' | 'row';
+  href?: string;
+  class?: string;
+  style?: string;
+}
+
+const { driver, variant = 'compact', href, class: className, style } = Astro.props;
+
+const socials = Object.entries(driver.socials ?? {}).filter(([, url]) => url);
+const stats = [
+  { label: 'iRating', value: driver.stats?.irating },
+  { label: 'Licence', value: driver.stats?.licence },
+].filter((stat) => stat.value);
+---
+
+{
+  variant === 'compact' ? (
+    <li class:list={['driver-compact', className]} style={style}>
+      <a href={href ?? '/team'}>
+        {
+          driver.number && (
+            <span class="driver-number" aria-hidden="true">
+              {driver.number}
+            </span>
+          )
+        }
+        <span class="driver-name">{driver.name}</span>
+        <span class="driver-focus">{driver.focus}</span>
+        <span class="driver-country data">{driver.country}</span>
+      </a>
+    </li>
+  ) : (
+    <li class:list={['driver-row', className, { 'has-number': !!driver.number }]} style={style}>
+      {
+        driver.number && (
+          <span class="driver-number" aria-hidden="true">
+            {driver.number}
+          </span>
+        )
+      }
+      <div class="driver-identity">
+        <h3 class="driver-name">{driver.name}</h3>
+        <p class="driver-meta data">
+          {driver.country}
+          {driver.number ? ` / No. ${driver.number}` : ''}
+        </p>
+      </div>
+      <div class="driver-detail">
+        <p class="driver-focus">{driver.focus}</p>
+        {driver.bio && <p class="driver-bio">{driver.bio}</p>}
+        {stats.length > 0 && (
+          <dl class="driver-stats">
+            {stats.map((stat) => (
+              <div>
+                <dt class="field-label">{stat.label}</dt>
+                <dd class="data">{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {socials.length > 0 && (
+          <ul class="driver-socials">
+            {socials.map(([name, url]) => (
+              <li>
+                <a href={url} target="_blank" rel="noopener">
+                  {name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </li>
+  )
+}
+
+<style>
+  /* Compact: a column in the home teaser, separated by hairlines only.
+     No card box, no shadow. */
+  .driver-compact > a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    height: 100%;
+    padding: var(--space-m) var(--space-s) var(--space-m) 0;
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .driver-compact .driver-number {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: clamp(2.25rem, 4vw, 3rem);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--teal-soft);
+    margin-bottom: var(--space-2xs);
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+
+  .driver-compact .driver-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-base);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .driver-compact .driver-focus {
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    line-height: 1.4;
+  }
+
+  .driver-compact .driver-country {
+    margin-top: auto;
+    padding-top: var(--space-s);
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    font-size: var(--text-2xs);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .driver-compact > a:hover .driver-number {
+      color: var(--teal);
+      -webkit-text-stroke-color: var(--teal);
+    }
+    .driver-compact > a:hover .driver-name {
+      color: var(--teal);
+    }
+  }
+
+  /* Row: the full roster entry, laid out like a timing sheet line. */
+  .driver-row {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: var(--space-m);
+    align-items: start;
+    padding-block: var(--space-m);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .driver-row:last-child {
+    border-bottom: none;
+  }
+
+  /* Crew have no car number; their name starts in the name column. */
+  .driver-row:not(.has-number) .driver-identity {
+    grid-column: 2;
+  }
+
+  .driver-row .driver-number {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 2.25rem;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--teal-soft);
+  }
+
+  .driver-row .driver-name {
+    font-size: var(--text-xl);
+    letter-spacing: 0.03em;
+  }
+
+  .driver-meta {
+    margin-top: 0.35rem;
+    color: var(--ink-faint);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .driver-row .driver-focus {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+  }
+
+  .driver-bio {
+    margin-top: 0.5rem;
+    color: var(--ink-dim);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+  }
+
+  .driver-stats {
+    display: flex;
+    gap: var(--space-m);
+    margin-top: var(--space-s);
+  }
+
+  .driver-stats dd {
+    margin-top: 0.2rem;
+    color: var(--ink);
+    font-size: var(--text-sm);
+  }
+
+  .driver-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-s);
+    margin-top: var(--space-s);
+  }
+
+  .driver-socials a {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-2xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    border-bottom: 1px solid var(--line);
+    transition: color var(--dur-hover) var(--ease-out),
+      border-color var(--dur-hover) var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .driver-socials a:hover {
+      color: var(--teal);
+      border-color: var(--teal);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .driver-row {
+      grid-template-columns: 3.25rem minmax(0, 1fr);
+      gap: var(--space-s) var(--space-m);
+    }
+    .driver-row .driver-number {
+      font-size: 1.75rem;
+    }
+    .driver-detail {
+      grid-column: 2 / -1;
+    }
+  }
+</style>

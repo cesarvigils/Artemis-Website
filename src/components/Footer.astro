@@ -1,44 +1,65 @@
 ---
-import { Image } from 'astro:assets';
+import nav from '../data/nav.json';
 import site from '../data/site.json';
-import icon from '../assets/logos/Artemis White Logo.png';
+import Mark from './Mark.astro';
+import Icon from './Icon.astro';
 
-const year = new Date().getFullYear();
-const socials = Object.entries(site.socials).filter(([, url]) => url);
+const buildYear = new Date().getFullYear();
+
+const SOCIAL_LABELS: Record<string, string> = {
+  discord: 'Discord',
+  x: 'X',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  twitch: 'Twitch',
+};
+
+const channels = [
+  ...Object.entries(site.socials)
+    .filter(([, url]) => url)
+    .map(([key, url]) => ({ label: SOCIAL_LABELS[key] ?? key, url })),
+  ...(site.store ? [{ label: 'Store', url: site.store }] : []),
+];
 ---
 
 <footer class="site-footer">
   <div class="container footer-grid">
     <div class="footer-brand">
-      <Image src={icon} alt="Artemis Esports icon" width={72} densities={[1, 2]} />
-      <p class="footer-line">{site.tagline}</p>
+      <span class="footer-mark"><Mark variant="mark" label="Artemis Esports" /></span>
+      <p class="footer-tagline">{site.tagline}</p>
+      <a class="footer-email" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
     </div>
 
-    <nav class="footer-nav" aria-label="Footer">
-      <a href="/team">Team</a>
-      <a href="/about">About</a>
-      <a href="/partners">Partners</a>
-      <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
+    <nav class="footer-col" aria-label="Footer">
+      <h2 class="field-label">Pages</h2>
+      <ul>
+        {nav.footer.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+      </ul>
     </nav>
 
-    <div class="footer-tags">
-      {site.hashtags.map((tag) => <span>{tag}</span>)}
+    <div class="footer-col">
+      <h2 class="field-label">Channels</h2>
+      <ul class="footer-channels">
+        {
+          channels.map((channel) => (
+            <li>
+              <a href={channel.url} target="_blank" rel="noopener">
+                {channel.label}
+                <Icon name="arrow-up-right" size={13} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </div>
 
   <div class="container footer-base">
-    <p>{year} Artemis Esports. All rights reserved.</p>
-    {
-      socials.length > 0 && (
-        <div class="footer-socials">
-          {socials.map(([name, url]) => (
-            <a href={url} target="_blank" rel="noopener">
-              {name}
-            </a>
-          ))}
-        </div>
-      )
-    }
+    <p class="footer-copy">
+      &copy; <span data-year>{buildYear}</span> Artemis Esports. All rights reserved.
+    </p>
+    <p class="footer-hash data">{site.hashtags[0]}</p>
   </div>
 </footer>
 
@@ -46,94 +67,101 @@ const socials = Object.entries(site.socials).filter(([, url]) => url);
   .site-footer {
     border-top: 1px solid var(--line);
     background: var(--bg-raise);
-    padding-block: 4rem 2rem;
+    padding-block: var(--space-xl) var(--space-m);
   }
+
   .footer-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
-    gap: 3rem;
-    padding-bottom: 3rem;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-l) var(--space-xl);
+    padding-bottom: var(--space-xl);
   }
-  .footer-brand img {
-    width: 72px;
-    height: auto;
+
+  .footer-mark {
+    display: block;
+    --mark-size: 52px;
+    color: var(--teal);
   }
-  .footer-line {
-    margin-top: 1.25rem;
-    color: var(--ink-dim);
-    font-size: 0.9375rem;
-  }
-  .footer-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-  .footer-nav a {
+
+  .footer-tagline {
+    margin-top: var(--space-m);
+    max-width: 22ch;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.875rem;
+    font-size: var(--text-lg);
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .footer-email {
+    display: inline-block;
+    margin-top: var(--space-s);
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    border-bottom: 1px solid var(--line);
+    transition: color var(--dur-hover) var(--ease-out),
+      border-color var(--dur-hover) var(--ease-out);
+  }
+
+  .footer-col h2 {
+    margin-bottom: var(--space-s);
+  }
+
+  .footer-col ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .footer-col a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xs);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-dim);
-    transition: color 200ms ease;
-    width: fit-content;
+    transition: color var(--dur-hover) var(--ease-out);
   }
+
   @media (hover: hover) and (pointer: fine) {
-    .footer-nav a:hover {
+    .footer-col a:hover,
+    .footer-email:hover {
       color: var(--teal);
+      border-color: var(--teal);
     }
   }
-  .footer-tags {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    align-items: flex-start;
-  }
-  .footer-tags span {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.875rem;
-    letter-spacing: 0.1em;
-    color: var(--teal-dim);
-  }
+
   .footer-base {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 2rem;
-    padding-top: 2rem;
+    gap: var(--space-s) var(--space-l);
+    padding-top: var(--space-m);
     border-top: 1px solid var(--line);
   }
-  .footer-base p {
+
+  .footer-copy {
     color: var(--ink-faint);
-    font-size: 0.875rem;
+    font-size: var(--text-xs);
   }
-  .footer-socials {
-    display: flex;
-    gap: 1.5rem;
-  }
-  .footer-socials a {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.8125rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-dim);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .footer-socials a:hover {
-      color: var(--teal);
-    }
+
+  .footer-hash {
+    color: var(--teal-soft);
   }
 
   @media (max-width: 820px) {
     .footer-grid {
-      grid-template-columns: 1fr;
-      gap: 2.5rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-l) var(--space-m);
     }
-    .footer-base {
-      flex-direction: column;
-      align-items: flex-start;
+    .footer-brand {
+      grid-column: 1 / -1;
     }
   }
 </style>

@@ -1,52 +1,44 @@
 [
   {
-    "image": "sebring-mustang-front.jpg",
+    "image": "sebring-mustang-gt3.jpg",
     "car": "Ford Mustang GT3",
-    "caption": "Golden hour at Sebring"
+    "track": "Sebring",
+    "caption": "Golden hour on the way to turn one.",
+    "shape": "portrait"
   },
   {
-    "image": "indy-pack.png",
-    "car": "Dallara IR-18",
-    "caption": "Running the pack at Indianapolis"
-  },
-  {
-    "image": "iRacingSim64DX11 2024-01-17 21-56-09.png",
-    "car": "Porsche 911 GT3 R",
-    "caption": "On the grid at Daytona"
-  },
-  {
-    "image": "watkins-gtp.jpg",
-    "car": "GTP Prototype",
-    "caption": "Flat out at Watkins Glen"
-  },
-  {
-    "image": "iRacingSim64DX11 2024-01-17 21-30-06.png",
+    "image": "watkins-glen-gtp.jpg",
     "car": "Cadillac V-Series.R",
-    "caption": "Prototype pace, Artemis colors"
+    "track": "Watkins Glen",
+    "caption": "GTP bodywork in Artemis teal.",
+    "shape": "portrait"
   },
   {
-    "image": "sebring-mustang-rear.jpg",
-    "car": "Ford Mustang GT3",
-    "caption": "Chasing the Sebring sunset"
-  },
-  {
-    "image": "nordschleife-bmw.png",
+    "image": "nordschleife-bmw-m4.jpg",
     "car": "BMW M4 GT3",
-    "caption": "Into the Karussell at the Nordschleife"
+    "track": "Nordschleife",
+    "caption": "Into the Karussell on old tyres.",
+    "shape": "standard"
   },
   {
-    "image": "interlagos-lmp2.png",
-    "car": "LMP2",
-    "caption": "Dusk stint at Interlagos"
+    "image": "interlagos-lmp2.jpg",
+    "car": "Oreca 07 LMP2",
+    "track": "Interlagos",
+    "caption": "Dusk stint, lights already on.",
+    "shape": "standard"
   },
   {
-    "image": "nascar-chevy.png",
-    "car": "NASCAR Xfinity Chevrolet",
-    "caption": "Friday night short track colors"
+    "image": "nascar-xfinity-chevy.jpg",
+    "car": "Chevrolet Camaro",
+    "track": "Short track",
+    "caption": "Friday night colours.",
+    "shape": "standard"
   },
   {
-    "image": "iRacingSim64DX11 2024-01-17 22-04-19.png",
-    "car": "Porsche 911 GT3 R",
-    "caption": "Out of the bus stop, into the banking"
+    "image": "indianapolis-ir18.jpg",
+    "car": "Dallara IR-18",
+    "track": "Indianapolis",
+    "caption": "Running the pack into turn three.",
+    "shape": "wide"
   }
 ]

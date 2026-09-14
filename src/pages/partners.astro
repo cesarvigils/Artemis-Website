@@ -1,83 +1,161 @@
 ---
-import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import ResultsTable from '../components/ResultsTable.astro';
+import DriverCard from '../components/DriverCard.astro';
+import PartnerBand from '../components/PartnerBand.astro';
+import Icon from '../components/Icon.astro';
+
 import site from '../data/site.json';
-import partners from '../data/partners.json';
+import results from '../data/results.json';
+import drivers from '../data/drivers.json';
 
-const partnerImages = import.meta.glob<{ default: ImageMetadata }>(
-  '../assets/partners/*.{png,svg,webp}'
-);
+const OFFER = [
+  {
+    title: 'Livery placement',
+    line: 'Your mark on the endurance and GT cars, sized so it reads in a replay and on a stream overlay.',
+  },
+  {
+    title: 'Result posts',
+    line: 'Every finish gets a post across our channels, with the livery visible in the render.',
+  },
+  {
+    title: 'Roster exposure',
+    line: 'Driver profiles, race-week graphics and broadcast mentions carry the partner name.',
+  },
+  {
+    title: 'The Discord',
+    line: 'A channel inside the community the team actually lives in, not a logo on a static page.',
+  },
+];
 
-const list = await Promise.all(
-  partners.map(async (p) => {
-    const mod = await partnerImages[`../assets/partners/${p.logo}`]();
-    return { ...p, meta: mod.default };
-  })
-);
+const snapshot = [...results].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+const rosterSnapshot = drivers.filter((driver) => driver.group !== 'crew').slice(0, 4);
+
+const SOCIAL_LABELS: Record<string, string> = {
+  discord: 'Discord',
+  x: 'X',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  twitch: 'Twitch',
+};
+
+const channels = [
+  ...Object.entries(site.socials)
+    .filter(([, url]) => url)
+    .map(([key, url]) => ({ label: SOCIAL_LABELS[key] ?? key, url })),
+  { label: 'Store', url: site.store },
+];
+
+const podiums = results.filter((result) => result.position <= 3).length;
 ---
 
 <Base
   title="Partners | Artemis Esports"
-  description="The brands behind Artemis Esports, and how to work with our sim racing program."
+  description="What a partner gets from Artemis Esports: livery placement, result posts, roster exposure and the Discord community. Recent results, roster and contact."
 >
-  <section class="page-head">
-    <div class="container">
-      <h1 class="display-xl reveal">Partners</h1>
-      <p class="lead reveal" style="--reveal-delay: 80ms">
-        We keep the list short and the relationships real.
-      </p>
-    </div>
-  </section>
+  <PageHead
+    title="Partner with us"
+    lead="Everything a sponsor needs to make a decision is on this page: what you get, what we have finished recently, who drives, and where the audience is."
+    meta={`${results.length} results listed / ${podiums} podiums / contact below`}
+  />
 
-  <section class="section partner-list">
+  <section class="section offer rule-top" aria-labelledby="offer-heading">
     <div class="container">
-      {
-        list.map((p, i) => (
-          <article class="partner-row reveal" style={`--reveal-delay: ${i * 60}ms`}>
-            <a
-              class="partner-logo"
-              href={p.url}
-              target="_blank"
-              rel="noopener"
-              aria-label={p.name}
-            >
-              <Image
-                src={p.meta}
-                alt={p.name}
-                height={96}
-                densities={[1, 2]}
-                format="webp"
-              />
-            </a>
-            <div class="partner-info">
-              <h2 class="display-md">{p.name}</h2>
-              <p>{p.blurb}</p>
-              <a class="text-link" href={p.url} target="_blank" rel="noopener">
-                Visit {p.name}
-              </a>
-            </div>
-          </article>
-        ))
-      }
-    </div>
-  </section>
-
-  <section class="section contact" id="contact">
-    <div class="container contact-inner">
-      <div class="contact-copy reveal">
-        <h2 class="display-lg">Work with us</h2>
+      <div class="section-head section-head-stack">
+        <h2 class="display-md" id="offer-heading">What a partner gets</h2>
         <p class="lead">
-          Livery placement, activations, and long-term partnerships around an
-          endurance racing program that shows up prepared.
+          One package. We would rather do a small number of partnerships properly.
         </p>
       </div>
-      <div class="contact-card reveal" style="--reveal-delay: 100ms">
-        <p class="contact-label">Partnerships and general inquiries</p>
-        <a class="contact-email" href={`mailto:${site.contactEmail}`}>
-          {site.contactEmail}
+      <ul class="offer-grid">
+        {
+          OFFER.map((item, i) => (
+            <li class="offer-item reveal" style={`--reveal-delay: ${i * 60}ms`}>
+              <h3 class="offer-title">{item.title}</h3>
+              <p class="offer-line">{item.line}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="snapshot-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="display-md" id="snapshot-heading">Recent results</h2>
+        <a class="text-link" href="/#results">
+          All results
+          <Icon name="arrow-right" size={16} />
         </a>
-        <a href={`mailto:${site.contactEmail}`} class="btn btn-solid">
-          Get in touch
+      </div>
+      <div class="reveal">
+        <ResultsTable results={snapshot} caption="The four most recent Artemis Esports results" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="roster-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="display-md" id="roster-heading">Who drives</h2>
+        <a class="text-link" href="/team">
+          Full roster
+          <Icon name="arrow-right" size={16} />
+        </a>
+      </div>
+      <ul class="roster-teaser reveal">
+        {rosterSnapshot.map((driver) => <DriverCard driver={driver} variant="compact" />)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section reach rule-top" aria-labelledby="reach-heading">
+    <div class="container reach-inner">
+      <div class="reach-copy">
+        <h2 class="display-md" id="reach-heading">Where the audience is</h2>
+        <p class="lead">
+          We do not publish follower counts on a marketing page. Ask and we will send
+          current numbers from each dashboard, with the screenshots.
+        </p>
+      </div>
+      <ul class="channel-list">
+        {
+          channels.map((channel) => (
+            <li>
+              <a href={channel.url} target="_blank" rel="noopener">
+                <span>{channel.label}</span>
+                <Icon name="arrow-up-right" size={15} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <PartnerBand
+    heading="Current partners"
+    lead="The list is short because we only sign what we can service."
+  />
+
+  <section class="section contact rule-top" id="contact" aria-labelledby="contact-heading">
+    <div class="container contact-inner">
+      <div>
+        <h2 class="display-lg" id="contact-heading">Talk to us.</h2>
+        <p class="lead">
+          Tell us what you want out of a season and we will tell you honestly whether we
+          can deliver it. One email, one reply, no deck required.
+        </p>
+      </div>
+      <div class="contact-card">
+        <p class="field-label">Partnerships and general enquiries</p>
+        <a class="contact-email" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
+        <a class="btn btn-solid contact-btn" href={`mailto:${site.contactEmail}?subject=Partnership%20enquiry`}>
+          Partner with us
+          <Icon name="arrow-right" size={16} />
         </a>
       </div>
     </div>
@@ -85,103 +163,148 @@ const list = await Promise.all(
 </Base>
 
 <style>
-  .page-head {
-    padding-top: calc(var(--nav-h) + clamp(4rem, 10vh, 7rem));
-    padding-bottom: clamp(2rem, 6vh, 4rem);
-  }
-  .page-head .lead {
-    margin-top: 1.25rem;
+  .offer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-m) var(--space-xl);
   }
 
-  .partner-list {
+  .offer-item {
+    padding-top: var(--space-m);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .offer-title {
+    font-size: var(--text-xl);
+    letter-spacing: 0.02em;
+  }
+
+  .offer-line {
+    margin-top: var(--space-2xs);
+    color: var(--ink-dim);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    max-width: 40ch;
+  }
+
+  .reach-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  .reach-copy h2 {
+    max-width: 12ch;
+  }
+
+  .reach-copy .lead {
+    margin-top: var(--space-s);
+    max-width: 40ch;
+  }
+
+  .channel-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     border-top: 1px solid var(--line);
+  }
+
+  .channel-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-s);
+    padding-block: var(--space-s);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .channel-list li:nth-child(even) a {
+    padding-left: var(--space-m);
+    border-left: 1px solid var(--line);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .channel-list a:hover {
+      color: var(--teal);
+    }
+  }
+
+  .contact-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  .contact-inner h2 {
+    max-width: 10ch;
+  }
+
+  .contact-inner .lead {
+    margin-top: var(--space-s);
+    max-width: 40ch;
+  }
+
+  .contact-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-s);
+    padding: var(--space-l);
+    border: 1px solid var(--line-teal);
     background: var(--bg-raise);
   }
-  .partner-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-    gap: 3rem;
-    align-items: center;
-    padding-block: 3rem;
+
+  .contact-email {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-xl);
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
     border-bottom: 1px solid var(--line);
+    transition: color var(--dur-hover) var(--ease-out),
+      border-color var(--dur-hover) var(--ease-out);
   }
-  .partner-row:first-child {
-    padding-top: 0;
+
+  .contact-btn {
+    margin-top: var(--space-2xs);
   }
-  .partner-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-  .partner-logo img {
-    height: clamp(64px, 8vw, 96px);
-    width: auto;
-  }
-  .partner-info p {
-    margin-block: 1rem 1.25rem;
-    color: var(--ink-dim);
-  }
-  .text-link {
-    color: var(--teal);
-    border-bottom: 1px solid var(--line-teal);
-    transition: border-color 200ms ease;
-    font-size: 0.9375rem;
-  }
+
   @media (hover: hover) and (pointer: fine) {
-    .text-link:hover {
+    .contact-email:hover {
+      color: var(--teal);
       border-color: var(--teal);
     }
   }
 
-  .contact {
-    border-top: 1px solid var(--line);
-  }
-  .contact-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    gap: 3rem;
-    align-items: center;
-  }
-  .contact-copy .lead {
-    margin-top: 1.25rem;
-  }
-  .contact-card {
-    border: 1px solid var(--line-teal);
-    padding: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  .contact-label {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.8125rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-  .contact-email {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(1.125rem, 2vw, 1.5rem);
-    color: var(--ink);
-    word-break: break-all;
-    transition: color 200ms ease;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .contact-email:hover {
-      color: var(--teal);
-    }
-  }
-  .contact-card .btn {
-    margin-top: 0.75rem;
-  }
-
   @media (max-width: 900px) {
-    .partner-row,
+    .offer-grid,
+    .channel-list {
+      grid-template-columns: 1fr;
+    }
+    .channel-list li:nth-child(even) a {
+      padding-left: 0;
+      border-left: none;
+    }
+    .reach-inner,
     .contact-inner {
       grid-template-columns: 1fr;
-      gap: 1.75rem;
+      gap: var(--space-l);
+    }
+    .contact-card {
+      width: 100%;
+      padding: var(--space-m);
+    }
+    .contact-btn {
+      width: 100%;
     }
   }
 </style>

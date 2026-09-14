@@ -1,9 +1,14 @@
 /* ------------------------------------------------------------------
    Artemis Esports - global styles
-   Tokens, fonts, base, shared components (nav, footer, buttons, reveal)
+   Design system: tokens, base, type scale, shared primitives.
+   Direction: "pit wall, not billboard" (see DESIGN.md).
 ------------------------------------------------------------------- */
 
-/* Fonts ----------------------------------------------------------- */
+/* Fonts ------------------------------------------------------------
+   Nexa is the licensed brand face (700 + 300 only - hierarchy comes
+   from size, tracking, case and colour, never from extra weights).
+   JetBrains Mono carries data only: positions, dates, numbers.
+------------------------------------------------------------------- */
 @font-face {
   font-family: 'Nexa';
   src: url('/fonts/nexa-bold.woff2') format('woff2');
@@ -18,34 +23,115 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* Tokens ----------------------------------------------------------- */
 :root {
-  --bg: #000a08;
-  --bg-raise: #03120e;
-  --bg-panel: #06201a;
-  --ink: #ebfffb;
-  --ink-dim: rgba(235, 255, 251, 0.68);
-  --ink-faint: rgba(235, 255, 251, 0.45);
-  --teal: #0fffcf;
-  --teal-dim: rgba(15, 255, 207, 0.55);
-  --line: rgba(235, 255, 251, 0.14);
-  --line-teal: rgba(15, 255, 207, 0.28);
+  color-scheme: dark;
 
+  /* Surfaces. Three-step near-black ramp, green-cast, never pure #000. */
+  --bg: #000a08;              /* oklch(13.0% 0.023 183) */
+  --bg-raise: #03120e;        /* oklch(16.6% 0.025 176) */
+  --bg-panel: #06201a;        /* oklch(22.1% 0.034 175) */
+
+  /* Ink. Light mint; the alpha steps are pre-checked for contrast. */
+  --ink: #ebfffb;                          /* 19.3:1 on --bg */
+  --ink-dim: rgba(235, 255, 251, 0.78);    /* 11.6:1 on --bg */
+  --ink-faint: rgba(235, 255, 251, 0.52);  /*  5.5:1 on --bg */
+
+  /* Accent. One colour, whole site. */
+  --teal: #0fffcf;                         /* 15.5:1 on --bg */
+  --teal-soft: rgba(15, 255, 207, 0.7);    /*  7.8:1 on --bg */
+  --teal-ink: #001410;                     /* 14.7:1 on --teal */
+  --teal-hover: #7dffe3;
+
+  /* Hairlines. The pit-wall rule vocabulary. */
+  --line: rgba(235, 255, 251, 0.12);
+  --line-strong: rgba(235, 255, 251, 0.24);
+  --line-teal: rgba(15, 255, 207, 0.32);
+
+  /* Type */
   --font-display: 'Nexa', 'Avenir Next', 'Helvetica Neue', sans-serif;
   --font-body: 'Nexa', 'Avenir Next', 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --text-2xs: 0.75rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  --text-xl: clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem);
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  --text-3xl: clamp(1.875rem, 1.4rem + 2.4vw, 3rem);
+  --text-4xl: clamp(2.375rem, 1.7rem + 3.4vw, 4rem);
+  --text-5xl: clamp(2.75rem, 1.95rem + 4.1vw, 5rem);
 
-  --nav-h: 72px;
+  --track-display: -0.01em;
+  --track-label: 0.16em;
+  --track-data: 0.02em;
+
+  /* Space. One fluid rhythm; sections vary deliberately. */
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-s: 1rem;
+  --space-m: 1.5rem;
+  --space-l: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: clamp(4rem, 9vh, 7rem);
+  --space-3xl: clamp(5.5rem, 13vh, 9.5rem);
+
   --pad-x: clamp(1.25rem, 4vw, 3.5rem);
+  --measure: 66ch;
+  --shell: 1400px;
+
+  /* Shape. Committed: everything is square. */
+  --radius: 0;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 120ms;
+  --dur-hover: 180ms;
+  --dur-ui: 240ms;
+  --dur-reveal: 460ms;
+  --dur-entrance: 820ms;
+
+  /* Layers */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 50;
   --z-nav: 100;
   --z-menu: 110;
+  --z-skip: 200;
+
+  --nav-h: 60px;
+}
+
+@media (min-width: 821px) {
+  :root {
+    --nav-h: 72px;
+  }
 }
 
 /* Base ------------------------------------------------------------- */
-* {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -53,12 +139,8 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--nav-h) + 1rem);
   -webkit-text-size-adjust: 100%;
-}
-
-/* Lenis drives scrolling when active; native smooth would fight it */
-html.lenis-smooth {
-  scroll-behavior: auto;
 }
 
 body {
@@ -66,15 +148,20 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   font-weight: 300;
-  font-size: 1.0625rem;
-  line-height: 1.65;
+  font-size: var(--text-base);
+  line-height: 1.7;
   overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
 }
 
 img {
-  max-width: 100%;
   height: auto;
-  display: block;
 }
 
 a {
@@ -82,91 +169,239 @@ a {
   text-decoration: none;
 }
 
-::selection {
-  background: var(--teal);
-  color: var(--bg);
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
 }
 
-h1, h2, h3, h4 {
+ul,
+ol {
+  list-style: none;
+}
+
+::selection {
+  background: var(--teal);
+  color: var(--teal-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-display);
   font-weight: 700;
-  line-height: 1.05;
-  text-wrap: balance;
+  line-height: 1.04;
+  letter-spacing: var(--track-display);
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 p {
-  max-width: 65ch;
+  max-width: var(--measure);
   text-wrap: pretty;
 }
 
 /* Type scale ------------------------------------------------------- */
 .display-xl {
-  font-size: clamp(2.75rem, 7vw, 6rem);
-  letter-spacing: 0.01em;
+  font-size: var(--text-5xl);
 }
 .display-lg {
-  font-size: clamp(2.25rem, 5vw, 4.25rem);
-  letter-spacing: 0.01em;
+  font-size: var(--text-4xl);
 }
 .display-md {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  letter-spacing: 0.02em;
+  font-size: var(--text-3xl);
 }
-.lead {
-  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-  color: var(--ink-dim);
-}
-.kicker {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.8125rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--teal);
+.display-sm {
+  font-size: var(--text-2xl);
 }
 
-/* Layout helpers --------------------------------------------------- */
+.lead {
+  font-size: var(--text-lg);
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+/* Data voice: positions, dates, counts, driver numbers. */
+.data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--track-data);
+  font-size: var(--text-xs);
+}
+
+/* One small tracked label style. Used for genuine field labels in data
+   rows (a timing sheet has column headers), never as a section eyebrow. */
+.field-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Layout ----------------------------------------------------------- */
 .container {
-  max-width: 1400px;
+  width: 100%;
+  max-width: var(--shell);
   margin-inline: auto;
   padding-inline: var(--pad-x);
 }
 
 .section {
-  padding-block: clamp(5rem, 12vh, 9rem);
+  padding-block: var(--space-2xl);
+}
+
+.section-tall {
+  padding-block: var(--space-3xl);
+}
+
+.rule-top {
+  border-top: 1px solid var(--line);
+}
+
+/* Section header: heading on the left, one real link on the right.
+   No eyebrows, no floating explainer paragraphs. */
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-s) var(--space-l);
+  margin-bottom: var(--space-l);
+}
+
+.section-head h2 {
+  max-width: 18ch;
+}
+
+/* Stacked variant: heading with its own explainer underneath, never a
+   small paragraph floating in the opposite corner. */
+.section-head-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-s);
+}
+
+.section-head-stack .lead {
+  max-width: 44ch;
+}
+
+/* Roster teaser: four hairline columns, no card boxes.
+   Used on the home page; the full roster is a timing-sheet list. */
+.roster-teaser {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--line-strong);
+}
+
+.roster-teaser > li + li {
+  border-left: 1px solid var(--line);
+}
+
+.roster-teaser > li + li > a {
+  padding-left: var(--space-m);
+}
+
+@media (max-width: 900px) {
+  .roster-teaser {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .roster-teaser > li:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+  .roster-teaser > li:nth-child(odd) {
+    border-left: none;
+  }
+  .roster-teaser > li:nth-child(odd) > a {
+    padding-left: 0;
+  }
+  .roster-teaser > li:nth-child(even) > a {
+    padding-left: var(--space-m);
+  }
+}
+
+/* Links ------------------------------------------------------------ */
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--teal);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-block: 0.25rem;
+  border-bottom: 1px solid var(--line-teal);
+  transition: border-color var(--dur-hover) var(--ease-out),
+    color var(--dur-hover) var(--ease-out);
+}
+
+.text-link svg {
+  transition: transform var(--dur-hover) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .text-link:hover {
+    border-color: var(--teal);
+  }
+  .text-link:hover svg {
+    transform: translateX(3px);
+  }
 }
 
 /* Buttons ---------------------------------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: center;
+  gap: 0.65rem;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
+  line-height: 1;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 1rem 1.75rem;
+  white-space: nowrap;
+  padding: 1.0625rem 1.75rem;
   border: 1px solid transparent;
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), background-color 200ms ease,
-    border-color 200ms ease, color 200ms ease;
+  transition: transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out),
+    color var(--dur-hover) var(--ease-out);
 }
+
 .btn:active {
   transform: scale(0.97);
 }
+
 .btn-solid {
   background: var(--teal);
-  color: #001410;
+  color: var(--teal-ink);
 }
+
 .btn-ghost {
-  border-color: var(--line-teal);
+  border-color: var(--line-strong);
   color: var(--ink);
 }
+
+.btn-sm {
+  padding: 0.75rem 1.25rem;
+  font-size: var(--text-xs);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .btn-solid:hover {
-    background: #5cffdf;
+    background: var(--teal-hover);
   }
   .btn-ghost:hover {
     border-color: var(--teal);
@@ -174,24 +409,119 @@ p {
   }
 }
 
-/* Reveal-on-scroll (progressive enhancement; visible without JS) --- */
+/* Skip link -------------------------------------------------------- */
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-skip);
+  transform: translateY(-120%);
+  background: var(--teal);
+  color: var(--teal-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.9rem 1.25rem;
+  transition: transform var(--dur-ui) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline-offset: -4px;
+}
+
+/* Screen-reader only ----------------------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reveal-on-scroll -------------------------------------------------
+   Progressive enhancement only: without the `js` class (no JS) the
+   content renders at its final state, so nothing is ever invisible.
+------------------------------------------------------------------- */
 html.js .reveal {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  transform: translateY(14px);
+  transition: opacity var(--dur-reveal) var(--ease-out-quart),
+    transform var(--dur-reveal) var(--ease-out-quart);
   transition-delay: var(--reveal-delay, 0ms);
 }
+
 html.js .reveal.in-view {
   opacity: 1;
   transform: none;
 }
 
+/* Hero entrance ----------------------------------------------------
+   Pure CSS, no library. Same rule: only under html.js, so the no-JS
+   render is the finished state.
+------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-enter] {
+    animation: enter-up var(--dur-entrance) var(--ease-out-quart) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  html.js [data-enter-mask] > * {
+    animation: enter-mask var(--dur-entrance) var(--ease-out-quart) both;
+    animation-delay: var(--enter-delay, 0ms);
+  }
+
+  html.js [data-enter-media] {
+    animation: enter-media 1100ms var(--ease-out-quart) both;
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes enter-mask {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+@keyframes enter-media {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Reduced motion ---------------------------------------------------
+   Motion sickness safety: keep opacity, drop movement.
+------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
   html.js .reveal {
     transform: none;
-    transition: opacity 300ms ease;
+    transition: opacity 240ms linear;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

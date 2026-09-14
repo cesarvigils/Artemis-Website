@@ -1,0 +1,222 @@
+---
+import { raceDate } from '../lib/format';
+
+interface Result {
+  date: string;
+  event: string;
+  track: string;
+  series: string;
+  class: string;
+  position: number;
+  driver: string;
+  note?: string;
+}
+
+interface Props {
+  results: Result[];
+  caption: string;
+}
+
+const { results, caption } = Astro.props;
+---
+
+<table class="results" role="table">
+  <caption class="sr-only">{caption}</caption>
+  <thead role="rowgroup">
+    <tr role="row">
+      <th role="columnheader" scope="col" class="field-label col-pos">Pos</th>
+      <th role="columnheader" scope="col" class="field-label col-event">Event</th>
+      <th role="columnheader" scope="col" class="field-label col-class">Class</th>
+      <th role="columnheader" scope="col" class="field-label col-driver">Drivers</th>
+      <th role="columnheader" scope="col" class="field-label col-date">Date</th>
+    </tr>
+  </thead>
+  <tbody role="rowgroup">
+    {
+      results.map((result) => (
+        <tr role="row">
+          <td role="cell" class="col-pos" data-label="Pos">
+            <span class:list={['pos', { 'is-podium': result.position <= 3 }]}>
+              P{result.position}
+            </span>
+          </td>
+          <td role="cell" class="col-event" data-label="Event">
+            <span class="event-name">{result.event}</span>
+            <span class="event-sub">
+              {result.track}.{result.note ? ` ${result.note}` : ''}
+            </span>
+          </td>
+          <td role="cell" class="col-class" data-label="Class">
+            <span class="chip">{result.class}</span>
+          </td>
+          <td role="cell" class="col-driver" data-label="Drivers">
+            {result.driver}
+          </td>
+          <td role="cell" class="col-date" data-label="Date">
+            {raceDate(result.date)}
+          </td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<style>
+  .results {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .results th {
+    padding-block: 0 0.7rem;
+    border-bottom: 1px solid var(--line-strong);
+    font-weight: 400;
+  }
+
+  .results td {
+    padding-block: 1.1rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    transition: background-color var(--dur-hover) var(--ease-out);
+  }
+
+  .results tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .col-pos {
+    width: 5.5rem;
+  }
+  .col-class {
+    width: 10.5rem;
+  }
+  .col-driver {
+    width: 30%;
+  }
+  .col-date {
+    width: 8.5rem;
+  }
+
+  .pos {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: var(--text-xl);
+    line-height: 1;
+    color: var(--ink-faint);
+  }
+
+  .pos.is-podium {
+    color: var(--teal);
+  }
+
+  .event-name {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-base);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.25;
+  }
+
+  .event-sub {
+    display: block;
+    margin-top: 0.3rem;
+    max-width: 46ch;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+
+  .chip {
+    display: inline-block;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--line);
+  }
+
+  .col-driver {
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    line-height: 1.5;
+  }
+
+  .col-date {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-data);
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .results tbody tr:hover td {
+      background: var(--bg-raise);
+    }
+  }
+
+  /* Under 860px the timing sheet becomes stacked entries. Explicit ARIA
+     roles above keep the table semantics when display changes. */
+  @media (max-width: 860px) {
+    .results,
+    .results tbody,
+    .results tr,
+    .results td {
+      display: block;
+      width: auto;
+    }
+
+    .results thead {
+      display: none;
+    }
+
+    .results tr {
+      position: relative;
+      padding: var(--space-m) 0 var(--space-m) 4.25rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .results tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .results td {
+      padding-block: 0;
+      border-bottom: none;
+    }
+
+    .col-pos {
+      position: absolute;
+      left: 0;
+      top: var(--space-m);
+    }
+
+    .col-class,
+    .col-driver,
+    .col-date {
+      margin-top: 0.6rem;
+    }
+
+    .col-driver::before,
+    .col-date::before {
+      content: attr(data-label) ': ';
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .col-class {
+      margin-top: 0.8rem;
+    }
+  }
+</style>

@@ -1,38 +1,90 @@
 [
   {
-    "name": "Driver One",
-    "role": "driver",
-    "number": "1",
-    "country": "USA",
+    "name": "Mateo Ferreira",
+    "group": "road",
+    "number": "7",
+    "country": "BRA",
     "focus": "GT3 / Endurance",
-    "bio": "Replace with the driver's one-line bio.",
-    "socials": {}
+    "bio": "Runs the opening stint. Keeps the car clean when the pack is not.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
   },
   {
-    "name": "Driver Two",
-    "role": "driver",
-    "number": "9",
+    "name": "Dane Kowalczyk",
+    "group": "road",
+    "number": "14",
     "country": "USA",
     "focus": "GTP / Endurance",
-    "bio": "Replace with the driver's one-line bio.",
-    "socials": {}
+    "bio": "Prototype specialist. Fastest when the track goes green at 3am.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
   },
   {
-    "name": "Driver Three",
-    "role": "driver",
-    "number": "17",
-    "country": "CAN",
+    "name": "Ines Marchetti",
+    "group": "road",
+    "number": "23",
+    "country": "ITA",
     "focus": "GT3 Sprint",
-    "bio": "Replace with the driver's one-line bio.",
-    "socials": {}
+    "bio": "Qualifying driver. Builds a lap out of three corners and a tow.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
   },
   {
-    "name": "Pitwall One",
-    "role": "pitwall",
-    "number": "",
+    "name": "Rhys Callaghan",
+    "group": "road",
+    "number": "41",
+    "country": "GBR",
+    "focus": "LMP2 / Endurance",
+    "bio": "Double stints without a complaint. Talks to the pitwall like an engineer.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
+  },
+  {
+    "name": "Colt Vandermeer",
+    "group": "oval",
+    "number": "58",
     "country": "USA",
-    "focus": "Strategy",
-    "bio": "Replace with the crew member's one-line bio.",
-    "socials": {}
+    "focus": "NASCAR ovals",
+    "bio": "Short track closer. Saves the tyres nobody else remembered to save.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
+  },
+  {
+    "name": "Shay Okonkwo",
+    "group": "oval",
+    "number": "62",
+    "country": "USA",
+    "focus": "Trucks / Superspeedway",
+    "bio": "Reads a pack better than the spotter. Rarely out of the top ten.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
+  },
+  {
+    "name": "Priya Raghunathan",
+    "group": "crew",
+    "number": "",
+    "country": "CAN",
+    "focus": "Race engineer",
+    "bio": "Owns the strategy call and the fuel number behind it.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
+  },
+  {
+    "name": "Tomas Ek",
+    "group": "crew",
+    "number": "",
+    "country": "SWE",
+    "focus": "Team manager",
+    "bio": "Builds the entry list, the driver rotation and the practice calendar.",
+    "socials": {},
+    "stats": { "irating": "", "licence": "" },
+    "_placeholder": true
   }
 ]

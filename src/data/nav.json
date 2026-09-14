@@ -1,0 +1,18 @@
+{
+  "primary": [
+    { "href": "/team", "label": "Team" },
+    { "href": "/about", "label": "About" },
+    { "href": "/partners", "label": "Partners" }
+  ],
+  "cta": {
+    "href": "https://discord.gg/ybSQQk9axG",
+    "label": "Join the team",
+    "external": true
+  },
+  "footer": [
+    { "href": "/", "label": "Home" },
+    { "href": "/team", "label": "Team" },
+    { "href": "/about", "label": "About" },
+    { "href": "/partners", "label": "Partners" }
+  ]
+}

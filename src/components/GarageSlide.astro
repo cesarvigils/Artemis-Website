@@ -1,0 +1,117 @@
+---
+/**
+ * One car in the garage carousel. The <Image> itself is passed in as a
+ * slot from Garage.astro so that its `src` stays a plain imported
+ * identifier - that is what lets Astro ship the webp derivative only.
+ */
+interface Props {
+  car: string;
+  track: string;
+  caption: string;
+  shape?: string;
+}
+
+const { car, track, caption, shape = 'standard' } = Astro.props;
+---
+
+<li class:list={['garage-slide', `is-${shape}`]}>
+  <figure>
+    <div class="garage-frame"><slot /></div>
+    <figcaption>
+      <span class="slide-car">{car}</span>
+      <span class="slide-track data">{track}</span>
+      <span class="slide-caption">{caption}</span>
+    </figcaption>
+  </figure>
+</li>
+
+<style>
+  /* Filmstrip: every frame is the same height so the captions line up,
+     and the widths vary with each shot's own proportion. */
+  .garage-slide {
+    --frame-h: clamp(15rem, 24vw, 22rem);
+    flex: 0 0 auto;
+    width: calc(var(--frame-h) * 16 / 9);
+    scroll-snap-align: start;
+  }
+
+  .garage-slide.is-portrait {
+    width: calc(var(--frame-h) * 4 / 5);
+  }
+
+  .garage-slide.is-wide {
+    width: calc(var(--frame-h) * 21 / 9);
+  }
+
+  .garage-frame {
+    height: var(--frame-h);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--bg-raise);
+  }
+
+  .garage-frame :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 600ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .garage-slide:hover .garage-frame :global(img) {
+      transform: scale(1.02);
+    }
+  }
+
+  figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: var(--space-s);
+  }
+
+  .slide-car {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--teal);
+  }
+
+  .slide-track {
+    color: var(--ink-faint);
+    font-size: var(--text-2xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+  }
+
+  .slide-caption {
+    margin-top: 0.15rem;
+    font-size: var(--text-sm);
+    color: var(--ink-dim);
+    line-height: 1.5;
+  }
+
+  /* Below 900px the frame is width-driven instead, so a slide always
+     fits the screen and the shots keep their own proportion. */
+  @media (max-width: 900px) {
+    .garage-slide,
+    .garage-slide.is-wide {
+      width: 84vw;
+    }
+    .garage-slide.is-portrait {
+      width: 68vw;
+    }
+    .garage-frame {
+      height: auto;
+      aspect-ratio: 16 / 9;
+    }
+    .garage-slide.is-portrait .garage-frame {
+      aspect-ratio: 4 / 5;
+    }
+    .garage-slide.is-wide .garage-frame {
+      aspect-ratio: 21 / 9;
+    }
+  }
+</style>

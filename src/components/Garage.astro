@@ -1,0 +1,159 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import GarageSlide from './GarageSlide.astro';
+import cars from '../data/cars.json';
+
+/* One static import per car photo, and each one is handed to <Image> as a
+   bare identifier below. A dynamic reference (a glob, or `map[car.image]`)
+   makes Vite copy every full-size original into dist next to the webp
+   derivatives - that is what made the old build 72 MB. Captions stay in
+   cars.json; the six slots are fixed by design (see DESIGN.md). */
+import sebringMustangGt3 from '../assets/racing/sebring-mustang-gt3.jpg';
+import watkinsGlenGtp from '../assets/racing/watkins-glen-gtp.jpg';
+import nordschleifeBmwM4 from '../assets/racing/nordschleife-bmw-m4.jpg';
+import interlagosLmp2 from '../assets/racing/interlagos-lmp2.jpg';
+import nascarXfinityChevy from '../assets/racing/nascar-xfinity-chevy.jpg';
+import indianapolisIr18 from '../assets/racing/indianapolis-ir18.jpg';
+
+const SIZES = '(max-width: 900px) 84vw, 46vw';
+const altFor = (i: number) =>
+  `${cars[i].car} in the Artemis livery at ${cars[i].track}`;
+---
+
+<section class="garage rule-top" id="garage" aria-labelledby="garage-heading">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="display-md" id="garage-heading">The garage</h2>
+      <div class="garage-controls" data-garage-controls hidden>
+        <button type="button" class="garage-btn" data-garage-prev aria-controls="garage-track">
+          <span class="sr-only">Previous car</span>
+          <Icon name="arrow-left" size={18} />
+        </button>
+        <button type="button" class="garage-btn" data-garage-next aria-controls="garage-track">
+          <span class="sr-only">Next car</span>
+          <Icon name="arrow-right" size={18} />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ul
+    class="garage-track"
+    id="garage-track"
+    data-garage-track
+    tabindex="0"
+    role="region"
+    aria-label="Artemis liveries, scroll sideways"
+  >
+    <GarageSlide car={cars[0].car} track={cars[0].track} caption={cars[0].caption} shape={cars[0].shape}>
+      <Image src={sebringMustangGt3} alt={altFor(0)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+    </GarageSlide>
+
+    <GarageSlide car={cars[1].car} track={cars[1].track} caption={cars[1].caption} shape={cars[1].shape}>
+      <Image src={watkinsGlenGtp} alt={altFor(1)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+    </GarageSlide>
+
+    <GarageSlide car={cars[2].car} track={cars[2].track} caption={cars[2].caption} shape={cars[2].shape}>
+      <Image src={nordschleifeBmwM4} alt={altFor(2)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+    </GarageSlide>
+
+    <GarageSlide car={cars[3].car} track={cars[3].track} caption={cars[3].caption} shape={cars[3].shape}>
+      <Image src={interlagosLmp2} alt={altFor(3)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+    </GarageSlide>
+
+    <GarageSlide car={cars[4].car} track={cars[4].track} caption={cars[4].caption} shape={cars[4].shape}>
+      <Image src={nascarXfinityChevy} alt={altFor(4)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+    </GarageSlide>
+
+    <GarageSlide car={cars[5].car} track={cars[5].track} caption={cars[5].caption} shape={cars[5].shape}>
+      <Image src={indianapolisIr18} alt={altFor(5)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+    </GarageSlide>
+  </ul>
+
+  <div class="container">
+    <div class="garage-progress" aria-hidden="true">
+      <span data-garage-progress></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .garage {
+    padding-block: var(--space-2xl);
+    overflow: clip;
+  }
+
+  .garage-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .garage-controls[hidden] {
+    display: none;
+  }
+
+  .garage-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color var(--dur-hover) var(--ease-out),
+      color var(--dur-hover) var(--ease-out),
+      opacity var(--dur-hover) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+
+  .garage-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .garage-btn:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .garage-btn:hover:not(:disabled) {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+  }
+
+  /* Native horizontal scroll on every device. No pinning, no hijack. */
+  .garage-track {
+    display: flex;
+    gap: var(--space-m);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    /* Line the first slide up with the container gutter, not the viewport. */
+    scroll-padding-inline: max(var(--pad-x), calc((100% - var(--shell)) / 2 + var(--pad-x)));
+    padding-inline: max(var(--pad-x), calc((100% - var(--shell)) / 2 + var(--pad-x)));
+    padding-bottom: var(--space-m);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .garage-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .garage-progress {
+    height: 2px;
+    background: var(--line);
+    margin-top: var(--space-s);
+  }
+
+  .garage-progress span {
+    display: block;
+    height: 100%;
+    background: var(--teal);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+</style>
