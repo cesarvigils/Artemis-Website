@@ -1,0 +1,98 @@
+[
+  {
+    "id": "mateo-ferreira",
+    "name": "Mateo Ferreira",
+    "role": "driver",
+    "group": "road",
+    "number": "7",
+    "country": "BRA",
+    "focus": "GT3 / Endurance",
+    "bio": "Runs the opening stint. Keeps the car clean when the pack is not.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "dane-kowalczyk",
+    "name": "Dane Kowalczyk",
+    "role": "driver",
+    "group": "road",
+    "number": "14",
+    "country": "USA",
+    "focus": "GTP / Endurance",
+    "bio": "Prototype specialist. Fastest when the track goes green at 3am.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "ines-marchetti",
+    "name": "Ines Marchetti",
+    "role": "driver",
+    "group": "road",
+    "number": "23",
+    "country": "ITA",
+    "focus": "GT3 Sprint",
+    "bio": "Qualifying driver. Builds a lap out of three corners and a tow.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "rhys-callaghan",
+    "name": "Rhys Callaghan",
+    "role": "driver",
+    "group": "road",
+    "number": "41",
+    "country": "GBR",
+    "focus": "LMP2 / Endurance",
+    "bio": "Double stints without a complaint. Talks to the pitwall like an engineer.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "colt-vandermeer",
+    "name": "Colt Vandermeer",
+    "role": "driver",
+    "group": "oval",
+    "number": "58",
+    "country": "USA",
+    "focus": "NASCAR ovals",
+    "bio": "Short track closer. Saves the tyres nobody else remembered to save.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "shay-okonkwo",
+    "name": "Shay Okonkwo",
+    "role": "driver",
+    "group": "oval",
+    "number": "62",
+    "country": "USA",
+    "focus": "Trucks / Superspeedway",
+    "bio": "Reads a pack better than the spotter. Rarely out of the top ten.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "priya-raghunathan",
+    "name": "Priya Raghunathan",
+    "role": "pitwall",
+    "group": "crew",
+    "number": "",
+    "country": "CAN",
+    "focus": "Race engineer",
+    "bio": "Owns the strategy call and the fuel number behind it.",
+    "active": true,
+    "_placeholder": true
+  },
+  {
+    "id": "tomas-ek",
+    "name": "Tomas Ek",
+    "role": "staff",
+    "group": "crew",
+    "number": "",
+    "country": "SWE",
+    "focus": "Team manager",
+    "bio": "Builds the entry list, the driver rotation and the practice calendar.",
+    "active": true,
+    "_placeholder": true
+  }
+]

@@ -1,0 +1,258 @@
+/**
+ * embeds.js
+ *
+ * Every reply the bot sends is built here, so wording and layout stay uniform.
+ *
+ * House style, set by the team owner:
+ *  - no emojis anywhere, in any field, at any time
+ *  - no exclamation marks
+ *  - a title, labelled fields and the footer "Artemis data bot"
+ *  - short sentences; say what happened and what to do next
+ */
+
+import { EmbedBuilder } from 'discord.js';
+import { FILES, SINGULAR } from './schema.js';
+
+/** Team colour, used for every embed except errors. */
+export const BRAND_COLOUR = 0x0fffcf;
+
+/** A muted red, used only for errors so they are easy to spot. */
+export const ERROR_COLOUR = 0xc0392b;
+
+/** Text of the footer on every embed. */
+export const FOOTER_TEXT = 'Artemis data bot';
+
+/** Discord limits, applied defensively so a long note can never break a reply. */
+const LIMITS = { title: 256, description: 4096, fieldName: 256, fieldValue: 1024, footer: 2048 };
+
+/** Shown instead of an empty value, because Discord rejects empty field values. */
+const EMPTY = 'not set';
+
+/**
+ * Shorten text to a limit, marking that it was cut.
+ * @param {unknown} value
+ * @param {number} max
+ * @returns {string}
+ */
+export function truncate(value, max) {
+  const text = String(value ?? '');
+  if (text.length <= max) return text;
+  return `${text.slice(0, Math.max(0, max - 3))}...`;
+}
+
+/**
+ * A field value that is never empty.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function fieldValue(value) {
+  const text = String(value ?? '').trim();
+  return truncate(text.length > 0 ? text : EMPTY, LIMITS.fieldValue);
+}
+
+/**
+ * Start an embed with the house footer and colour.
+ * @param {number} colour
+ * @returns {EmbedBuilder}
+ */
+function base(colour) {
+  return new EmbedBuilder().setColor(colour).setFooter({ text: FOOTER_TEXT }).setTimestamp(new Date());
+}
+
+/**
+ * A plain informational embed.
+ * @param {{ title: string, description?: string, fields?: Array<{ name: string, value: string, inline?: boolean }> }} options
+ * @returns {EmbedBuilder}
+ */
+export function infoEmbed(options) {
+  const embed = base(BRAND_COLOUR).setTitle(truncate(options.title, LIMITS.title));
+  if (options.description) embed.setDescription(truncate(options.description, LIMITS.description));
+  if (options.fields?.length) {
+    embed.addFields(
+      options.fields.slice(0, 25).map((field) => ({
+        name: truncate(field.name, LIMITS.fieldName),
+        value: fieldValue(field.value),
+        inline: field.inline ?? false,
+      })),
+    );
+  }
+  return embed;
+}
+
+/**
+ * Confirmation of a change that was written.
+ * @param {{ title: string, description?: string, fields?: Array<{ name: string, value: string, inline?: boolean }> }} options
+ * @returns {EmbedBuilder}
+ */
+export function successEmbed(options) {
+  return infoEmbed(options);
+}
+
+/**
+ * An error an operator can act on.
+ * @param {{ title?: string, message: string, details?: string[] }} options
+ * @returns {EmbedBuilder}
+ */
+export function errorEmbed(options) {
+  const lines = [options.message];
+  if (options.details?.length) {
+    lines.push('', ...options.details.map((detail) => `- ${detail}`));
+  }
+  return base(ERROR_COLOUR)
+    .setTitle(truncate(options.title || 'Error', LIMITS.title))
+    .setDescription(truncate(lines.join('\n'), LIMITS.description));
+}
+
+/**
+ * Human readable summary of one field value for the record embeds.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function show(value) {
+  if (value === undefined || value === null) return EMPTY;
+  if (Array.isArray(value)) return value.length ? value.join(', ') : EMPTY;
+  if (typeof value === 'boolean') return value ? 'yes' : 'no';
+  const text = String(value).trim();
+  return text.length ? text : EMPTY;
+}
+
+/**
+ * How a finish reads: "P4" on its own, or "P4 / 41" when the number of cars in
+ * the class or split is known. This is the form the website uses.
+ * @param {Record<string, any>} record a result record
+ * @returns {string}
+ */
+export function finishText(record) {
+  const position = record?.position;
+  if (position === undefined || position === null) return EMPTY;
+  return record?.entries ? `P${position} / ${record.entries}` : `P${position}`;
+}
+
+/**
+ * Fields of one record, in the order the contract lists them.
+ * @param {'results'|'drivers'|'events'} kind
+ * @param {Record<string, any>} record
+ * @returns {Array<{ name: string, value: string, inline?: boolean }>}
+ */
+export function recordFields(kind, record) {
+  if (kind === 'results') {
+    return [
+      { name: 'Id', value: show(record.id) },
+      { name: 'Date', value: show(record.date), inline: true },
+      // The site renders the pair as "P4 / 41" when the field size is known.
+      { name: 'Position', value: finishText(record), inline: true },
+      { name: 'Entries', value: show(record.entries), inline: true },
+      { name: 'Class', value: show(record.class), inline: true },
+      { name: 'Event', value: show(record.event) },
+      { name: 'Track', value: show(record.track), inline: true },
+      { name: 'Series', value: show(record.series), inline: true },
+      { name: 'Drivers', value: show(record.drivers) },
+      { name: 'Note', value: show(record.note) },
+    ];
+  }
+  if (kind === 'drivers') {
+    const stats = [];
+    if (record.stats?.irating !== undefined) stats.push(`iRating ${record.stats.irating}`);
+    if (record.stats?.licence !== undefined) stats.push(`Licence ${record.stats.licence}`);
+    const socials = Object.entries(record.socials || {})
+      .filter(([, link]) => typeof link === 'string' && link.length > 0)
+      .map(([key, link]) => `${key}: ${link}`);
+    return [
+      { name: 'Id', value: show(record.id) },
+      { name: 'Name', value: show(record.name), inline: true },
+      { name: 'Number', value: show(record.number), inline: true },
+      { name: 'Country', value: show(record.country), inline: true },
+      { name: 'Role', value: show(record.role), inline: true },
+      { name: 'Group', value: show(record.group), inline: true },
+      { name: 'Active', value: show(record.active ?? true), inline: true },
+      { name: 'Focus', value: show(record.focus) },
+      { name: 'Bio', value: show(record.bio) },
+      { name: 'Stats', value: stats.length ? stats.join(', ') : EMPTY },
+      { name: 'Socials', value: socials.length ? socials.join('\n') : EMPTY },
+    ];
+  }
+  return [
+    { name: 'Id', value: show(record.id) },
+    { name: 'Name', value: show(record.name) },
+    { name: 'Track', value: show(record.track), inline: true },
+    { name: 'Status', value: show(record.status), inline: true },
+    { name: 'Start', value: show(record.start), inline: true },
+    { name: 'End', value: show(record.end), inline: true },
+    { name: 'Classes', value: show(record.classes) },
+    { name: 'Note', value: show(record.note) },
+  ];
+}
+
+/**
+ * Full view of one record, used after add and edit and in the remove prompt.
+ * @param {'results'|'drivers'|'events'} kind
+ * @param {Record<string, any>} record
+ * @param {{ title: string, description?: string, extraFields?: Array<{ name: string, value: string, inline?: boolean }> }} options
+ * @returns {EmbedBuilder}
+ */
+export function recordEmbed(kind, record, options) {
+  return infoEmbed({
+    title: options.title,
+    description: options.description,
+    fields: [...recordFields(kind, record), ...(options.extraFields ?? [])],
+  });
+}
+
+/**
+ * One compact line for a record in a list.
+ * @param {'results'|'drivers'|'events'} kind
+ * @param {Record<string, any>} record
+ * @returns {string}
+ */
+export function listLine(kind, record) {
+  const placeholder = record._placeholder === true ? ' (placeholder)' : '';
+  let line;
+  if (kind === 'results') {
+    line = [
+      show(record.date),
+      finishText(record),
+      show(record.class),
+      show(record.event),
+      show(record.track),
+    ].join(' | ');
+  } else if (kind === 'drivers') {
+    const number = String(record.number ?? '').length ? `no ${record.number}` : 'no number';
+    const active = record.active === false ? 'inactive' : 'active';
+    line = [show(record.name), number, show(record.group), show(record.role), show(record.focus), active].join(' | ');
+  } else {
+    const span = record.end && record.end !== record.start ? `${show(record.start)} to ${show(record.end)}` : show(record.start);
+    line = [span, show(record.status), show(record.name), show(record.track), show(record.classes)].join(' | ');
+  }
+  return truncate(`${line}${placeholder}\nid: ${show(record.id)}`, 300);
+}
+
+/**
+ * A page of records, at most ten to a page, one line each.
+ * @param {'results'|'drivers'|'events'} kind
+ * @param {Array<Record<string, any>>} pageRecords the records on this page
+ * @param {{ page: number, pages: number, total: number, offset: number, source: string }} options
+ *        offset is the index of the first record on this page, used for numbering
+ * @returns {EmbedBuilder}
+ */
+export function listEmbed(kind, pageRecords, options) {
+  const heading = `${FILES[kind]}, ${options.total} record(s)`;
+  const body = pageRecords.length
+    ? pageRecords.map((record, index) => `${options.offset + index + 1}. ${listLine(kind, record)}`).join('\n\n')
+    : 'No records on this page.';
+  return infoEmbed({
+    title: `${SINGULAR[kind].replace(/^./, (c) => c.toUpperCase())} list`,
+    description: truncate(`${heading}\nPage ${options.page} of ${options.pages}\n\n${body}`, LIMITS.description),
+    fields: [{ name: 'Source', value: options.source }],
+  });
+}
+
+/**
+ * The line the contract asks every write confirmation to carry.
+ * @param {'local'|'github'} mode
+ * @returns {string}
+ */
+export function liveNote(mode) {
+  return mode === 'github'
+    ? 'Live in about a minute once Vercel finishes building.'
+    : 'Local storage mode. The file on disk was changed, nothing was pushed.';
+}

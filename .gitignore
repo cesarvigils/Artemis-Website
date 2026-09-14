@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Secrets. Only .env.example belongs in the repository.
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Local scratch copies of the data, used while testing
+sample-data/*.local.json

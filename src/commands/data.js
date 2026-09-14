@@ -1,0 +1,225 @@
+/**
+ * commands/data.js
+ *
+ * /data status      where the bot writes, how many records each file holds, and
+ *                   the last commit that touched the data folder
+ * /data validate    check all three files against the data contract
+ * /data placeholders  list the sample records so they can be removed
+ *
+ * These subcommands only read, so they are safe to run at any time.
+ */
+
+import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
+import { FILES, KINDS } from '../lib/schema.js';
+import { readRecords } from '../lib/storage.js';
+import { validateArray } from '../lib/validate.js';
+import { errorEmbed, infoEmbed, truncate } from '../lib/embeds.js';
+import { BotError } from '../lib/errors.js';
+import { replyEphemeral } from './shared.js';
+
+/** How many problems or placeholder lines one embed shows. */
+const MAX_LINES = 20;
+
+export const data = new SlashCommandBuilder()
+  .setName('data')
+  .setDescription('Check the website data files')
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .setDMPermission(false)
+  .addSubcommand((sub) => sub.setName('status').setDescription('Show where the data lives and how much of it there is'))
+  .addSubcommand((sub) => sub.setName('validate').setDescription('Check all three files against the data contract'))
+  .addSubcommand((sub) =>
+    sub.setName('placeholders').setDescription('List the sample records that are still in the files'),
+  );
+
+/**
+ * Read all three files without refusing invalid content.
+ * @param {object} storage
+ * @returns {Promise<Record<string, { records: Array<Record<string, any>>, error: string | null }>>}
+ */
+async function readAll(storage) {
+  const out = {};
+  for (const kind of KINDS) {
+    try {
+      const { records } = await readRecords(storage, kind, { validate: false });
+      out[kind] = { records, error: null };
+    } catch (error) {
+      out[kind] = { records: [], error: error.message };
+    }
+  }
+  return out;
+}
+
+/**
+ * A short label for one record, used in the placeholder list.
+ * @param {'results'|'drivers'|'events'} kind
+ * @param {Record<string, any>} record
+ * @returns {string}
+ */
+function label(kind, record) {
+  if (kind === 'results') return `${record.date ?? ''} ${record.event ?? ''}`.trim();
+  if (kind === 'drivers') return String(record.name ?? '');
+  return `${record.start ?? ''} ${record.name ?? ''}`.trim();
+}
+
+/**
+ * /data status
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {{ storage: object, config: import('../lib/config.js').BotConfig }} ctx
+ */
+async function statusSubcommand(interaction, ctx) {
+  const files = await readAll(ctx.storage);
+
+  const fields = [
+    { name: 'Storage mode', value: ctx.storage.mode, inline: true },
+    { name: 'Source', value: ctx.storage.describe() },
+  ];
+
+  if (ctx.storage.mode === 'github') {
+    fields.push(
+      { name: 'Repository', value: `${ctx.config.githubOwner}/${ctx.config.githubRepo}`, inline: true },
+      { name: 'Branch', value: ctx.config.githubBranch, inline: true },
+    );
+  }
+
+  for (const kind of KINDS) {
+    const file = files[kind];
+    fields.push({
+      name: FILES[kind],
+      value: file.error ? `Could not be read. ${file.error}` : `${file.records.length} record(s)`,
+      inline: true,
+    });
+  }
+
+  let commitLine = 'Not available in local storage mode.';
+  if (ctx.storage.mode === 'github') {
+    try {
+      const commit = await ctx.storage.lastCommit();
+      commitLine = commit
+        ? `${commit.shortSha} on ${commit.date.slice(0, 10)} at ${commit.date.slice(11, 16)} UTC\n${truncate(commit.message, 200)}`
+        : 'No commit has touched the data folder yet.';
+    } catch (error) {
+      commitLine = `Could not be read. ${error.message}`;
+    }
+  }
+  fields.push({ name: 'Last commit', value: commitLine });
+  fields.push({ name: 'Audit channel', value: ctx.config.logChannelId ? `<#${ctx.config.logChannelId}>` : 'not set' });
+
+  await replyEphemeral(interaction, {
+    embeds: [
+      infoEmbed({
+        title: 'Data status',
+        description: 'Where the bot reads and writes the website data.',
+        fields,
+      }),
+    ],
+  });
+}
+
+/**
+ * /data validate
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {{ storage: object }} ctx
+ */
+async function validateSubcommand(interaction, ctx) {
+  const files = await readAll(ctx.storage);
+  const problems = [];
+  const fields = [];
+
+  for (const kind of KINDS) {
+    const file = files[kind];
+    if (file.error) {
+      problems.push(`${FILES[kind]}: ${file.error}`);
+      fields.push({ name: FILES[kind], value: 'Could not be read.' });
+      continue;
+    }
+    const { errors } = validateArray(kind, file.records);
+    problems.push(...errors);
+    fields.push({
+      name: FILES[kind],
+      value: errors.length === 0 ? `OK, ${file.records.length} record(s)` : `${errors.length} problem(s) in ${file.records.length} record(s)`,
+      inline: true,
+    });
+  }
+
+  if (problems.length === 0) {
+    await replyEphemeral(interaction, {
+      embeds: [
+        infoEmbed({
+          title: 'Data validation',
+          description: 'All three files match the data contract. The website build will accept them.',
+          fields,
+        }),
+      ],
+    });
+    return;
+  }
+
+  const shown = problems.slice(0, MAX_LINES).map((problem) => `- ${problem}`);
+  if (problems.length > MAX_LINES) shown.push(`- and ${problems.length - MAX_LINES} more problem(s)`);
+
+  await replyEphemeral(interaction, {
+    embeds: [
+      errorEmbed({
+        title: 'Data validation found problems',
+        message: `${problems.length} problem(s) found. The website build will fail until they are fixed.`,
+        details: shown.map((line) => line.replace(/^- /, '')),
+      }).addFields(fields),
+    ],
+  });
+}
+
+/**
+ * /data placeholders
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {{ storage: object }} ctx
+ */
+async function placeholdersSubcommand(interaction, ctx) {
+  const files = await readAll(ctx.storage);
+  const fields = [];
+  let total = 0;
+
+  for (const kind of KINDS) {
+    const file = files[kind];
+    if (file.error) {
+      fields.push({ name: FILES[kind], value: 'Could not be read.' });
+      continue;
+    }
+    const marked = file.records.filter((record) => record?._placeholder === true);
+    total += marked.length;
+    const lines = marked
+      .slice(0, MAX_LINES)
+      .map((record) => `${record.id ?? 'no id'} - ${label(kind, record)}`);
+    if (marked.length > MAX_LINES) lines.push(`and ${marked.length - MAX_LINES} more`);
+    fields.push({
+      name: `${FILES[kind]} (${marked.length})`,
+      value: lines.length ? lines.join('\n') : 'None left.',
+    });
+  }
+
+  await replyEphemeral(interaction, {
+    embeds: [
+      infoEmbed({
+        title: 'Placeholder records',
+        description:
+          total === 0
+            ? 'No placeholder records are left. The site is showing real data only.'
+            : `${total} placeholder record(s) are still on the site. Remove them with the remove subcommand of each command.`,
+        fields,
+      }),
+    ],
+  });
+}
+
+/**
+ * Route one /data command.
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {{ storage: object, config: object, client: import('discord.js').Client }} ctx
+ * @returns {Promise<void>}
+ */
+export async function execute(interaction, ctx) {
+  const sub = interaction.options.getSubcommand();
+  if (sub === 'status') return statusSubcommand(interaction, ctx);
+  if (sub === 'validate') return validateSubcommand(interaction, ctx);
+  if (sub === 'placeholders') return placeholdersSubcommand(interaction, ctx);
+  throw new BotError(`Unknown subcommand: ${sub}`, { title: 'Unknown subcommand' });
+}
