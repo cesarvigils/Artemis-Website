@@ -1,0 +1,31 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Page not found | Artemis Esports"
+  description="This page does not exist."
+>
+  <section class="notfound">
+    <div class="container">
+      <h1 class="display-xl">Off track.</h1>
+      <p class="lead">This page does not exist. Rejoin at the pit exit.</p>
+      <a href="/" class="btn btn-solid">Back to the paddock</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .notfound {
+    min-height: 80dvh;
+    display: flex;
+    align-items: center;
+    padding-top: var(--nav-h);
+  }
+  .notfound .lead {
+    margin-top: 1.25rem;
+  }
+  .notfound .btn {
+    margin-top: 2.25rem;
+  }
+</style>

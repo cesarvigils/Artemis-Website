@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Driver One",
+    "role": "driver",
+    "number": "1",
+    "country": "USA",
+    "focus": "GT3 / Endurance",
+    "bio": "Replace with the driver's one-line bio.",
+    "socials": {}
+  },
+  {
+    "name": "Driver Two",
+    "role": "driver",
+    "number": "9",
+    "country": "USA",
+    "focus": "GTP / Endurance",
+    "bio": "Replace with the driver's one-line bio.",
+    "socials": {}
+  },
+  {
+    "name": "Driver Three",
+    "role": "driver",
+    "number": "17",
+    "country": "CAN",
+    "focus": "GT3 Sprint",
+    "bio": "Replace with the driver's one-line bio.",
+    "socials": {}
+  },
+  {
+    "name": "Pitwall One",
+    "role": "pitwall",
+    "number": "",
+    "country": "USA",
+    "focus": "Strategy",
+    "bio": "Replace with the crew member's one-line bio.",
+    "socials": {}
+  }
+]
