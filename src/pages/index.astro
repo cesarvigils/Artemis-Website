@@ -32,11 +32,13 @@ import { discordInvite } from '../lib/links';
    to contradict. */
 import heroSource from '../assets/racing/interlagos-lmp2.jpg';
 
-/* The ladder has steps at 828 and 1536 because the old 640/1280/1920 one made
-   a 412px phone pull the 1280 file and a retina 1440 laptop pull the 1920. */
+/* The ladder has steps at 828, 1024 and 1536 because the old 640/1280/1920 one
+   made a 412px phone pull the 1280 file and a retina 1440 laptop pull the 1920.
+   The 1024 step exists because the phone hero is painted at 130% of its layout
+   box, so a 412px device asks for ~940px and would otherwise jump to 1280. */
 const heroImg = await getImage({
   src: heroSource,
-  widths: [640, 828, 1280, 1536, 1920],
+  widths: [640, 828, 1024, 1280, 1536, 1920],
   format: 'webp',
   quality: 58,
 });
@@ -58,7 +60,10 @@ const driverCount = (drivers as Driver[]).filter(
   preload={{
     href: heroImg.src,
     srcset: heroImg.srcSet.attribute,
-    sizes: '(max-width: 900px) 100vw, 62vw',
+    /* Must match Hero.astro exactly. Below 900px the image is painted at
+       130% of its layout box by the art-direction crop, so `100vw` had the
+       browser selecting for 390px and displaying across 507px. */
+    sizes: '(max-width: 900px) 130vw, 62vw',
   }}
 >
   <Hero
@@ -96,20 +101,30 @@ const driverCount = (drivers as Driver[]).filter(
 
   <Garage />
 
-  <section class="section rule-top" aria-labelledby="drivers-heading">
-    <div class="container">
-      <div class="section-head">
-        <h2 class="display-md" id="drivers-heading">Who drives</h2>
-        <a class="text-link" href="/team">
-          Full roster ({driverCount} drivers)
-          <Icon name="arrow-right" size={16} />
-        </a>
-      </div>
-      <ul class="roster-teaser">
-        {featured.map((driver) => <DriverCard driver={driver} variant="compact" />)}
-      </ul>
-    </div>
-  </section>
+  {/* No active drivers means no section: the heading, a "0 drivers" link and
+      a 1px orphan hairline where the teaser was is worse than nothing. */}
+  {
+    featured.length > 0 && (
+      <section class="section rule-top" aria-labelledby="drivers-heading">
+        <div class="container">
+          <div class="section-head">
+            <h2 class="display-md" id="drivers-heading">
+              Who drives
+            </h2>
+            <a class="text-link" href="/team">
+              Full roster ({driverCount} {driverCount === 1 ? 'driver' : 'drivers'})
+              <Icon name="arrow-right" size={16} />
+            </a>
+          </div>
+          <ul class="roster-teaser">
+            {featured.map((driver) => (
+              <DriverCard driver={driver} variant="compact" />
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
 
   <PillarBand
     heading="How we race"

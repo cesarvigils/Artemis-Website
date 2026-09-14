@@ -23,10 +23,14 @@ const {
 } = Astro.props;
 
 const socials = Object.entries(driver.socials ?? {}).filter(([, url]) => url);
+/* `null` used to pass this filter, so `"stats": {"irating": null}` from the
+   bot rendered a <dt>iRating</dt> above an empty <dd>. iRating is typed as an
+   integer, so 0 is not a rating either - it is a missing value that would read
+   on the page as a real one. */
 const stats = [
-  { label: 'iRating', value: driver.stats?.irating },
+  { label: 'iRating', value: Number.isFinite(driver.stats?.irating) && (driver.stats?.irating ?? 0) > 0 ? driver.stats?.irating : undefined },
   { label: 'Licence', value: driver.stats?.licence },
-].filter((stat) => stat.value !== undefined && stat.value !== '');
+].filter((stat) => stat.value !== undefined && stat.value !== null && stat.value !== '');
 ---
 
 {
@@ -74,7 +78,9 @@ const stats = [
           <p class="driver-last data">
             Last drive: P{lastResult.position}
             {lastResult.entries ? ` of ${lastResult.entries}` : ''}, {lastResult.event},{' '}
-            {raceDate(lastResult.date)}
+            {/* One date, one line: at 1024 this string used to split
+                "06 / SEP 2026" across two of them. */}
+            <span class="nowrap">{raceDate(lastResult.date)}</span>
           </p>
         )}
         {stats.length > 0 && (
@@ -92,7 +98,8 @@ const stats = [
             {socials.map(([name, url]) => (
               <li>
                 <a href={url} target="_blank" rel="noopener">
-                  {name}
+                  <span>{name}</span>
+                  <span class="sr-only"> (opens in a new tab)</span>
                 </a>
               </li>
             ))}
@@ -106,12 +113,15 @@ const stats = [
 <style>
   /* Compact: a column in the home teaser, separated by hairlines only.
      No card box, no shadow. */
+  /* The inset comes from the page through `--compact-inset`: the <ul> owns
+     the column hairlines but its selectors cannot out-specify this scoped
+     shorthand, so the page sets a property instead of fighting the cascade. */
   .driver-compact > a {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
     height: 100%;
-    padding: var(--space-m) var(--space-s) var(--space-m) 0;
+    padding: var(--space-m) var(--space-s) var(--space-m) var(--compact-inset, 0px);
     transition: color var(--dur-hover) var(--ease-out);
   }
 
@@ -119,7 +129,11 @@ const stats = [
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
-    font-size: clamp(2.25rem, 4vw, 3rem);
+    /* Same cascade trap as `--compact-inset`: the page's
+       `.roster-teaser > li:first-child .driver-number` is (0,3,0) against this
+       scoped rule's (0,4,0), so the lead cell's larger number never applied
+       and all four columns rendered identically. */
+    font-size: var(--compact-number-size, var(--number-md));
     line-height: 1;
     color: transparent;
     -webkit-text-stroke: 1px var(--teal-soft);
@@ -131,16 +145,18 @@ const stats = [
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-base);
-    letter-spacing: 0.04em;
+    letter-spacing: var(--track-title);
     text-transform: uppercase;
-    line-height: 1.2;
+    line-height: var(--leading-tight);
     text-wrap: balance;
+    overflow-wrap: anywhere;
   }
 
   .driver-compact .driver-focus {
     font-size: var(--text-sm);
     color: var(--ink-dim);
-    line-height: 1.4;
+    line-height: var(--leading-snug);
+    overflow-wrap: anywhere;
   }
 
   .driver-compact .driver-country {
@@ -185,7 +201,7 @@ const stats = [
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
-    font-size: 2.25rem;
+    font-size: var(--number-md);
     line-height: 1;
     color: transparent;
     -webkit-text-stroke: 1px var(--teal-soft);
@@ -193,7 +209,7 @@ const stats = [
 
   .driver-row .driver-name {
     font-size: var(--text-xl);
-    letter-spacing: 0.03em;
+    letter-spacing: var(--track-title);
     text-wrap: balance;
   }
 
@@ -210,6 +226,12 @@ const stats = [
     color: var(--ink-dim);
     font-size: var(--text-2xs);
     letter-spacing: var(--track-data);
+    line-height: var(--leading-body);
+    text-wrap: pretty;
+  }
+
+  .nowrap {
+    white-space: nowrap;
   }
 
   .driver-meta {
@@ -224,16 +246,18 @@ const stats = [
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-xs);
-    letter-spacing: 0.14em;
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--teal);
+    /* "Trucks / Superspeedway" is 243px of tracked caps at a 200% root. */
+    overflow-wrap: anywhere;
   }
 
   .driver-bio {
     margin-top: 0.5rem;
     color: var(--ink-dim);
     font-size: var(--text-sm);
-    line-height: 1.55;
+    line-height: var(--leading-body);
   }
 
   .driver-stats {
@@ -255,22 +279,45 @@ const stats = [
     margin-top: var(--space-s);
   }
 
+  /* 44px of target, with the hairline still sitting on the word: the height
+     lives on the anchor, the underline on the span inside it. */
   .driver-socials a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: var(--text-2xs);
-    letter-spacing: 0.12em;
+    font-size: var(--text-xs);
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .driver-socials a > span:first-child {
     border-bottom: 1px solid var(--line);
-    transition: color var(--dur-hover) var(--ease-out),
-      border-color var(--dur-hover) var(--ease-out);
+    transition: border-color var(--dur-hover) var(--ease-out);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .driver-socials a:hover {
       color: var(--teal);
+    }
+    .driver-socials a:hover > span:first-child {
       border-color: var(--teal);
+    }
+  }
+
+  /* The whole 761-1200px band - most tablets and small laptops - gave the
+     name column 197px against a 25.8px name, so every road driver's name
+     broke across two lines. One band rule, not a new breakpoint. */
+  @media (min-width: 761px) and (max-width: 1200px) {
+    .driver-row {
+      grid-template-columns: 4rem minmax(0, 1.35fr) minmax(0, 1.5fr);
+    }
+
+    .driver-row .driver-name {
+      font-size: var(--text-lg);
     }
   }
 
@@ -279,9 +326,8 @@ const stats = [
       grid-template-columns: 3.25rem minmax(0, 1fr);
       gap: var(--space-s) var(--space-m);
     }
-    .driver-row .driver-number {
-      font-size: 1.75rem;
-    }
+    /* No size override here any more: `--number-md` is a fluid token, so the
+       number already steps down with the heading scale. */
     .driver-detail {
       grid-column: 2 / -1;
     }

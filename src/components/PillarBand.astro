@@ -57,27 +57,28 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
 
   .pillars-head .lead {
     margin-top: var(--space-s);
-    max-width: 48ch;
+    max-width: var(--measure-lead);
   }
 
   .pillar dt {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: var(--track-title);
     text-transform: uppercase;
-    line-height: 1.15;
+    line-height: var(--leading-tight);
+    overflow-wrap: anywhere;
   }
 
   .pillar dd {
     color: var(--ink-dim);
-    line-height: 1.55;
+    line-height: var(--leading-body);
   }
 
   /* Row variant: the heading sits on its own line and the four rules run
      across the band as one horizontal register. No narrow copy column,
      no tall empty gutter beside a short list. */
   .is-row .pillars-head h2 {
-    max-width: 20ch;
+    max-width: 16em;
   }
 
   .is-row .pillars-list {
@@ -108,7 +109,7 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
   /* Long variant: one entry per row, the title held against the sentence
      that explains what it costs on a race weekend. */
   .is-long .pillars-head h2 {
-    max-width: 14ch;
+    max-width: 11em;
   }
 
   .is-long .pillars-list {
@@ -158,7 +159,11 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
   .pillar-tags li {
     color: var(--teal-soft);
     font-size: var(--text-xs);
+    line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
+    /* "#FOLLOWERSOFTHEHUNT" is one unbreakable 19-character token and at a
+       200% root font it is wider than a 390px phone. */
+    overflow-wrap: anywhere;
   }
 
   @media (max-width: 1024px) {
@@ -170,9 +175,26 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
       margin-top: var(--space-m);
       border-top: 1px solid var(--line);
     }
-    .is-row .pillar:nth-child(3) {
+    /* Same selector shape as the rule it overrides, so source order decides.
+       Written as `.is-row .pillar:nth-child(3)` it was (0,4,0) against the
+       four-across rule's (0,5,0) and never applied: row two of the register
+       kept a 24px indent and a vertical hairline with nothing to its left. */
+    .is-row .pillar + .pillar:nth-child(3) {
       padding-left: 0;
       border-left: none;
+    }
+  }
+
+  /* The long variant kept two columns down to 640px, so on a portrait tablet
+     a 24px title sat in a 279px cell beside a 388px sentence and the two
+     halves never settled into a ratio. It stacks where the page head does. */
+  @media (max-width: 900px) {
+    .is-long .pillar {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+    .is-long .pillar-detail {
+      grid-column: 1;
     }
   }
 
@@ -185,13 +207,6 @@ const { heading, lead, variant = 'row', hashtags = false } = Astro.props;
       margin-top: 0;
       border-left: none;
       border-top: 1px solid var(--line);
-    }
-    .is-long .pillar {
-      grid-template-columns: 1fr;
-      gap: 0.35rem;
-    }
-    .is-long .pillar-detail {
-      grid-column: 1;
     }
   }
 </style>

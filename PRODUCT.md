@@ -113,6 +113,16 @@ in order, because a human edit can always break it.
    facts (founded 2017, iRacing since 2023).
 5. Driver `stats` (iRating, licence) render the moment they are filled in and
    stay invisible until then. Nothing is invented to fill the slot.
+6. **A dark-variant GLYTCH mark.** `src/assets/partners/glytch-white.png` is
+   white on transparent, so on any light ground it is invisible - including
+   Windows High Contrast, which is the mode a partner's accessibility-audited
+   machine may be running. The site now puts the mark on an opaque plate in
+   that mode so the one piece of sponsor evidence survives, but the right fix
+   is a dark-on-transparent export from GLYTCH. Ask for one.
+7. **The Nordschleife render is a 1089px crop** of a 1919px original, made to
+   remove two AMG hoardings. It is the one garage photo that cannot serve a
+   retina tablet at full sharpness. A clean re-render at 1920 without the
+   hoardings in frame would close that.
 
 **Closed:** the hero render carried a NordVPN decal while the Partners page said
 GLYTCH was the only partner. The hero is now the Interlagos LMP2, which carries

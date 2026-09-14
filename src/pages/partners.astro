@@ -16,7 +16,7 @@ import {
   type Driver,
   type RaceResult,
 } from '../lib/data';
-import { partnershipMailto } from '../lib/links';
+import { channelLinks, partnershipMailto } from '../lib/links';
 
 /* The first item is the headline of the offer, so it takes the full width and
    the other three sit under it. Four equal cells made livery placement look
@@ -42,7 +42,13 @@ const OFFER = [
 
 const races = sortResults(results as RaceResult[]);
 const snapshot = recentResults(races, 3);
-const best = races.reduce((a, b) => (b.position < a.position ? b : a));
+/* No initial value on this reduce used to throw a bare TypeError and kill the
+   whole build the moment the bot wrote an empty results.json - which
+   check:data accepts, because an empty file breaks no rule. Guarded the same
+   way heroProof() in lib/data.ts already guards its own reduce. */
+const best = races.length
+  ? races.reduce((a, b) => (b.position < a.position ? b : a))
+  : undefined;
 const podiums = podiumCount(races);
 const tracks = [...new Set(races.map((race) => race.event))].slice(0, 4);
 const classes = [...new Set(races.map((race) => race.class))];
@@ -51,21 +57,10 @@ const roster = activeDrivers(drivers as Driver[]).filter(
   (driver) => driver.role === 'driver'
 );
 
-const SOCIAL_LABELS: Record<string, string> = {
-  discord: 'Discord',
-  x: 'X',
-  instagram: 'Instagram',
-  tiktok: 'TikTok',
-  youtube: 'YouTube',
-  twitch: 'Twitch',
-};
-
-const channels = [
-  ...Object.entries(site.socials)
-    .filter(([, url]) => url)
-    .map(([key, url]) => ({ label: SOCIAL_LABELS[key] ?? key, url })),
-  { label: 'Store', url: site.store },
-];
+/* Shared with the footer: the store link carries the same guard in both
+   places, so an empty site.store can never ship an href="" opening in a new
+   tab. */
+const channels = channelLinks(site.socials, site.store);
 ---
 
 <Base
@@ -83,26 +78,40 @@ const channels = [
       <Icon name="arrow-right" size={16} />
     </a>
 
-    <dl class="dossier" slot="aside">
-      <div>
-        <dt class="field-label">Best finish</dt>
-        <dd class="data">
-          P{best.position}{best.entries ? ` of ${best.entries}` : ''}, {best.event}
-        </dd>
-      </div>
-      <div>
-        <dt class="field-label">Results listed</dt>
-        <dd class="data">{races.length}, {podiums} of them podiums</dd>
-      </div>
-      <div>
-        <dt class="field-label">Classes run</dt>
-        <dd class="data">{classes.join(' / ')}</dd>
-      </div>
-      <div>
-        <dt class="field-label">Recent events</dt>
-        <dd class="data">{tracks.join(' / ')}</dd>
-      </div>
-    </dl>
+    {/* The whole dossier is evidence from results.json. With no results there
+        is no dossier: a sponsor gets one honest line instead of four empty
+        rows. */}
+    {
+      best ? (
+        <dl class="dossier" slot="aside">
+          <div>
+            <dt class="field-label">Best finish</dt>
+            <dd class="data">
+              P{best.position}
+              {best.entries ? ` of ${best.entries}` : ''}, {best.event}
+            </dd>
+          </div>
+          <div>
+            <dt class="field-label">Results listed</dt>
+            <dd class="data">
+              {races.length}, {podiums} of them podiums
+            </dd>
+          </div>
+          <div>
+            <dt class="field-label">Classes run</dt>
+            <dd class="data">{classes.join(' / ')}</dd>
+          </div>
+          <div>
+            <dt class="field-label">Recent events</dt>
+            <dd class="data">{tracks.join(' / ')}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p class="dossier-empty data" slot="aside">
+          The season summary appears here once the first result is published.
+        </p>
+      )
+    }
   </PageHead>
 
   <section class="section offer rule-top" aria-labelledby="offer-heading">
@@ -135,25 +144,41 @@ const channels = [
           <Icon name="arrow-right" size={16} />
         </a>
       </div>
-      <ResultsTable results={snapshot} caption="The three most recent Artemis Esports results" />
+      {/* Never a column header row over nothing: the home page has always had
+          this branch, the sponsor's page did not. */}
+      {
+        snapshot.length > 0 ? (
+          <ResultsTable
+            results={snapshot}
+            caption="The three most recent Artemis Esports results"
+          />
+        ) : (
+          <p class="lead">
+            No finishes published for this season yet. The calendar and the full
+            results module are on the home page.
+          </p>
+        )
+      }
 
       {/* Roster exposure without re-running the home page's teaser: the
           numbers that would carry a partner mark, on one line. */}
-      <div class="roster-line">
-        <p class="field-label">Who runs these entries</p>
-        <ul>
-          {
-            roster.map((driver) => (
-              <li>
-                <a href={`/team#${driver.id}`}>
-                  <span class="roster-number data">{driver.number}</span>
-                  {driver.name}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
+      {
+        roster.length > 0 && (
+          <div class="roster-line">
+            <p class="field-label">Who runs these entries</p>
+            <ul>
+              {roster.map((driver) => (
+                <li>
+                  <a href={`/team#${driver.id}`}>
+                    <span class="roster-number data">{driver.number}</span>
+                    <span class="roster-name">{driver.name}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
     </div>
   </section>
 
@@ -214,9 +239,12 @@ const channels = [
     border-top: 1px solid var(--line-strong);
   }
 
+  /* `minmax(9rem, …)`: at 1024 the label track collapsed to 124px, which held
+     three of the four labels and wrapped the fourth, so the row rhythm went
+     58 / 70 / 58 / 100px. */
   .dossier > div {
     display: grid;
-    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(9rem, 0.7fr) minmax(0, 1.6fr);
     gap: var(--space-m);
     align-items: baseline;
     padding-block: var(--space-xs);
@@ -226,7 +254,15 @@ const channels = [
   .dossier dd {
     color: var(--ink);
     font-size: var(--text-sm);
-    line-height: 1.5;
+    line-height: var(--leading-body);
+  }
+
+  .dossier-empty {
+    padding-top: var(--space-s);
+    border-top: 1px solid var(--line-strong);
+    color: var(--ink-faint);
+    line-height: var(--leading-body);
+    max-width: var(--measure-lead);
   }
 
   /* One headline item, then three. */
@@ -248,7 +284,7 @@ const channels = [
 
   .offer-title {
     font-size: var(--text-xl);
-    letter-spacing: 0.02em;
+    letter-spacing: var(--track-title);
   }
 
   .offer-item:first-child .offer-title {
@@ -259,7 +295,7 @@ const channels = [
     margin-top: var(--space-2xs);
     color: var(--ink-dim);
     font-size: var(--text-sm);
-    line-height: 1.6;
+    line-height: var(--leading-body);
     max-width: 40ch;
   }
 
@@ -277,21 +313,28 @@ const channels = [
   .roster-line ul {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2xs) var(--space-m);
-    margin-top: var(--space-xs);
+    gap: 0 var(--space-m);
+    margin-top: 0;
   }
 
+  /* Six 22px links at an 8px row gap was a 30px pitch and the smallest set of
+     targets on the site. The height goes on the link, not on the list gap. */
   .roster-line a {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.5rem;
+    min-height: 44px;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-xs);
-    letter-spacing: 0.1em;
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
     transition: color var(--dur-hover) var(--ease-out);
+  }
+
+  .roster-name {
+    overflow-wrap: anywhere;
   }
 
   .roster-number {
@@ -313,12 +356,12 @@ const channels = [
   }
 
   .reach-copy h2 {
-    max-width: 12ch;
+    max-width: 9em;
   }
 
   .reach-copy .lead {
     margin-top: var(--space-s);
-    max-width: 40ch;
+    max-width: var(--measure-lead);
   }
 
   /* Seven channels in a two-column grid left a visible hole in the last
@@ -332,12 +375,13 @@ const channels = [
     align-items: center;
     justify-content: space-between;
     gap: var(--space-s);
+    min-height: 44px;
     padding-block: var(--space-s);
     border-bottom: 1px solid var(--line);
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-sm);
-    letter-spacing: 0.1em;
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
     transition: color var(--dur-hover) var(--ease-out);
@@ -357,12 +401,12 @@ const channels = [
   }
 
   .contact-inner h2 {
-    max-width: 10ch;
+    max-width: 8em;
   }
 
   .contact-inner .lead {
     margin-top: var(--space-s);
-    max-width: 40ch;
+    max-width: var(--measure-lead);
   }
 
   .contact-card {
@@ -376,11 +420,14 @@ const channels = [
   }
 
   .contact-email {
+    display: inline-block;
+    min-height: 44px;
+    padding-block: 0.55rem;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-xl);
-    letter-spacing: 0.02em;
-    line-height: 1.2;
+    letter-spacing: var(--track-title);
+    line-height: var(--leading-tight);
     overflow-wrap: anywhere;
     border-bottom: 1px solid var(--line);
     transition: color var(--dur-hover) var(--ease-out),
@@ -395,6 +442,15 @@ const channels = [
     .contact-email:hover {
       color: var(--teal);
       border-color: var(--teal);
+    }
+  }
+
+  /* Two columns rather than three between 901 and 1100: at 1024 the three
+     cells measured 32ch under a 52ch full-row item, so the headline item and
+     the three under it did not read as the same kind of text. */
+  @media (min-width: 901px) and (max-width: 1100px) {
+    .offer-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -415,6 +471,11 @@ const channels = [
       width: 100%;
       padding: var(--space-m);
     }
+  }
+
+  /* Full-width is right on a phone and wrong on a 706px tablet, where it made
+     a 13-character label sit alone in the middle of a teal slab. */
+  @media (max-width: 560px) {
     .contact-btn {
       width: 100%;
     }

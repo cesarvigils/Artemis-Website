@@ -53,22 +53,41 @@ const crewCount = roster.length - racingDrivers.length;
     meta={`${racingDrivers.length} drivers / ${crewCount} crew / road and oval`}
   >
     {/* The right half of the first screen carries the entry list rather than
-        400px of flat ground. */}
-    <ul class="entry-strip" slot="aside" aria-label="Car numbers">
-      {
-        racingDrivers.map((driver) => (
-          <li>
-            <a href={`#${driver.id}`}>
-              <span class="entry-number" aria-hidden="true">
-                {driver.number}
-              </span>
-              <span class="entry-name">{driver.name}</span>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+        400px of flat ground - and nothing at all when there are no entries,
+        which collapses the split rather than reserving an empty column. */}
+    {
+      racingDrivers.length > 0 && (
+        <ul class="entry-strip" slot="aside" aria-label="Car numbers">
+          {racingDrivers.map((driver) => (
+            <li>
+              <a href={`#${driver.id}`}>
+                <span class="entry-number" aria-hidden="true">
+                  {driver.number}
+                </span>
+                <span class="entry-name">{driver.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
   </PageHead>
+
+  {
+    sections.length === 0 && (
+      <section class="section rule-top" aria-labelledby="roster-empty">
+        <div class="container">
+          <h2 class="display-sm" id="roster-empty">
+            Roster in transition
+          </h2>
+          <p class="lead roster-empty-lead">
+            No drivers are published right now. The seats are open, and the three
+            steps to one are on the home page.
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   {
     sections.map((section) => (
@@ -146,7 +165,7 @@ const crewCount = roster.length - racingDrivers.length;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
-    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-size: var(--number-md);
     line-height: 1;
     color: transparent;
     -webkit-text-stroke: 1px var(--teal-soft);
@@ -162,9 +181,16 @@ const crewCount = roster.length - racingDrivers.length;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
     color: var(--ink-dim);
+    overflow-wrap: anywhere;
+  }
+
+  .roster-empty-lead {
+    margin-top: var(--space-s);
+    max-width: var(--measure-lead);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -192,8 +218,8 @@ const crewCount = roster.length - racingDrivers.length;
     margin-top: var(--space-s);
     color: var(--ink-dim);
     font-size: var(--text-sm);
-    line-height: 1.6;
-    max-width: 28ch;
+    line-height: var(--leading-body);
+    max-width: 30ch;
   }
 
   .roster-count {

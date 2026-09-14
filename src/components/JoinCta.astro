@@ -20,7 +20,7 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     <Image
       src={texture}
       alt=""
-      widths={[640, 1280, 1920]}
+      widths={[400, 800, 1280, 1920]}
       sizes="100vw"
       format="webp"
       quality={55}
@@ -92,12 +92,12 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
   /* The band runs the full width: heading, then the sentence, then the
      action, then what happens after it. No narrow copy column. */
   .join-heading {
-    max-width: 12ch;
+    max-width: 9em;
   }
 
   .join-lead {
     margin-top: var(--space-m);
-    max-width: 46ch;
+    max-width: var(--measure-lead);
     color: var(--ink);
   }
 
@@ -134,19 +134,22 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     color: var(--teal);
   }
 
+  /* Explicit: inheriting the body's leading made this title lead looser than
+     the sentence underneath it. */
   .step-title {
     margin-top: var(--space-2xs);
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-base);
-    letter-spacing: 0.05em;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-title);
     text-transform: uppercase;
   }
 
   .step-line {
     color: var(--ink-dim);
     font-size: var(--text-sm);
-    line-height: 1.55;
+    line-height: var(--leading-body);
     max-width: 32ch;
   }
 
@@ -158,9 +161,6 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
         rgba(0, 10, 8, 0.82) 55%,
         rgba(0, 10, 8, 0.7)
       );
-    }
-    .join-btn {
-      width: 100%;
     }
     .join-steps {
       grid-template-columns: 1fr;
@@ -187,6 +187,22 @@ const { heading = 'On the hunt.', lead = site.join.lead, steps = true } = Astro.
     .step-line {
       flex: 1 0 100%;
       max-width: none;
+    }
+  }
+
+  /* A full-width button is right on a phone and wrong on a 706px tablet,
+     where it became a 706x52px slab around a 13-character label. */
+  @media (max-width: 560px) {
+    .join-btn {
+      width: 100%;
+    }
+  }
+
+  /* The scrim over the HUNT texture is a background-image, so high contrast
+     strips it and the copy lands on the spray. The texture is decorative. */
+  @media (forced-colors: active) {
+    .join-texture {
+      display: none;
     }
   }
 </style>

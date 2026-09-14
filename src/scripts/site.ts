@@ -77,11 +77,35 @@ function initMenu() {
       (el): el is HTMLElement => !!el
     );
 
+  /* Scroll lock. `overflow: hidden` on the root stops a wheel but not a
+     touch drag that chains out of the panel, and it does not stop scripted
+     scrolling either, so the reader closed the menu somewhere else on the
+     page. Taking <body> out of flow at a negative offset freezes the
+     position exactly, and restoring it puts them back where they were. */
+  let lockedAt = 0;
+
+  const lockScroll = (open: boolean) => {
+    const body = document.body;
+    if (open) {
+      lockedAt = window.scrollY;
+      body.style.position = 'fixed';
+      body.style.top = `-${lockedAt}px`;
+      body.style.insetInline = '0';
+      return;
+    }
+    body.style.position = '';
+    body.style.top = '';
+    body.style.insetInline = '';
+    window.scrollTo(0, lockedAt);
+  };
+
   const setOpen = (open: boolean) => {
+    const wasOpen = toggle.getAttribute('aria-expanded') === 'true';
     toggle.setAttribute('aria-expanded', String(open));
     menu.hidden = !open;
     document.documentElement.classList.toggle('menu-open', open);
     if (label) label.textContent = open ? 'Close menu' : 'Menu';
+    if (open !== wasOpen) lockScroll(open);
 
     // The panel covers the page; keep what is behind it out of the tab
     // order and out of the accessibility tree.

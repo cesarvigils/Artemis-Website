@@ -44,15 +44,17 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       </a>
     </nav>
 
+    {/* Short label on purpose: see the note on `short` in lib/links.ts. The
+        accessible name stays the full one. */}
     <a
       href={cta.href}
       class="btn btn-sm nav-cta nav-cta-compact"
+      aria-label={cta.external ? `${cta.label} (opens in a new tab)` : cta.label}
       target={cta.external ? '_blank' : undefined}
       rel={cta.external ? 'noopener' : undefined}
     >
-      {cta.label}
+      {cta.short}
       <Icon name={cta.external ? 'arrow-up-right' : 'arrow-right'} size={14} />
-      {cta.external && <span class="sr-only"> (opens in a new tab)</span>}
     </a>
 
     <button
@@ -146,9 +148,16 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     gap: var(--space-m);
   }
 
+  /* `flex: 0 0 auto`: as a shrinkable flex item the lockup was squashed to
+     59px on a 320px phone and the global `svg { max-width: 100% }` clipped
+     the wordmark mid-letter. The mark is sized in px so it does not grow
+     with the root font either. */
   .brand {
     display: flex;
     align-items: center;
+    flex: 0 0 auto;
+    /* The lockup is 28px tall; the link around it is a target. */
+    min-height: 44px;
     color: var(--ink);
     --mark-size: 28px;
     transition: color var(--dur-hover) var(--ease-out);
@@ -174,13 +183,18 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
 
   .nav-link {
     position: relative;
+    display: inline-block;
+    min-width: 44px;
+    text-align: center;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-xs);
-    letter-spacing: 0.14em;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
-    padding-block: 0.5rem;
+    /* 44px of pointer target without changing --nav-h. */
+    padding-block: 0.95rem;
     transition: color var(--dur-hover) var(--ease-out);
   }
 
@@ -217,7 +231,7 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
   /* Quiet over the hero, where the page's own primary button is the loud
      one; solid once the bar is the only chrome left on screen. */
   .nav-cta {
-    letter-spacing: 0.1em;
+    letter-spacing: var(--track-link);
     border-color: var(--line-strong);
     color: var(--ink);
   }
@@ -241,18 +255,28 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     }
   }
 
+  /* Order of yielding in the bar, from most to least protected: hamburger,
+     lockup, CTA. This is the one item allowed to shrink, so the control that
+     opens the navigation can never be pushed off the device. */
   .nav-cta-compact {
     display: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
     margin-left: auto;
+    min-height: 44px;
     padding: 0.6rem 0.85rem;
     font-size: var(--text-2xs);
-    letter-spacing: 0.08em;
+    letter-spacing: var(--track-link);
   }
 
   .menu-toggle {
     display: none;
     align-items: center;
     justify-content: center;
+    /* `width` alone is advisory on a flex item: the declared 44px measured
+       33px on a 320px phone because the default flex-shrink applied. */
+    flex: 0 0 44px;
     width: 44px;
     height: 44px;
     margin-right: -10px;
@@ -282,8 +306,10 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       display: none;
     }
 
+    /* Capped against the viewport as well as the root font: at 200% a 1rem
+       gap is 32px twice over, and the CTA paid for both. */
     .nav-inner {
-      gap: var(--space-s);
+      gap: min(var(--space-s), 4vw);
     }
 
     /* The site's single action stays on screen at phone widths instead of
@@ -313,6 +339,10 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       background: var(--bg);
       border-top: 1px solid var(--line);
       overflow-y: auto;
+      /* The panel is never taller than the screen, so it has nothing of its
+         own to scroll and every drag on it used to scroll the page behind.
+         Paired with the scroll lock in scripts/site.ts. */
+      overscroll-behavior: contain;
     }
 
     .mobile-menu[hidden] {
@@ -331,8 +361,8 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
       gap: var(--space-s);
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 1.375rem;
-      letter-spacing: 0.06em;
+      font-size: var(--text-xl);
+      letter-spacing: var(--track-title);
       text-transform: uppercase;
       padding-block: 1.125rem;
       border-bottom: 1px solid var(--line);
@@ -356,6 +386,32 @@ const cta = CTA_INTENTS[override?.intent ?? nav.cta.intent];
     .nav-link[aria-current='page']::after,
     .nav-link:hover::after {
       opacity: 1;
+    }
+  }
+
+  /* Forced colours -------------------------------------------------
+     The gradient scrim is a background-image, so it is dropped and the links
+     end up on bare foliage; the current-page bar is a background-filled
+     pseudo-element, so it is forced to Canvas and disappears entirely while
+     `aria-current` still says the page is current. */
+  @media (forced-colors: active) {
+    .site-nav {
+      background: Canvas;
+      border-bottom: 1px solid CanvasText;
+    }
+
+    .site-nav::before {
+      display: none;
+    }
+
+    .nav-link[aria-current='page'] {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 4px;
+    }
+
+    .mobile-menu {
+      border-top: 1px solid CanvasText;
     }
   }
 </style>

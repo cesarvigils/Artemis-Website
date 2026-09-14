@@ -372,6 +372,20 @@ if (drivers) checkDrivers(drivers);
 if (events) checkEvents(events);
 checkDriverNames(results, drivers);
 
+/* An empty file is contract-valid and the site renders a deliberate empty
+   state for each one, so this is a warning and never a failure. It is here so
+   that "the results section is gone" is explained in the build log rather
+   than diagnosed from the deployed page. */
+for (const [name, list] of [
+  ['results.json', results],
+  ['drivers.json', drivers],
+  ['events.json', events],
+]) {
+  if (Array.isArray(list) && list.length === 0) {
+    warnings.push(`${name}: file is empty; the site will render its empty state for this section.`);
+  }
+}
+
 for (const line of warnings) console.warn(`warning  ${line}`);
 
 if (errors.length) {

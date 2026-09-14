@@ -15,7 +15,18 @@ import watkinsGlenGtp from '../assets/racing/watkins-glen-gtp.jpg';
 import nascarXfinityChevy from '../assets/racing/nascar-xfinity-chevy.jpg';
 import indianapolisIr18 from '../assets/racing/indianapolis-ir18.jpg';
 
-const SIZES = '(max-width: 900px) 84vw, 46vw';
+/* One `sizes` string cannot describe three slide shapes. Above 900px the
+   slide width is derived from `--frame-h` (24vw, capped at 22rem above
+   1466px) and the shot's own ratio, so each shape gets the fraction it
+   actually occupies plus the fixed width it settles at once the frame caps.
+   The old single "46vw" had the browser fetching a 1024w file for a 275px
+   portrait slide. */
+const SIZES: Record<string, string> = {
+  portrait: '(min-width: 1467px) 282px, (min-width: 901px) 20vw, 68vw',
+  standard: '(min-width: 1467px) 626px, (min-width: 901px) 43vw, 84vw',
+  wide: '(min-width: 1467px) 821px, (min-width: 901px) 56vw, 84vw',
+};
+const sizesFor = (i: number) => SIZES[cars[i].shape] ?? SIZES.standard;
 const altFor = (i: number) =>
   `${cars[i].car} in the Artemis livery at ${cars[i].track}`;
 ---
@@ -49,23 +60,24 @@ const altFor = (i: number) =>
   >
     <ul class="garage-track">
       <GarageSlide car={cars[0].car} track={cars[0].track} caption={cars[0].caption} shape={cars[0].shape}>
-        <Image src={sebringMustangGt3} alt={altFor(0)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+        {/* Ladders stop at each source's own width so Astro never upscales. */}
+        <Image src={sebringMustangGt3} alt={altFor(0)} widths={[320, 480, 640, 1024]} sizes={sizesFor(0)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
 
       <GarageSlide car={cars[1].car} track={cars[1].track} caption={cars[1].caption} shape={cars[1].shape}>
-        <Image src={nordschleifeBmwM4} alt={altFor(1)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+        <Image src={nordschleifeBmwM4} alt={altFor(1)} widths={[320, 480, 640, 960, 1089]} sizes={sizesFor(1)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
 
       <GarageSlide car={cars[2].car} track={cars[2].track} caption={cars[2].caption} shape={cars[2].shape}>
-        <Image src={watkinsGlenGtp} alt={altFor(2)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+        <Image src={watkinsGlenGtp} alt={altFor(2)} widths={[320, 480, 640, 1024]} sizes={sizesFor(2)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
 
       <GarageSlide car={cars[3].car} track={cars[3].track} caption={cars[3].caption} shape={cars[3].shape}>
-        <Image src={nascarXfinityChevy} alt={altFor(3)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+        <Image src={nascarXfinityChevy} alt={altFor(3)} widths={[320, 480, 640, 960, 1280]} sizes={sizesFor(3)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
 
       <GarageSlide car={cars[4].car} track={cars[4].track} caption={cars[4].caption} shape={cars[4].shape}>
-        <Image src={indianapolisIr18} alt={altFor(4)} widths={[640, 1280]} sizes={SIZES} format="webp" quality={72} loading="lazy" decoding="async" />
+        <Image src={indianapolisIr18} alt={altFor(4)} widths={[320, 480, 640, 960, 1280]} sizes={sizesFor(4)} format="webp" quality={72} loading="lazy" decoding="async" />
       </GarageSlide>
     </ul>
   </div>

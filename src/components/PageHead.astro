@@ -10,8 +10,13 @@ const { title, lead, meta } = Astro.props;
 
 /* The inner pages used to open with a heading in the left 45% and a flat void
    beside it. Each page now puts something real in the right column: an entry
-   list, the founding dates, the season summary. */
-const hasAside = Astro.slots.has('aside');
+   list, the founding dates, the season summary.
+   The aside is rendered up front rather than tested with `slots.has`, because
+   a page can pass a slot whose content is conditional on data: with an empty
+   drivers.json `has('aside')` is still true and the split would reserve a
+   column for nothing. */
+const asideHtml = Astro.slots.has('aside') ? await Astro.slots.render('aside') : '';
+const hasAside = asideHtml.replace(/<!--[\s\S]*?-->/g, '').trim().length > 0;
 const hasAction = Astro.slots.has('action');
 ---
 
@@ -45,7 +50,7 @@ const hasAction = Astro.slots.has('action');
     {
       hasAside && (
         <div class="page-head-aside" data-enter style="--enter-delay: 220ms">
-          <slot name="aside" />
+          <Fragment set:html={asideHtml} />
         </div>
       )
     }
@@ -62,13 +67,16 @@ const hasAction = Astro.slots.has('action');
     padding-bottom: var(--space-xl);
   }
 
+  /* `min(..., 100%)` so the cap can never be wider than the column it sits
+     in: at a 200% root font the `em` value alone painted the heading outside
+     its own grid cell. */
   .page-head h1 {
-    max-width: 14ch;
+    max-width: min(11em, 100%);
   }
 
   .page-lead {
     margin-top: var(--space-m);
-    max-width: 44ch;
+    max-width: var(--measure-lead);
   }
 
   /* Not `ch`: this line is tracked mono, and `ch` under-measures tracked text
@@ -89,7 +97,12 @@ const hasAction = Astro.slots.has('action');
     margin-top: var(--space-l);
   }
 
-  @media (min-width: 901px) {
+  /* The split used to start at 901px, which left the copy column at ~450px
+     while `.display-xl` was still at its 73px step: the page's own h1
+     fragmented into three lines with one word alone in the middle and the
+     lead fell to 33.6ch. The grid now starts where the column can carry the
+     type it is asked to hold. */
+  @media (min-width: 1101px) {
     .page-head.has-aside .page-head-inner {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
@@ -98,7 +111,15 @@ const hasAction = Astro.slots.has('action');
     }
   }
 
-  @media (max-width: 900px) {
+  /* One band where the split is on but the column is not yet wide enough for
+     the top step. The heading takes the step below rather than fragmenting. */
+  @media (min-width: 1101px) and (max-width: 1380px) {
+    .page-head.has-aside h1 {
+      font-size: var(--text-4xl);
+    }
+  }
+
+  @media (max-width: 1100px) {
     .page-head-aside {
       margin-top: var(--space-l);
     }

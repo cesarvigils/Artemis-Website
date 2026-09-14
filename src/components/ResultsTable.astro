@@ -8,6 +8,12 @@ interface Props {
 }
 
 const { results, caption } = Astro.props;
+
+/* The separator is glued to the name that follows it with a no-break space,
+   so a wrapped driver list can never end a line on a bare "/" sitting beside
+   the date column. */
+const driverList = (names: string[]) =>
+  names.map((name, i) => (i === 0 ? name : `/\u00A0${name}`)).join(' ');
 ---
 
 <table class="results" role="table">
@@ -26,8 +32,11 @@ const { results, caption } = Astro.props;
       results.map((result) => (
         <tr role="row">
           <td role="cell" class="col-pos" data-label="Pos">
+            {/* A podium is marked by a rule as well as by the teal, so it
+                survives forced colours and reads for a colour-blind visitor. */}
             <span class:list={['pos', { 'is-podium': result.position <= 3 }]}>
               P{result.position}
+              {result.position <= 3 && <span class="sr-only"> podium</span>}
             </span>
             {/* Field size is what turns a position into evidence. It only
                 prints when the record carries it. */}
@@ -44,10 +53,10 @@ const { results, caption } = Astro.props;
             <span class="chip">{result.class}</span>
           </td>
           <td role="cell" class="col-driver" data-label="Drivers">
-            {result.drivers.join(' / ')}
+            {driverList(result.drivers)}
           </td>
           <td role="cell" class="col-date" data-label="Date">
-            {raceDate(result.date)}
+            <span class="date-value">{raceDate(result.date)}</span>
           </td>
         </tr>
       ))
@@ -68,10 +77,27 @@ const { results, caption } = Astro.props;
     font-weight: 400;
   }
 
+  /* `baseline`, not `top`: the position marker is 28px and the event name is
+     17px, so top-aligned they shared a box edge and their first baselines sat
+     11px apart. In a layout that is meant to be a timing tower, column one
+     has to line up with column two. */
   .results td {
     padding-block: 1.1rem;
     border-bottom: 1px solid var(--line);
-    vertical-align: top;
+    vertical-align: baseline;
+  }
+
+  /* A real gutter, so column separation stops depending on how wide each
+     class chip happens to be. Measured variance before this: 16px after
+     "NASCAR Xfinity", 109px after "GT3", in the same column. */
+  .results th,
+  .results td {
+    padding-inline-end: var(--space-l);
+  }
+
+  .results th:last-child,
+  .results td:last-child {
+    padding-inline-end: 0;
   }
 
   .results tbody tr:last-child td {
@@ -81,8 +107,11 @@ const { results, caption } = Astro.props;
   .col-pos {
     width: 6rem;
   }
+  /* The chip sets its own column instead of a fixed 9.5rem that left a hole
+     after short class names and none after long ones. */
   .col-class {
-    width: 9.5rem;
+    width: 1%;
+    white-space: nowrap;
   }
   .col-driver {
     width: 26%;
@@ -92,17 +121,18 @@ const { results, caption } = Astro.props;
   }
 
   .pos {
-    display: block;
+    display: inline-block;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: 700;
     font-size: var(--text-xl);
-    line-height: 1;
+    line-height: var(--leading-snug);
     color: var(--ink-faint);
   }
 
   .pos.is-podium {
     color: var(--teal);
+    border-bottom: 2px solid currentColor;
   }
 
   .pos-field {
@@ -111,6 +141,7 @@ const { results, caption } = Astro.props;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
     letter-spacing: var(--track-data);
     color: var(--ink-faint);
   }
@@ -120,12 +151,15 @@ const { results, caption } = Astro.props;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-base);
-    letter-spacing: 0.04em;
+    letter-spacing: var(--track-title);
     text-transform: uppercase;
-    line-height: 1.25;
+    line-height: var(--leading-snug);
     /* `text-wrap: balance` is set on h1-h4 globally; this heading is a span
        inside a cell, so it needs saying here or it orphans a word. */
     text-wrap: balance;
+    /* A 57-character circuit name is one unbreakable token; without this it
+       paints 408px outside its cell at 390 and the body clip eats it. */
+    overflow-wrap: anywhere;
   }
 
   .event-series {
@@ -133,6 +167,7 @@ const { results, caption } = Astro.props;
     margin-top: 0.3rem;
     font-family: var(--font-mono);
     font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
     color: var(--ink-faint);
@@ -145,7 +180,7 @@ const { results, caption } = Astro.props;
     margin-top: 0.4rem;
     max-width: 56ch;
     font-size: var(--text-sm);
-    line-height: 1.5;
+    line-height: var(--leading-body);
     color: var(--ink-dim);
     text-wrap: pretty;
   }
@@ -155,7 +190,8 @@ const { results, caption } = Astro.props;
     white-space: nowrap;
     font-family: var(--font-mono);
     font-size: var(--text-2xs);
-    letter-spacing: 0.1em;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-faint);
     padding: 0.3rem 0.5rem;
@@ -165,15 +201,22 @@ const { results, caption } = Astro.props;
   .col-driver {
     font-size: var(--text-sm);
     color: var(--ink-dim);
-    line-height: 1.5;
+    line-height: var(--leading-body);
+    overflow-wrap: anywhere;
   }
 
   .col-date {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
     letter-spacing: var(--track-data);
     color: var(--ink-faint);
+  }
+
+  /* The date keeps itself on one line; the cell around it (which carries a
+     "Date:" prefix in the stacked layout) is free to wrap. */
+  .date-value {
     white-space: nowrap;
   }
 
@@ -195,9 +238,11 @@ const { results, caption } = Astro.props;
       display: none;
     }
 
+    /* The position gutter is capped as a share of the row as well as in rem:
+       at a 200% root font 4.75rem is 152px of a 350px line. */
     .results tr {
       position: relative;
-      padding: var(--space-m) 0 var(--space-m) 4.75rem;
+      padding: var(--space-m) 0 var(--space-m) min(4.75rem, 30%);
       border-bottom: 1px solid var(--line);
     }
 
@@ -207,6 +252,7 @@ const { results, caption } = Astro.props;
 
     .results td {
       padding-block: 0;
+      padding-inline-end: 0;
       border-bottom: none;
     }
 
@@ -234,6 +280,47 @@ const { results, caption } = Astro.props;
 
     .col-class {
       margin-top: 0.8rem;
+    }
+  }
+
+  /* A 768px tablet is not a phone: the stacked entry used about 60% of its
+     line and made the section 54% taller than the same six rows at 1024. The
+     row stays a stack but runs as three tracks, so the width is used. The
+     explicit ARIA roles above keep this announced as a table throughout. */
+  @media (min-width: 621px) and (max-width: 860px) {
+    .results tr {
+      display: grid;
+      grid-template-columns: 4.75rem minmax(0, 1.7fr) minmax(0, 1fr);
+      gap: var(--space-2xs) var(--space-m);
+      align-content: start;
+      padding-left: 0;
+    }
+
+    .col-pos {
+      position: static;
+      grid-area: 1 / 1 / span 3 / auto;
+    }
+
+    .col-event {
+      grid-area: 1 / 2 / span 3 / auto;
+    }
+
+    .col-class {
+      grid-area: 1 / 3 / auto / auto;
+    }
+
+    .col-driver {
+      grid-area: 2 / 3 / auto / auto;
+    }
+
+    .col-date {
+      grid-area: 3 / 3 / auto / auto;
+    }
+
+    .col-class,
+    .col-driver,
+    .col-date {
+      margin-top: 0;
     }
   }
 </style>

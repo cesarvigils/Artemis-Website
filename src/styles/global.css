@@ -68,22 +68,51 @@
   --font-body: 'Nexa', 'Avenir Next', 'Helvetica Neue', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  --text-2xs: 0.75rem;
+  /* Size. The bottom of the scale used to be 12/13/15 - ratios of 1.08 and
+     1.15 - which is not a scale, it is three sizes nobody can tell apart. The
+     micro step is 11px so a field label reads as a different thing from a nav
+     link. The display steps carry a `vw` ceiling as well as a `rem` floor:
+     at a 200% root font the floor alone doubled and painted headings straight
+     out of their columns. */
+  --text-2xs: 0.6875rem;
   --text-xs: 0.8125rem;
   --text-sm: 0.9375rem;
   --text-base: 1.0625rem;
   --text-lg: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
   --text-xl: clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem);
   --text-2xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
-  --text-3xl: clamp(1.875rem, 1.4rem + 2.4vw, 3rem);
-  --text-4xl: clamp(2.375rem, 1.7rem + 3.4vw, 4rem);
-  --text-5xl: clamp(2.75rem, 1.95rem + 4.1vw, 5rem);
+  --text-3xl: min(clamp(1.875rem, 1.4rem + 2.4vw, 3rem), 11vw);
+  --text-4xl: min(clamp(2.375rem, 1.7rem + 3.4vw, 4rem), 13vw);
+  --text-5xl: min(clamp(2.75rem, 1.95rem + 4.1vw, 5rem), 15vw);
 
+  /* Car numbers are the loudest data voice on the site; they ride the
+     heading scale rather than drifting past it on four hard-coded clamps. */
+  --number-md: var(--text-2xl);
+  --number-lg: var(--text-4xl);
+
+  /* Leading. Four steps, one per role. Before this, ~20 tracked uppercase
+     labels silently inherited the body's 1.7 and one heading led looser than
+     the sentence under it. */
+  --leading-display: 1.04;
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-body: 1.6;
+
+  /* Tracking. One value per role. Ten hard-coded em values across eleven
+     files used to give five identical uppercase link styles five different
+     tracks. `--track-link` covers uppercase micro-caps: interactive labels
+     and the class chips. */
   --track-display: -0.01em;
+  --track-title: 0.04em;
+  --track-link: 0.1em;
   --track-label: 0.16em;
   --track-data: 0.02em;
+  --track-lockup: 0.06em;
 
-  /* Space. One fluid rhythm; sections vary deliberately. */
+  /* Space. One fluid rhythm; sections vary deliberately.
+     The top two steps are keyed to width like everything else here. Keyed to
+     `vh` they made the widest layout the tightest one, and gave two people on
+     identical monitors a different rhythm because one had a shorter window. */
   --space-3xs: 0.25rem;
   --space-2xs: 0.5rem;
   --space-xs: 0.75rem;
@@ -91,11 +120,14 @@
   --space-m: 1.5rem;
   --space-l: 2.5rem;
   --space-xl: 4rem;
-  --space-2xl: clamp(4rem, 9vh, 7rem);
-  --space-3xl: clamp(5.5rem, 13vh, 9.5rem);
+  --space-2xl: clamp(4rem, 2.5rem + 5vw, 7rem);
+  --space-3xl: clamp(5.5rem, 3.5rem + 7vw, 9.5rem);
 
   --pad-x: clamp(1.25rem, 4vw, 3.5rem);
   --measure: 66ch;
+  /* One cap for every `.lead` on the site. Five different values between 39
+     and 54ch used to mean the same element read differently on every page. */
+  --measure-lead: 52ch;
   --shell: 1400px;
 
   /* Shape. Committed: everything is square. */
@@ -119,12 +151,15 @@
   --z-menu: 110;
   --z-skip: 200;
 
-  --nav-h: 60px;
+  /* The bar has to contain a 44px compact CTA, and it has to keep containing
+     it when the reader's root font is 200%: the `rem` term grows with the
+     text, the `px` floor and ceiling keep the bar sane at either end. */
+  --nav-h: clamp(64px, 4rem, 88px);
 }
 
 @media (min-width: 821px) {
   :root {
-    --nav-h: 72px;
+    --nav-h: clamp(72px, 4.5rem, 96px);
   }
 }
 
@@ -151,7 +186,7 @@ body {
   font-family: var(--font-body);
   font-weight: 300;
   font-size: var(--text-base);
-  line-height: 1.7;
+  line-height: var(--leading-body);
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
@@ -199,10 +234,14 @@ h3,
 h4 {
   font-family: var(--font-display);
   font-weight: 700;
-  line-height: 1.04;
+  line-height: var(--leading-display);
   letter-spacing: var(--track-display);
   text-transform: uppercase;
   text-wrap: balance;
+  /* A circuit name the bot writes as one 57-character token used to paint
+     straight out of its cell, and `overflow-x: clip` then cut it off with no
+     scrollbar and no ellipsis. Headings break rather than escape. */
+  overflow-wrap: anywhere;
 }
 
 p {
@@ -226,7 +265,7 @@ p {
 
 .lead {
   font-size: var(--text-lg);
-  line-height: 1.55;
+  line-height: var(--leading-body);
   color: var(--ink-dim);
 }
 
@@ -236,6 +275,7 @@ p {
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--track-data);
   font-size: var(--text-xs);
+  line-height: var(--leading-tight);
 }
 
 /* One small tracked label style. Used for genuine field labels in data
@@ -243,17 +283,23 @@ p {
 .field-label {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
+  line-height: var(--leading-tight);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--ink-faint);
+  overflow-wrap: anywhere;
 }
 
 /* Layout ----------------------------------------------------------- */
+/* The `env()` terms matter in landscape on a notched phone, where the inset
+   is on the left or right rather than the bottom. They resolve to 0 (and the
+   gutter is just `--pad-x`) everywhere else. */
 .container {
   width: 100%;
   max-width: var(--shell);
   margin-inline: auto;
-  padding-inline: var(--pad-x);
+  padding-inline: max(var(--pad-x), env(safe-area-inset-left))
+    max(var(--pad-x), env(safe-area-inset-right));
 }
 
 .section {
@@ -279,8 +325,11 @@ p {
   margin-bottom: var(--space-l);
 }
 
+/* `em`, not `ch`. `ch` is the advance of "0"; uppercase Nexa is about a fifth
+   wider per character, so an "18ch" cap actually held 14 glyphs and the nine
+   `ch` caps across the site were not comparable with each other. */
 .section-head h2 {
-  max-width: 18ch;
+  max-width: 14em;
 }
 
 /* Stacked variant: heading with its own explainer underneath, never a
@@ -292,7 +341,7 @@ p {
 }
 
 .section-head-stack .lead {
-  max-width: 44ch;
+  max-width: var(--measure-lead);
 }
 
 /* Roster teaser: hairline columns, no card boxes. The first column is wider so
@@ -306,36 +355,37 @@ p {
 /* The lead cell carries a larger number, so the row reads as one entry plus
    three rather than four identical cells. Lives here, not in DriverCard,
    because the <ul> belongs to the page and component styles are scoped. */
-.roster-teaser > li:first-child .driver-number {
-  font-size: clamp(2.75rem, 5.2vw, 3.75rem);
+.roster-teaser > li:first-child {
+  --compact-number-size: var(--number-lg);
 }
 
 .roster-teaser > li + li {
   border-left: 1px solid var(--line);
-}
-
-.roster-teaser > li + li > a {
-  padding-left: var(--space-m);
+  /* A custom property, not a selector. `.roster-teaser > li + li > a` is
+     (0,1,3) and DriverCard's own scoped `padding` shorthand is (0,3,1), so the
+     page rule never applied and four names sat 1px from their hairlines.
+     Custom properties cross the scope boundary; selectors do not. */
+  --compact-inset: var(--space-m);
 }
 
 @media (max-width: 900px) {
   .roster-teaser {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .roster-teaser > li:first-child .driver-number {
-    font-size: clamp(2.25rem, 4vw, 3rem);
+  /* Two columns: the "one entry plus three" idea needs a four-across row, so
+     the lead cell goes back to the shared number size. */
+  .roster-teaser > li:first-child {
+    --compact-number-size: var(--number-md);
   }
   .roster-teaser > li:nth-child(n + 3) {
     border-top: 1px solid var(--line);
   }
   .roster-teaser > li:nth-child(odd) {
     border-left: none;
+    --compact-inset: 0;
   }
-  .roster-teaser > li:nth-child(odd) > a {
-    padding-left: 0;
-  }
-  .roster-teaser > li:nth-child(even) > a {
-    padding-left: var(--space-m);
+  .roster-teaser > li:nth-child(even) {
+    --compact-inset: var(--space-m);
   }
 }
 
@@ -348,9 +398,10 @@ p {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--text-sm);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--track-link);
   text-transform: uppercase;
-  padding-block: 0.25rem;
+  /* 0.25rem gave a 35px control. This reads identically and clears 44px. */
+  padding-block: 0.65rem;
   border-bottom: 1px solid var(--line-teal);
   transition: border-color var(--dur-hover) var(--ease-out),
     color var(--dur-hover) var(--ease-out);
@@ -379,10 +430,16 @@ p {
   font-weight: 700;
   font-size: var(--text-sm);
   line-height: 1;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--track-link);
   text-transform: uppercase;
-  white-space: nowrap;
-  padding: 1.0625rem 1.75rem;
+  /* Not `white-space: nowrap`. A nowrap label has an unshrinkable min-content
+     width, and at a 200% root font "Partner with us" was 457px wide on a
+     390px phone - which pushed the layout viewport out to 597px and took the
+     hamburger off the screen with it. The label wraps instead. */
+  text-wrap: balance;
+  /* The inline padding is also capped against the viewport: 1.75rem is 56px
+     a side at a 200% root, which is a third of a 350px line spent on air. */
+  padding: 1.0625rem min(1.75rem, 7vw);
   border: 1px solid transparent;
   border-radius: var(--radius);
   cursor: pointer;
@@ -407,7 +464,9 @@ p {
 }
 
 .btn-sm {
-  padding: 0.75rem 1.25rem;
+  /* Smaller type and tighter padding, but still a 44px control. */
+  min-height: 44px;
+  padding: 0.75rem min(1.25rem, 5vw);
   font-size: var(--text-xs);
 }
 
@@ -433,7 +492,7 @@ p {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--text-xs);
-  letter-spacing: 0.12em;
+  letter-spacing: var(--track-link);
   text-transform: uppercase;
   padding: 0.9rem 1.25rem;
   /* Deliberately not animated: the skip link is reached by Tab, and a
@@ -549,5 +608,55 @@ html.js .reveal.in-view {
   .text-link:hover svg,
   .btn:active {
     transform: none;
+  }
+}
+
+/* More contrast ----------------------------------------------------
+   Nothing on the site hardcodes these five values, so raising the tokens
+   raises every hairline, every dim step and every faint step at once. The
+   0.12-alpha rules are the whole structural vocabulary of this direction;
+   a reader who has asked for more contrast should be able to see them.
+------------------------------------------------------------------- */
+@media (prefers-contrast: more) {
+  :root {
+    --ink-dim: #ebfffb;
+    --ink-faint: rgba(235, 255, 251, 0.78);
+    --line: rgba(235, 255, 251, 0.34);
+    --line-strong: rgba(235, 255, 251, 0.6);
+    --line-teal: rgba(15, 255, 207, 0.7);
+    --teal-soft: #0fffcf;
+  }
+}
+
+/* Forced colours ---------------------------------------------------
+   Windows High Contrast drops every background-image, which on this site
+   means every legibility scrim, and flattens both buttons to one link
+   colour. The rule below: anything that carries meaning is expressed as a
+   border, an outline or an opaque system colour - never as a gradient.
+------------------------------------------------------------------- */
+@media (forced-colors: active) {
+  /* Primary and secondary rendered identically: same transparent ground,
+     same LinkText border, same LinkText label. The page lost its call to
+     action. Highlight/HighlightText is the one pair the OS guarantees. */
+  .btn-solid {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+    border: 2px solid Highlight;
+  }
+
+  .btn-ghost {
+    border: 1px solid ButtonText;
+  }
+
+  .btn-solid:focus-visible {
+    outline: 3px solid CanvasText;
+    outline-offset: 3px;
+  }
+
+  /* A 1px pseudo-element filled with `background` is forced to Canvas and
+     disappears; a border keeps its forced colour. */
+  .text-link {
+    border-bottom-width: 2px;
   }
 }

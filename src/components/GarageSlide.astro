@@ -35,8 +35,11 @@ const { car, track, caption, shape = 'standard' } = Astro.props;
     scroll-snap-align: start;
   }
 
+  /* A floor, because the slide also has to hold its own caption: derived
+     purely from the frame height, the portrait slide was 196px at 1024 and
+     its caption measured 20.6ch beside a 46ch caption in the same row. */
   .garage-slide.is-portrait {
-    width: calc(var(--frame-h) * 4 / 5);
+    width: max(15rem, calc(var(--frame-h) * 4 / 5));
   }
 
   .garage-slide.is-wide {
@@ -82,23 +85,31 @@ const { car, track, caption, shape = 'standard' } = Astro.props;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-sm);
-    letter-spacing: 0.06em;
+    letter-spacing: var(--track-title);
     text-transform: uppercase;
     color: var(--teal);
+    overflow-wrap: anywhere;
   }
 
   .slide-track {
     color: var(--ink-faint);
     font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
     text-transform: uppercase;
     letter-spacing: var(--track-label);
+    overflow-wrap: anywhere;
   }
 
+  /* The other half of the same problem: without a cap the caption measure is
+     whatever the photograph's aspect ratio happens to give it, so the wide
+     slide ran to 55ch beside the portrait's 21ch. */
   .slide-caption {
     margin-top: 0.15rem;
+    max-width: 40ch;
     font-size: var(--text-sm);
     color: var(--ink-dim);
-    line-height: 1.5;
+    line-height: var(--leading-body);
+    text-wrap: pretty;
   }
 
   /* Below 900px the frame is width-driven instead, so a slide always

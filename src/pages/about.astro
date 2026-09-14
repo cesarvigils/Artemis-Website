@@ -58,11 +58,14 @@ import portrait from '../assets/photos/member-portrait.jpg';
       <div class="collage">
         <figure class="shot shot-wide reveal">
           <div class="shot-frame">
+          {/* Measured fractions, not guesses: the frame renders at 38% of a
+              1440 viewport and stops growing at 545px once the shell caps,
+              so the vw term is bracketed on both sides. */}
           <Image
             src={huddle}
             alt="The Artemis Esports crew standing together outside an event in team jerseys"
-            widths={[640, 1280, 1920]}
-            sizes="(max-width: 900px) 100vw, 45vw"
+            widths={[400, 640, 960, 1280, 1920]}
+            sizes="(min-width: 1512px) 545px, (min-width: 901px) 38vw, 100vw"
             format="webp"
             quality={72}
             loading="lazy"
@@ -79,8 +82,8 @@ import portrait from '../assets/photos/member-portrait.jpg';
           <Image
             src={lan}
             alt="An Artemis player competing on stage at a LAN event"
-            widths={[640, 1280]}
-            sizes="(max-width: 900px) 50vw, 30vw"
+            widths={[160, 320, 400, 480, 640, 853]}
+            sizes="(min-width: 1512px) 320px, (min-width: 901px) 23vw, 46vw"
             format="webp"
             quality={72}
             loading="lazy"
@@ -94,8 +97,8 @@ import portrait from '../assets/photos/member-portrait.jpg';
           <Image
             src={portrait}
             alt="An Artemis Esports member in the team jersey at an event"
-            widths={[640, 1280]}
-            sizes="(max-width: 900px) 50vw, 30vw"
+            widths={[160, 320, 400, 480, 640, 960, 1280]}
+            sizes="(min-width: 1512px) 376px, (min-width: 901px) 27vw, 46vw"
             format="webp"
             quality={72}
             loading="lazy"
@@ -154,7 +157,7 @@ import portrait from '../assets/photos/member-portrait.jpg';
   }
 
   .origin-inner h2 {
-    max-width: 10ch;
+    max-width: 8em;
   }
 
   .origin-copy {
@@ -165,9 +168,9 @@ import portrait from '../assets/photos/member-portrait.jpg';
 
   .origin-copy p {
     font-size: var(--text-lg);
-    line-height: 1.6;
+    line-height: var(--leading-body);
     color: var(--ink-dim);
-    max-width: 52ch;
+    max-width: var(--measure-lead);
   }
 
   .origin-copy p:first-child {
@@ -204,8 +207,9 @@ import portrait from '../assets/photos/member-portrait.jpg';
     max-width: 42ch;
     color: var(--ink-dim);
     font-size: var(--text-sm);
-    line-height: 1.5;
+    line-height: var(--leading-body);
     text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
 
   .shot-wide .shot-frame {

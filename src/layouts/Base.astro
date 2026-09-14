@@ -36,7 +36,9 @@ const structuredData = {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {/* `viewport-fit=cover` or every `env(safe-area-inset-*)` on the site
+        resolves to 0 and the notch handling is decorative. */}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#000a08" />

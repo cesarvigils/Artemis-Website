@@ -67,6 +67,15 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
     color: var(--line-teal);
   }
 
+  /* Sized by width, not height. `Mark` sets `height: var(--mark-size);
+     width: auto`, and the global `svg { max-width: 100% }` then clamped the
+     width to the column while the height stayed at 288px, letterboxing a
+     190px glyph in a 288px box with 50px of dead space above and below. */
+  .notfound-mark :global(svg) {
+    width: var(--mark-size);
+    height: auto;
+  }
+
   .notfound-code {
     color: var(--teal);
     letter-spacing: var(--track-label);
@@ -75,7 +84,7 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
 
   .notfound-copy .lead {
     margin-top: var(--space-s);
-    max-width: 38ch;
+    max-width: var(--measure-lead);
   }
 
   .notfound-actions {
@@ -95,10 +104,14 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
   }
 
   .notfound-links a {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--text-xs);
-    letter-spacing: 0.12em;
+    letter-spacing: var(--track-link);
     text-transform: uppercase;
     color: var(--ink-dim);
     transition: color var(--dur-hover) var(--ease-out);
@@ -110,7 +123,10 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
     }
   }
 
-  @media (max-width: 760px) {
+  /* 860, not 760: at 768 the split survived into a 193px left column holding
+     a 288px mark, and the equal-flex CTA rule was behind the same query, so
+     the two buttons stacked at mismatched widths. */
+  @media (max-width: 860px) {
     .notfound-inner {
       grid-template-columns: 1fr;
       gap: var(--space-l);
@@ -120,6 +136,7 @@ const pages = nav.primary.filter((link) => !link.href.includes('#'));
     }
     .notfound-actions .btn {
       flex: 1 1 13rem;
+      max-width: 22rem;
     }
   }
 </style>
