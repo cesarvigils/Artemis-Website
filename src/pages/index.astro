@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+
+const currentYear = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000a08" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Artemis Esports is currently undergoing scheduled maintenance."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Artemis Esports</title>
+  </head>
+
+  <body>
+    <div class="page-shell">
+      <div class="grid" aria-hidden="true"></div>
+      <div class="glow glow--left" aria-hidden="true"></div>
+      <div class="glow glow--right" aria-hidden="true"></div>
+
+
+        <div class="system-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          Scheduled maintenance
+        </div>
+      </header>
+
+      <main class="maintenance-card">
+        <p class="eyebrow"><span>01</span> System update in progress</p>
+
+        <h1>WE'LL BE<br /><span>RIGHT BACK.</span></h1>
+
+        <p class="message">
+          The Artemis Esports website is currently undergoing maintenance.
+          We're making improvements and will be back online soon.
+        </p>
+
+        <div class="progress" aria-label="Maintenance in progress">
+          <div class="progress__meta">
+            <span>IN PROGRESS</span>
+          </div>
+          <div class="progress__track" aria-hidden="true">
+            <span></span>
+          </div>
+        </div>
+
+      </main>
+
+      <footer class="site-footer">
+        <p>&copy; {currentYear} Artemis Esports</p>
+        <p>ARTEMISESPORTS.COM</p>
+      </footer>
+    </div>
+  </body>
+</html>
