@@ -1,0 +1,82 @@
+name: IndexNow
+
+# Tell IndexNow the site changed, once per deploy of `master`.
+#
+# Google does not participate in IndexNow; Bing, Yandex, Seznam and Naver
+# do, and one submission reaches all of them. The reason it is worth a
+# workflow on a site this size is second-order: Bing's index is what
+# ChatGPT's search is grounded in, so this is the cheapest lever the repo
+# has on an AI surface it is otherwise passive on.
+#
+# The whole job is a no-op without the INDEXNOW_KEY secret, which is also
+# what gates the key file the site serves (src/pages/[key].txt.ts). The two
+# read the same value, so the site can never advertise a key the pinger
+# does not use, or vice versa.
+on:
+  push:
+    branches: [master]
+
+# One submission at a time, and never cancel one in flight: a cancelled
+# ping is a lost notification, not a retried one.
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    name: Submit changed URLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Submit the sitemap's URLs to IndexNow
+        env:
+          KEY: ${{ secrets.INDEXNOW_KEY }}
+          HOST: artemisesports.com
+        run: |
+          set -euo pipefail
+
+          if [ -z "${KEY:-}" ]; then
+            echo "INDEXNOW_KEY is not set - skipping. See DEPLOY.md to enable."
+            exit 0
+          fi
+
+          # Read the live sitemap rather than rebuilding: it is the same
+          # document the engines are being pointed at, so the two can never
+          # disagree about which URLs exist. Deployment is not instant, so
+          # give Vercel a moment to publish this commit first.
+          sleep 45
+
+          urls=$(curl -fsS --retry 3 --retry-delay 5 "https://${HOST}/sitemap.xml" \
+            | grep -o '<loc>[^<]*</loc>' \
+            | sed 's|</\?loc>||g')
+
+          if [ -z "$urls" ]; then
+            echo "No URLs found in the sitemap - nothing to submit."
+            exit 0
+          fi
+
+          count=$(printf '%s\n' "$urls" | wc -l | tr -d ' ')
+          echo "Submitting $count URL(s)."
+
+          # jq builds the payload so a URL containing a character that would
+          # break hand-rolled JSON cannot produce a malformed body.
+          payload=$(printf '%s\n' "$urls" | jq -R . | jq -s \
+            --arg host "$HOST" --arg key "$KEY" \
+            '{host: $host, key: $key, keyLocation: "https://\($host)/\($key).txt", urlList: .}')
+
+          # 200 and 202 both mean accepted. 422 usually means the key file
+          # did not validate, which is worth failing on - a silent 422 is
+          # how this quietly stops working.
+          status=$(curl -sS -o /tmp/indexnow.out -w '%{http_code}' \
+            -X POST 'https://api.indexnow.org/IndexNow' \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            --data "$payload")
+
+          echo "IndexNow responded $status"
+          cat /tmp/indexnow.out || true
+
+          case "$status" in
+            200|202) echo "Accepted." ;;
+            *) echo "::error::IndexNow rejected the submission ($status)"; exit 1 ;;
+          esac

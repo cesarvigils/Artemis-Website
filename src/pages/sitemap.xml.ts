@@ -89,7 +89,16 @@ const PAGES: SitemapPage[] = [
       ...(events as RaceEvent[]).map((e) => e.start)
     ),
   },
-  { path: '/team', changefreq: 'weekly', priority: '0.8' },
+  {
+    path: '/team',
+    changefreq: 'weekly',
+    priority: '0.8',
+    /* Every roster card prints that driver's last result ("2nd of 41,
+       Suzuka 1000, <date>"), so the newest result is genuinely when this
+       page last changed. The live iRating on a card comes from stats.json,
+       which is generated and uncommitted, so it cannot date anything. */
+    lastmod: newest(...(results as RaceResult[]).map((r) => r.date)),
+  },
   { path: '/join', changefreq: 'monthly', priority: '0.9' },
   { path: '/partners', changefreq: 'monthly', priority: '0.8' },
   { path: '/about', changefreq: 'yearly', priority: '0.5' },

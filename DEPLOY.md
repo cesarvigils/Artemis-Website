@@ -109,6 +109,52 @@ crawlable.** Every `*.vercel.app` preview serves the same `robots.txt` with
 Vercel project settings (Settings -> Deployment Protection), which is
 environment-aware in a way a static config file is not.
 
+## 0d. IndexNow (optional)
+
+IndexNow is a push protocol: instead of waiting for a crawler, the site tells
+the engine a URL changed. One submission reaches Bing, Yandex, Seznam and
+Naver. **Google does not participate**, so this is not a replacement for the
+sitemap.
+
+It is worth the setup for a second-order reason: Bing's index is what
+ChatGPT's search is grounded in, which makes this the cheapest lever the repo
+has on an AI surface it is otherwise passive on.
+
+Two pieces, both reading one value:
+
+1. `src/pages/[key].txt.ts` serves the key back at `/<key>.txt`, which is how
+   ownership is proven. Possession of the file proves control of the host -
+   the key is **not a secret**, and is public by design.
+2. `.github/workflows/indexnow.yml` submits the sitemap's URLs after each
+   push to `master`.
+
+To enable:
+
+```bash
+# Any 8-128 characters from [A-Za-z0-9-]. A UUID with the dashes kept is fine.
+uuidgen | tr '[:upper:]' '[:lower:]'
+```
+
+- Set `INDEXNOW_KEY` as a **Vercel environment variable** (Production), so the
+  key file is built and served. It is read at build time, so it needs a
+  redeploy.
+- Set `INDEXNOW_KEY` as a **GitHub Actions secret** with the same value, so
+  the workflow submits under a key the site will validate.
+
+Both must match. If they do not, the endpoint answers 422 and the workflow
+fails loudly rather than silently doing nothing.
+
+With the variable unset, no key file is emitted and the workflow skips itself,
+so a fork or a preview never advertises a key it cannot honour.
+
+Verify after the first deploy:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://artemisesports.com/<key>.txt
+```
+
+It must be `200`, not a redirect - Bing will not follow one to find the key.
+
 ## 1. Build
 
 ```

@@ -68,6 +68,36 @@ const driverCount = (drivers as Driver[]).filter(
    multi-day entry. The track is a VirtualLocation, because the race
    happens on iRacing and not at the circuit whose name it borrows -
    saying otherwise would place a sim race at a physical address. */
+/* Completed races, as SportsEvent too. The calendar covers what is coming;
+   these are what the team has actually done, which is the evidence half of
+   the record and the half a search engine has no other way to read - the
+   results table is markup-free rows of text.
+
+   `EventScheduled` would be wrong on a race already run, so these carry
+   `eventStatus: EventCompleted`. No finishing position: schema.org has no
+   honest place for "we came 2nd of 41" on a SportsEvent without inventing
+   a subEvent tree per class, and a half-described result is worse than a
+   well-described event. The position stays where it is legible, in the
+   table on the page.
+
+   Same placeholder rule, so this is empty today and switches itself on. */
+const resultSchema = (results as RaceResult[])
+  .filter((result) => result._placeholder !== true)
+  .map((result) => ({
+    '@type': 'SportsEvent',
+    '@id': new URL(`/#result-${result.id}`, Astro.site).href,
+    name: result.event,
+    startDate: result.date,
+    eventStatus: 'https://schema.org/EventCompleted',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    location: {
+      '@type': 'VirtualLocation',
+      name: `${result.track} (iRacing)`,
+      url: 'https://www.iracing.com/',
+    },
+    competitor: { '@id': new URL('/#organization', Astro.site).href },
+  }));
+
 const eventSchema = upcoming
   .filter((event) => event._placeholder !== true)
   .map((event) => ({
@@ -98,7 +128,7 @@ const eventSchema = upcoming
        browser selecting for 390px and displaying across 507px. */
     sizes: '(max-width: 900px) 130vw, 62vw',
   }}
-  schema={eventSchema}
+  schema={[...eventSchema, ...resultSchema]}
 >
   <Hero
     image={heroImg}

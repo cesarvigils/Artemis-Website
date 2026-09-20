@@ -44,11 +44,46 @@ const sections = GROUPS.map((group) => ({
 
 const racingDrivers = roster.filter((driver) => driver.role === 'driver');
 const crewCount = roster.length - racingDrivers.length;
+
+/* The roster as an ItemList, which is what makes this a CollectionPage
+   with something in it rather than a page merely typed as one. The list
+   says what the page is a list OF and in what order it is presented.
+
+   Same placeholder rule as everywhere else: an invented driver is not
+   named here. Today that leaves an empty list, so the node is dropped
+   entirely rather than shipping `numberOfItems: 0`, which would assert
+   that Artemis has no drivers - a worse claim than saying nothing.
+
+   Entries point at each driver's Person node by @id where the driver has
+   a page, so the list resolves to the same entities those pages describe
+   instead of duplicating them as strings. */
+const listed = racingDrivers.filter((driver) => driver._placeholder !== true);
+
+const rosterSchema = listed.length
+  ? [
+      {
+        '@type': 'ItemList',
+        '@id': new URL('/team#roster', Astro.site).href,
+        name: 'Artemis Esports roster',
+        numberOfItems: listed.length,
+        itemListOrder: 'https://schema.org/ItemListUnordered',
+        itemListElement: listed.map((driver, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          item: hasOwnPage(driver)
+            ? { '@id': new URL(`/team/${driver.id}#person`, Astro.site).href }
+            : { '@type': 'Person', name: driver.name, jobTitle: driver.focus },
+        })),
+      },
+    ]
+  : [];
 ---
 
 <Base
-  title="Team | Artemis Esports"
-  description="The Artemis Esports roster: road drivers, oval drivers and the pitwall behind the endurance and GT program on iRacing."
+  pageType="CollectionPage"
+  schema={rosterSchema}
+  title="The iRacing roster: drivers and pitwall | Artemis Esports"
+  description="The Artemis Esports roster: road and oval drivers, and the pitwall behind the endurance and GT programme on iRacing. Last result and ratings per seat."
 >
   <PageHead
     title="The crew"
