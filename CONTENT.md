@@ -457,7 +457,19 @@ is why there is no cookie banner on this site.
 things a visitor acts on and `/about` is the one they read last.
 
 Adding a page means adding a file in `src/pages/`, a line in `primary`, a line
-in `footer`, and a `<url>` in `public/sitemap.xml`.
+in `footer`, and an entry in the `PAGES` list in `src/pages/sitemap.xml.ts`.
+
+Driver pages are the exception and need none of that. `/team/<id>` is generated
+from `drivers.json`, one per active record whose `role` is `driver`, and the
+sitemap picks it up from the same file. Publishing a driver publishes their
+page; setting `active: false` removes both. Pitwall and staff get no page - the
+roster row already holds everything their record carries, so their name on
+`/team` stays plain text rather than linking somewhere thinner.
+
+While a driver record still carries `"_placeholder": true`, their page is built
+and reachable but carries `noindex` and stays out of the sitemap: invented
+people are fine to look at locally and not fine to hand to a search engine.
+Both clear themselves when the flag comes off.
 
 ---
 

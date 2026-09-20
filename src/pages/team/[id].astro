@@ -1,0 +1,299 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import ResultsTable from '../../components/ResultsTable.astro';
+import FormLine from '../../components/FormLine.astro';
+import JoinCta from '../../components/JoinCta.astro';
+import Icon from '../../components/Icon.astro';
+
+import drivers from '../../data/drivers.json';
+import results from '../../data/results.json';
+import {
+  activeDrivers,
+  driverProfile,
+  hasOwnPage,
+  podiumCount,
+  resultsForDriver,
+  socialsOf,
+  type Driver,
+  type RaceResult,
+} from '../../lib/data';
+import { socialLabel } from '../../lib/links';
+import { stats } from '../../lib/stats';
+
+/* One page per active driver. Pitwall and staff are deliberately excluded -
+   see `hasOwnPage` - so their roster row stays the whole record and the
+   roster does not link to a page thinner than the row that linked to it. */
+export function getStaticPaths() {
+  return activeDrivers(drivers as Driver[])
+    .filter(hasOwnPage)
+    .map((driver) => ({ params: { id: driver.id }, props: { driver } }));
+}
+
+interface Props {
+  driver: Driver;
+}
+
+const { driver } = Astro.props;
+
+const entries = resultsForDriver(results as RaceResult[], driver.name);
+const podiums = podiumCount(entries);
+const profile = driverProfile(stats, driver);
+const socials = socialsOf(driver);
+
+/* The roster is placeholder data until real drivers are published, and
+   `Base.astro` already keeps those names out of the structured data for the
+   same reason. A page per placeholder person is fine to build and look at;
+   it is not fine to hand to a search engine, so it carries `noindex` and
+   `sitemap.xml.ts` leaves it out. Both clear themselves the moment
+   `_placeholder` comes off the record. */
+const provisional = driver._placeholder === true;
+
+const meta = [
+  driver.country,
+  driver.number ? `No. ${driver.number}` : '',
+  entries.length
+    ? `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}${podiums ? `, ${podiums} ${podiums === 1 ? 'podium' : 'podiums'}` : ''}`
+    : '',
+]
+  .filter(Boolean)
+  .join(' / ');
+---
+
+<Base
+  title={`${driver.name} | Artemis Esports`}
+  description={`${driver.name}, ${driver.focus} for Artemis Esports. Race entries, form and ratings.`}
+  noindex={provisional}
+>
+  <PageHead title={driver.name} lead={driver.bio} meta={meta}>
+    {
+      driver.number && (
+        <p class="driver-hero-number" slot="aside" aria-hidden="true">
+          {driver.number}
+        </p>
+      )
+    }
+  </PageHead>
+
+  {/* Ratings. A definition list rather than a table: it is a handful of
+      labelled values, not rows that compare against each other. Absent
+      entirely when the nightly sync has not run, which is the state the
+      repository ships in. */}
+  {
+    profile && profile.ratings.length > 0 && (
+      <section class="section rule-top" aria-labelledby="ratings-heading">
+        <div class="container">
+          <div class="section-head section-head-stack">
+            <h2 class="display-md" id="ratings-heading">
+              Ratings
+            </h2>
+            <p class="lead">
+              From iRacing, synced nightly. One row per category this driver
+              has raced in.
+            </p>
+          </div>
+          <dl class="rating-list">
+            {profile.ratings.map((rating) => (
+              <div class="rating-row">
+                <dt class="field-label">{rating.label}</dt>
+                <dd class="rating-values">
+                  {rating.irating !== undefined && (
+                    <span class="rating-figure data">
+                      {rating.irating}
+                      <span class="rating-unit">iRating</span>
+                    </span>
+                  )}
+                  {rating.safety && (
+                    <span class="rating-figure data">
+                      {rating.safety}
+                      <span class="rating-unit">Licence</span>
+                    </span>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    profile && profile.recent.length > 0 && (
+      <section class="section rule-top" aria-labelledby="form-heading">
+        <div class="container">
+          <div class="section-head section-head-stack">
+            <h2 class="display-md" id="form-heading">
+              Form
+            </h2>
+            <p class="lead">
+              The most recent official races, oldest first. The figure under
+              each finish is places gained or lost from the grid.
+            </p>
+          </div>
+          <FormLine races={profile.recent} driverName={driver.name} />
+        </div>
+      </section>
+    )
+  }
+
+  {/* Team entries. The one thing on this page that exists without the sync,
+      so it is also the empty state: with no stats.json and no results this
+      section says so rather than leaving the page as a heading and a CTA. */}
+  <section class="section rule-top" aria-labelledby="entries-heading">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="display-md" id="entries-heading">Team entries</h2>
+        <a class="text-link" href="/#scoreboard">
+          The Scoreboard
+          <Icon name="arrow-right" size={16} />
+        </a>
+      </div>
+      {
+        entries.length > 0 ? (
+          <ResultsTable
+            results={entries}
+            caption={`Every Artemis race result ${driver.name} appears in`}
+          />
+        ) : (
+          <p class="lead">
+            No published team entries yet. Everything this driver has run with
+            Artemis will appear here once it is on the Scoreboard.
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    socials.length > 0 && (
+      <section class="section rule-top" aria-labelledby="channels-heading">
+        <div class="container">
+          <h2 class="display-sm" id="channels-heading">
+            Where to watch
+          </h2>
+          <ul class="driver-channels">
+            {socials.map(([name, url]) => (
+              <li>
+                <a href={url} target="_blank" rel="noopener">
+                  <span>{socialLabel(name)}</span>
+                  <Icon name="arrow-up-right" size={15} />
+                  <span class="sr-only"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <JoinCta
+    heading="Race with us."
+    lead="Seats open when there is a car and a calendar behind them. The current list, and what a season asks of a driver, are on the join page."
+    steps={false}
+  />
+</Base>
+
+<style>
+  /* The car number as the page's aside, at the scale the liveries carry it.
+     Outlined rather than filled: a solid number this size would be the
+     loudest thing on a page whose subject is the person, not the digit. */
+  .driver-hero-number {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-display);
+    font-size: clamp(5rem, 14vw, 11rem);
+    line-height: 0.82;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--muted-deep);
+  }
+
+  @supports not (-webkit-text-stroke: 1px currentColor) {
+    .driver-hero-number {
+      color: var(--muted-deep);
+    }
+  }
+
+  .rating-list {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .rating-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2fr);
+    gap: var(--space-m);
+    align-items: baseline;
+    padding-block: var(--space-s);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rating-row:last-child {
+    border-bottom: none;
+  }
+
+  .rating-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-l);
+  }
+
+  .rating-figure {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-display);
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+    color: var(--mist);
+  }
+
+  .rating-unit {
+    font-weight: var(--weight-small);
+    font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .driver-channels {
+    margin-top: var(--space-m);
+    border-top: 1px solid var(--line-strong);
+    max-width: var(--measure-lead);
+  }
+
+  .driver-channels li {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .driver-channels a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-s);
+    padding-block: var(--space-s);
+    font-family: var(--font-display);
+    font-weight: var(--weight-small);
+    font-stretch: var(--wdth-normal);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .driver-channels a:hover {
+      color: var(--signal-hover);
+    }
+  }
+
+  @media (max-width: 620px) {
+    .rating-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-2xs);
+    }
+  }
+</style>

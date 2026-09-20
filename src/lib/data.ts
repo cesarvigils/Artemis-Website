@@ -273,6 +273,126 @@ export function driverStats(
   return { category, irating, safety, recent };
 }
 
+/* A driver's own page ------------------------------------------------
+   `driverStats` above answers "what does the roster row show": one
+   category, three races, chosen by the driver's group. The page under
+   /team/<id> is the place that shows everything the sync returned, so it
+   gets its own reader rather than a flag on that one.
+------------------------------------------------------------------- */
+
+/** Display names for the categories iRacing reports. */
+const CATEGORY_LABEL: Record<string, string> = {
+  sports_car: 'Sports car',
+  formula_car: 'Formula',
+  oval: 'Oval',
+  dirt_oval: 'Dirt oval',
+  dirt_road: 'Dirt road',
+  road: 'Road',
+};
+
+/* The order a racing person reads them in, not alphabetical. A category the
+   sync returns that is not on this list still renders - it sorts to the end
+   rather than disappearing, because a missing number is a bug the page
+   should show rather than hide. */
+const CATEGORY_ORDER = ['sports_car', 'formula_car', 'oval', 'dirt_oval', 'dirt_road', 'road'];
+
+export interface CategoryRating {
+  category: string;
+  label: string;
+  irating?: number;
+  safety?: string;
+}
+
+export interface DriverProfile {
+  /** Every category the sync returned a number or a licence for. */
+  ratings: CategoryRating[];
+  /** The full recent-races list, not the roster row's three. */
+  recent: NonNullable<DriverStats['recent']>;
+}
+
+/**
+ * Everything stats.json holds for one driver, for their own page.
+ *
+ * Same contract as `driverStats`: undefined when there is nothing real to
+ * show, so the page can omit whole sections rather than render a heading
+ * over an empty box. `stats.json` is not committed to the repository, so
+ * undefined is the normal answer until the nightly sync has run.
+ */
+export function driverProfile(
+  stats: StatsFile | undefined,
+  driver: Driver
+): DriverProfile | undefined {
+  const entry = stats?.drivers?.[driver.id];
+  if (!entry) return undefined;
+
+  const keys = new Set([
+    ...Object.keys(entry.irating ?? {}),
+    ...Object.keys(entry.safety ?? {}),
+  ]);
+
+  const ratings = [...keys]
+    .map((category): CategoryRating => {
+      const rawRating = entry.irating?.[category];
+      const rawSafety = entry.safety?.[category];
+      return {
+        category,
+        label: CATEGORY_LABEL[category] ?? category.replace(/_/g, ' '),
+        /* Same rule as `driverStats`: iRating is an integer, so 0 is a
+           missing value rather than a real rating. */
+        irating:
+          typeof rawRating === 'number' && Number.isFinite(rawRating) && rawRating > 0
+            ? Math.round(rawRating)
+            : undefined,
+        safety: typeof rawSafety === 'string' && rawSafety.trim() ? rawSafety : undefined,
+      };
+    })
+    .filter((row) => row.irating !== undefined || row.safety !== undefined)
+    .sort((a, b) => {
+      const order = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+      /* indexOf gives -1 for an unknown category, which would sort it to the
+         front; push those to the end instead and break the tie by name. */
+      if (CATEGORY_ORDER.includes(a.category) !== CATEGORY_ORDER.includes(b.category)) {
+        return CATEGORY_ORDER.includes(a.category) ? -1 : 1;
+      }
+      return order || a.category.localeCompare(b.category);
+    });
+
+  const recent = (Array.isArray(entry.recent) ? entry.recent : []).filter(
+    (row) => row && typeof row.date === 'string'
+  );
+
+  if (ratings.length === 0 && recent.length === 0) return undefined;
+  return { ratings, recent };
+}
+
+/**
+ * A driver's channels as [key, url] pairs, with the empty ones dropped.
+ *
+ * The bot writes `"socials": {"twitch": ""}` to clear a channel rather than
+ * removing the key, so the filter is what keeps a link with no href off the
+ * page. Shared by the roster row and the driver's own page so both agree on
+ * what counts as a channel.
+ */
+export function socialsOf(driver: Driver): [string, string][] {
+  return Object.entries(driver.socials ?? {}).filter(([, url]) => url);
+}
+
+/** Every team entry this driver appears in, newest first. Matched on `name`. */
+export function resultsForDriver(results: RaceResult[], driverName: string): RaceResult[] {
+  return sortResults(results).filter((row) => row.drivers.includes(driverName));
+}
+
+/**
+ * Who gets a page under /team/<id>.
+ *
+ * Drivers only. A pitwall or staff record carries a name, a focus and a bio
+ * and nothing else, all of which the roster row already shows in full - a
+ * page for one would hold strictly less than the row that linked to it.
+ */
+export function hasOwnPage(driver: Driver): boolean {
+  return driver.active !== false && driver.role === 'driver';
+}
+
 /** Today in the team's timezone, for build-time "is this race still ahead". */
 export function todayInTeamZone(now: Date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {

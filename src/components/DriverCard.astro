@@ -2,7 +2,7 @@
 import Icon from './Icon.astro';
 import { raceDate } from '../lib/format';
 import { socialLabel } from '../lib/links';
-import type { Driver, RaceResult, ResolvedStats } from '../lib/data';
+import { socialsOf, type Driver, type RaceResult, type ResolvedStats } from '../lib/data';
 
 interface Props {
   driver: Driver;
@@ -27,7 +27,7 @@ const {
   style,
 } = Astro.props;
 
-const socials = Object.entries(driver.socials ?? {}).filter(([, url]) => url);
+const socials = socialsOf(driver);
 
 /* Two sources for the same two numbers, and the synced one wins.
    `null` used to pass this filter, so `"stats": {"irating": null}` from the
@@ -86,7 +86,13 @@ const recent = live?.recent ?? [];
         )
       }
       <div class="driver-identity">
-        <h3 class="driver-name">{driver.name}</h3>
+        {/* The name links only when this driver has a page of their own.
+            Pitwall and staff do not get one (see `hasOwnPage`), so their row
+            stays plain text rather than promising a destination that holds
+            less than the row already shows. */}
+        <h3 class="driver-name">
+          {href ? <a class="driver-link" href={href}>{driver.name}</a> : driver.name}
+        </h3>
         <p class="driver-meta data">
           {driver.country}
           {driver.number ? ` / No. ${driver.number}` : ''}
@@ -296,6 +302,20 @@ const recent = live?.recent ?? [];
     font-size: var(--text-xl);
     letter-spacing: var(--track-title);
     text-wrap: balance;
+  }
+
+  /* The name is the link, and the row around it is not: a hover state on the
+     whole row would promise a click on the bio and the stats table too, and
+     DESIGN.md rules out hover states on rows that are not clickable. */
+  .driver-link {
+    color: inherit;
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .driver-link:hover {
+      color: var(--signal-hover);
+    }
   }
 
   /* `-webkit-text-stroke` is non-standard. Without it the number would be a

@@ -112,7 +112,7 @@ for (const route of ROUTES) {
   });
 }
 
-test('page titles are non-empty and unique across all five routes', async ({ page }) => {
+test('page titles are non-empty and unique across every route', async ({ page }) => {
   const titles = new Set<string>();
   for (const route of ROUTES) {
     await page.goto(route.path);
