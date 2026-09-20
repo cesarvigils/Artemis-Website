@@ -49,6 +49,51 @@ const socials = socialsOf(driver);
    `_placeholder` comes off the record. */
 const provisional = driver._placeholder === true;
 
+/* Breadcrumbs. A driver page is the only route on this site two levels
+   deep, so it is the only one where a trail says anything a search result
+   could not already infer - Google renders it in place of the raw URL. The
+   `item` values are absolute and match the canonical form exactly (no
+   trailing slash), or the trail points at URLs the sitemap does not list. */
+const breadcrumbs = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', Astro.site).href },
+    { '@type': 'ListItem', position: 2, name: 'Team', item: new URL('/team', Astro.site).href },
+    /* The last crumb is the current page, so it carries no `item` - that is
+       what tells a parser the trail ends here rather than linking to self. */
+    { '@type': 'ListItem', position: 3, name: driver.name },
+  ],
+};
+
+/* A `Person` node, and the same placeholder rule the rest of the site uses.
+   `Base.astro` keeps invented names out of the organisation node, the
+   sitemap leaves these pages out, and the page itself carries `noindex`;
+   a structured claim that this person exists and races for Artemis would
+   contradict all three. Emitted only for a real driver, so it switches
+   itself on when `_placeholder` comes off the record - no code change, the
+   same shape as the standings nav entry and the media-kit link.
+
+   Only fields the record actually holds are included. No `image` (the
+   roster has no portraits), no rating (iRating is a live number from the
+   sync, not a property of the person), no `birthDate`. */
+const person = provisional
+  ? []
+  : [
+      {
+        '@type': 'Person',
+        '@id': new URL(`/team/${driver.id}#person`, Astro.site).href,
+        name: driver.name,
+        url: new URL(`/team/${driver.id}`, Astro.site).href,
+        jobTitle: driver.focus,
+        ...(driver.bio ? { description: driver.bio } : {}),
+        ...(driver.country ? { nationality: driver.country } : {}),
+        ...(socials.length ? { sameAs: socials.map(([, url]) => url) } : {}),
+        /* Points back at the organisation node `Base.astro` emits in the
+           same graph, which is what the shared `@id` is for. */
+        memberOf: { '@id': new URL('/#organization', Astro.site).href },
+      },
+    ];
+
 const meta = [
   driver.country,
   driver.number ? `No. ${driver.number}` : '',
@@ -64,6 +109,8 @@ const meta = [
   title={`${driver.name} | Artemis Esports`}
   description={`${driver.name}, ${driver.focus} for Artemis Esports. Race entries, form and ratings.`}
   noindex={provisional}
+  ogType="profile"
+  schema={[breadcrumbs, ...person]}
 >
   <PageHead title={driver.name} lead={driver.bio} meta={meta}>
     {

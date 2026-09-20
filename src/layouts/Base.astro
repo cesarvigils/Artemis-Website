@@ -27,6 +27,20 @@ interface Props {
    * assert an organisation.
    */
   noindex?: boolean;
+  /**
+   * `og:type`. `website` for a site's pages; `profile` for a page that is
+   * about one person, which is what a driver page is.
+   */
+  ogType?: 'website' | 'profile';
+  /**
+   * Extra JSON-LD nodes for this page, joined with the organisation node in
+   * one `@graph`. A page passes what only it can know - its breadcrumb
+   * trail, the person it describes - rather than this layout guessing from
+   * the pathname. Suppressed entirely when `noindex` is set, along with the
+   * organisation node, because a document a crawler is told to skip should
+   * not be asserting facts on the way past.
+   */
+  schema?: Record<string, unknown>[];
 }
 
 const {
@@ -36,6 +50,8 @@ const {
   preload,
   cta = 'join',
   noindex = false,
+  ogType = 'website',
+  schema = [],
 } = Astro.props;
 
 /* One slash policy, everywhere. Astro emits `/team/` as the page's own
@@ -51,7 +67,6 @@ const canonical = new URL(Astro.url.pathname.replace(/\/+$/, '') || '/', Astro.s
    names are flagged as placeholders and must not be published as structured
    claims), the calendar, and any rating. */
 const structuredData = {
-  '@context': 'https://schema.org',
   '@type': 'SportsTeam',
   '@id': new URL('/#organization', Astro.site).href,
   name: site.name,
@@ -71,10 +86,21 @@ const structuredData = {
   },
   sameAs: [...Object.values(site.socials).filter(Boolean), site.store],
 };
+
+/* One script tag, not several. Multiple ld+json blocks are legal and
+   parsers accept them, but nodes in separate blocks cannot reference each
+   other by `@id`, so a breadcrumb or a person emitted alongside would be a
+   second anonymous island rather than something attached to this team. A
+   single `@graph` lets a page's own nodes point back at `/#organization`
+   and be read as one description of one entity. */
+const graph = [structuredData, ...schema];
 ---
 
 <!doctype html>
-<html lang="en">
+{/* en-GB, not en: the copy is British throughout (licence, colour,
+    behaviour) and `og:locale` below already says so. They have to agree -
+    a screen reader picks its pronunciation rules from this attribute. */}
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
     {/* `viewport-fit=cover` or every `env(safe-area-inset-*)` on the site
@@ -123,7 +149,7 @@ const structuredData = {
     <meta property="og:site_name" content="Artemis Esports" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:locale" content="en_GB" />
     {/* Declared dimensions: Slack, Discord and LinkedIn render the card
@@ -139,7 +165,10 @@ const structuredData = {
 
     {
       !noindex && (
-        <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })}
+        />
       )
     }
 

@@ -1,11 +1,16 @@
 import type { APIRoute } from 'astro';
 import drivers from '../data/drivers.json';
+import events from '../data/events.json';
+import results from '../data/results.json';
 import standings from '../data/standings.json';
 import {
   activeDrivers,
   hasOwnPage,
   hasStandings,
+  resultsForDriver,
   type Driver,
+  type RaceEvent,
+  type RaceResult,
   type StandingsFile,
 } from '../lib/data';
 
@@ -29,8 +34,61 @@ import {
    with the data; the rest move when somebody edits copy. `/404` is not here
    on purpose: it is a real file at that path, which a host serves with a
    200, and `Base.astro` marks it `noindex` for the same reason. */
-const PAGES: { path: string; changefreq: string; priority: string }[] = [
-  { path: '/', changefreq: 'weekly', priority: '1.0' },
+interface SitemapPage {
+  path: string;
+  changefreq: string;
+  priority: string;
+  /** ISO date, omitted when no dated record on the page backs one. */
+  lastmod?: string;
+}
+
+/**
+ * `<lastmod>`, and the rule for when this file is allowed to emit one.
+ *
+ * Google ignores `lastmod` across a whole sitemap once it finds the dates
+ * untrustworthy - every page stamped with the build time is the usual way
+ * that happens, and it costs the signal on the pages where it was real.
+ *
+ * So a page gets a `lastmod` only when a dated record it actually renders
+ * supplies one, and the value is the newest of those dates. Pages made of
+ * hand-edited copy - /about, /join, /partners, /privacy, /terms - get none,
+ * because nothing in the repository knows when that copy last changed and
+ * the build date would be a guess dressed as a fact.
+ */
+const newest = (...dates: (string | undefined)[]): string | undefined => {
+  /* Today, as the build sees it, so a future date can be dropped below. */
+  const today = new Date().toISOString().slice(0, 10);
+
+  const valid = dates
+    .filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d)))
+    /* Compared as ISO date strings, which sort correctly, rather than via
+       Date objects: `startTime` carries a time and `date` does not, so
+       parsing both would silently place a dated-only record at midnight UTC.
+       Trimming to the date part compares like with like. */
+    .map((d) => d.slice(0, 10))
+    /* A date in the future is never a modification date. The calendar is the
+       case that matters: an event's `start` is when it will be RACED, not
+       when it was added to the file, so the next-race strip would otherwise
+       stamp the home page weeks ahead and make every lastmod on the site
+       suspect at once. A page whose only dated records are upcoming gets no
+       lastmod, which is the correct answer rather than a missing one. */
+    .filter((d) => d <= today);
+
+  return valid.length ? valid.sort().at(-1) : undefined;
+};
+
+const PAGES: SitemapPage[] = [
+  {
+    path: '/',
+    changefreq: 'weekly',
+    priority: '1.0',
+    /* Home renders the recent-results table and the next-race strip, so the
+       newest of those two sets is genuinely when this page last changed. */
+    lastmod: newest(
+      ...(results as RaceResult[]).map((r) => r.date),
+      ...(events as RaceEvent[]).map((e) => e.start)
+    ),
+  },
   { path: '/team', changefreq: 'weekly', priority: '0.8' },
   { path: '/join', changefreq: 'monthly', priority: '0.9' },
   { path: '/partners', changefreq: 'monthly', priority: '0.8' },
@@ -62,6 +120,12 @@ export const GET: APIRoute = ({ site }) => {
       path: `/team/${driver.id}`,
       changefreq: 'weekly',
       priority: '0.6',
+      /* This driver's own entries, not the roster's - a page is stale or
+         fresh by what it shows, and it shows only their races. A driver
+         with no entries yet gets no lastmod rather than the team's. */
+      lastmod: newest(
+        ...resultsForDriver(results as RaceResult[], driver.name).map((r) => r.date)
+      ),
     }));
 
   /* /standings exists as a route whether or not there is a table, because a
@@ -69,7 +133,16 @@ export const GET: APIRoute = ({ site }) => {
      the sitemap once it has rows. `standings.astro` sets `noindex` from the
      same condition, so the page and the sitemap cannot disagree. */
   const standingsPages = hasStandings(standings as StandingsFile)
-    ? [{ path: '/standings', changefreq: 'daily', priority: '0.9' }]
+    ? [
+        {
+          path: '/standings',
+          changefreq: 'daily',
+          priority: '0.9',
+          /* Whoever writes the table stamps it; the page prints the same
+             field, so the sitemap and the page cannot disagree. */
+          lastmod: newest((standings as StandingsFile).updated),
+        },
+      ]
     : [];
 
   /* No trailing slashes except on the root: `vercel.json` sets
@@ -83,7 +156,9 @@ export const GET: APIRoute = ({ site }) => {
 ${[...PAGES, ...standingsPages, ...driverPages]
   .map(
     (page) => `  <url>
-    <loc>${page.path === '/' ? site.href : url(page.path)}</loc>
+    <loc>${page.path === '/' ? site.href : url(page.path)}</loc>${
+      page.lastmod ? `\n    <lastmod>${page.lastmod}</lastmod>` : ''
+    }
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
   </url>`
