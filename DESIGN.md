@@ -12,8 +12,10 @@ document and a generic design rule disagree, and what was chosen:
 | Generic rule | Brand core | Choice |
 |---|---|---|
 | **impeccable** `reference/brand.md` lists **Inter** on the reflex-reject font list (a training-data default that creates monoculture) | Section 6 names Inter for body, UI and numbers, with tabular numerals | **Inter.** The same reference says identity-preservation wins where the brand has already committed to a face, and this brand has: the choice is the org's, made outside this repository, and a website whose body face differed from the stream overlays and the social templates would be the more expensive mistake. The reflex-reject list is for greenfield decisions. |
-| **taste** and **impeccable** both treat a near-black-plus-one-saturated-accent palette as the esports category reflex | Section 6 fixes Night, the surface ramp, Mist, Deep Teal and Signal by hex | **The brand core's palette.** The palette was never this work's to choose. What the redesign chose is the register (a timing tower, not an esports template), and pass 6 narrowed the accent from "the site's colour" to five named jobs. |
-| **colorize** `reference/colorize.md`: "alpha is a design smell; define explicit overlay colours" | Section 6 gives two muted values and one Mist, not a nine-step ramp | **Two alpha steps kept** (`--mist-dim`, and the two hairlines). They sit on three different grounds - Night, `--surface-1`, `--surface-2` - so an opaque value would be wrong on two of them. Everything else is an opaque token. |
+| **taste** and **impeccable** both treat a near-black-plus-one-saturated-accent palette as the esports category reflex | Section 6 fixes Night, the surface ramp, Mist and Signal by hex | **The brand core's palette.** The palette was never this work's to choose. What the redesign chose is the register (a timing tower, not an esports template), and pass 6 narrowed the accent from "the site's colour" to five named jobs. The hexes are NOCTURNE's as of the palette migration; the reasoning is unchanged. |
+| **colorize** `reference/colorize.md`: "alpha is a design smell; define explicit overlay colours" | Section 6 gives two muted values and one Mist, not a nine-step ramp | **One alpha step kept** (`--mist-dim`). The two hairlines were alpha for the same reason until the NOCTURNE migration made them opaque; see below. |
+| NOCTURNE darkens the accent on hover (`#0BD4AB`, 10.5:1) | - | **The lighter step (`#7DFFE3`, 16.0:1) was kept.** On a near-black ground, darkening on hover reads as the control dimming as the pointer arrives. Brightening is the direction every other state change on this site already moves in, and it holds more contrast. This is the one place the site departs from NOCTURNE. |
+| **colorize** again, and the reasoning that kept the hairlines alpha | NOCTURNE specifies opaque borders | **Opaque, with a condition.** Measured against the two grounds actually in use, the opaque steps land in the same perceptual band as the alpha ones they replaced: `--line` is 1.50 on Night and 1.36 on `--surface-1`, against alpha's 1.32 and 1.39. The alpha argument only bites on `--surface-2`, which nothing currently paints a hairline on. **If something ever does, re-measure** - that is where an opaque value falls off (1.22) and the alpha one did not (1.40). |
 
 ## 1. Direction
 
@@ -59,32 +61,47 @@ Strategy on the commitment axis: **restrained**, not committed. That is the
 pass-6 change. Signal used to be "the site's colour" and carried labels,
 kickers, class chips, driver numbers, table accents, footer tags and icons. The
 brand core caps it at 5-10% of any layout and says what it is for, so it now has
-exactly five jobs and everything else is Mist, muted or Deep Teal.
+exactly five jobs and everything else is Mist or muted.
 
 ### Tokens
 
 | Token | Value | Role | Contrast on `--night` |
 |---|---|---|---|
-| `--night` | `#000a08` | The field, ~80% of every screen | - |
-| `--surface-1` | `#0a1714` | Tinted bands: next race, the commitments, the join band, the footer | - |
-| `--surface-2` | `#12211d` | Panels sitting on a tinted band | - |
-| `--surface-3` | `#1e322c` | The one opaque divider step | - |
-| `--mist` | `#ebfffb` | Most text and UI | 19.3:1 |
-| `--mist-dim` | `rgba(235,255,251,.76)` | Secondary prose: leads, blurbs, bios | 11.2:1 |
-| `--muted` | `#8fa8a1` | Captions, metadata, field labels, dates | 7.9:1 |
-| `--muted-deep` | `#486b62` | Large decorative type, disabled states. **Never body-size text** | 3.4:1 |
-| `--signal` | `#0fffcf` | The one thing the eye lands on | 15.5:1 |
-| `--signal-ink` | `#001410` | Text on a Signal fill | 14.7:1 on `--signal` |
-| `--signal-hover` | `#7dffe3` | Solid-button hover | - |
-| `--teal-deep` | `#0e7f6b` | Brand colour when it needs area rather than a line | - |
-| `--line` | `rgba(235,255,251,.12)` | Hairline rules | - |
-| `--line-strong` | `rgba(235,255,251,.24)` | Table head, ghost button border | - |
-| `--night-rgb` | `0 10 8` | `--night` as channels, for the hero scrims | - |
+| `--night` | `#0a0e0d` | The field, ~80% of every screen | - |
+| `--surface-1` | `#131a19` | Tinted bands: next race, the commitments, the join band, the footer | - |
+| `--surface-2` | `#1b2422` | Panels sitting on a tinted band | - |
+| `--mist` | `#e8f0ee` | Most text and UI | 16.8:1 |
+| `--mist-dim` | `rgba(232,240,238,.76)` | Secondary prose: leads, blurbs, bios | 9.8:1 |
+| `--muted` | `#93a5a1` | Captions, metadata, field labels, dates | 7.5:1 |
+| `--muted-deep` | `#687c78` | Large decorative type, disabled states. **Never body-size text** | 4.4:1 |
+| `--signal` | `#0fffcf` | The one thing the eye lands on | 15.0:1 |
+| `--signal-ink` | `#0a0e0d` | Text on a Signal fill. The ground, never white | 15.0:1 on `--signal` |
+| `--signal-hover` | `#7dffe3` | Solid-button hover, every link hover step | 16.0:1 |
+| `--line` | `#26333b` | Hairline rules | - |
+| `--line-strong` | `#34443f` | Table head, ghost button border, first row of a data block | - |
+| `--night-rgb` | `10 14 13` | `--night` as channels, for the hero scrims | - |
+| `--gain` | `#5bd98a` | Data: a position gained | 10.9:1 |
+| `--loss` | `#f2766b` | Data: a position lost | 7.0:1 |
+| `--caution` | `#e8b84b` | Data: provisional, at risk | 10.5:1 |
+| `--info` | `#6fb6e8` | Data: neutral annotation | 8.8:1 |
 
 The pass-5 names are gone: `--bg`, `--bg-raise`, `--bg-panel`, `--ink`,
 `--ink-dim`, `--ink-faint`, `--teal`, `--teal-soft`, `--teal-ink`,
 `--teal-hover`, `--line-teal`. A token named `--teal` invites a designer to
-reach for teal; a token named `--signal` states its job.
+reach for teal; a token named `--signal` states its job. That is also why the
+NOCTURNE migration took its **values** and not its names: NOCTURNE calls them
+`bg`, `text` and `accent`, and `--accent` does not tell you it has a budget.
+
+`--surface-3` and `--teal-deep` went with that migration. Both were declared,
+redefined in the print block, and read by nothing - `--surface-3`'s job as the
+opaque divider step is now `--line-strong`, and no area of Deep Teal was ever
+placed on the site. A token nothing uses is a value that drifts.
+
+**The data colours are not brand colours.** They sit outside the Signal budget
+because they are not directing the eye, they are labelling a value. Never
+decorative, and never alone: each use pairs with a glyph or a rule, the same
+way the results sheet marks a podium with a rule as well as with ink, so the
+meaning survives forced colours and reads for a colour-blind visitor.
 
 ### The Signal budget
 

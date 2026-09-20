@@ -1,5 +1,15 @@
 # Pass 6 report - Artemis
 
+> **Superseded in part.** The colour values and every measured contrast and
+> Signal-percentage figure in this report describe the original green-black
+> palette (`--night: #000a08`). The site has since migrated to the NOCTURNE
+> ramp; `DESIGN.md` section 2 and `docs/brand-core.md` section 6 carry the
+> current values. The *reasoning* in this report - the Signal budget, its five
+> allowed uses, which hairline goes where - still holds. The numbers do not.
+> The Signal percentages have not been re-measured because the tool that
+> produced them (`audit-tool/signal6.mjs`) is referenced here but is not
+> checked into this repository.
+
 Brand-core alignment, then the retention features. Target:
 `D:\Artemis\Website\Website` (Astro 7, static, branch `preview`).
 **Not committed.** No dependency added or removed. Six pages now, not five.
