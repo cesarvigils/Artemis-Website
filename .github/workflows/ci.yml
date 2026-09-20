@@ -106,11 +106,18 @@ jobs:
         working-directory: tests
         run: npm run test:lh
 
+      # `include-hidden-files` because the reports land in `.lighthouse/`,
+      # and upload-artifact has skipped dotfiles and dot-directories by
+      # default since v4.4. Without it this step warned "No files were
+      # found" on every run, pass or fail, and quietly uploaded nothing -
+      # so the one artifact that explains a Lighthouse failure was never
+      # there on the occasion somebody needed it.
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: lighthouse-reports
           path: tests/.lighthouse/
+          include-hidden-files: true
           retention-days: 7
 
   empty-data:
