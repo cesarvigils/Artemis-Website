@@ -1,6 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 324.87 324.87" width="512" height="512">
-  <rect width="324.87" height="324.87" fill="#000A08"/>
-  <g transform="translate(46.88 39.35)">
-    <path fill="#0FFFCF" d="M103.93 212.631 L67.481 212.631 L52.161 246.137 L0 246.137 L114.744 0.026 L116.203 0.026 L231.104 246.137 L178.786 246.137 L163.623 212.631 L132.745 212.631 L132.745 173.867 L156.984 173.867 L117.256 97.58 L79.692 173.867 L103.93 173.867 Z"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-46.363 -38.834 323.83 323.83">
+  <style>
+    path { fill: #0fffcf; }
+    /* Signal is dark-mode only - it fails contrast on a light ground - so on
+       light browser chrome the mark paints Night instead. */
+    @media (prefers-color-scheme: light) { path { fill: #0a0e0d; } }
+  </style>
+  <path d="M103.93 212.631 L67.481 212.631 L52.161 246.137 L0 246.137 L114.744 0.026 L116.203 0.026 L231.104 246.137 L178.786 246.137 L163.623 212.631 L132.745 212.631 L132.745 173.867 L156.984 173.867 L117.256 97.58 L79.692 173.867 L103.93 173.867 Z"/>
 </svg>

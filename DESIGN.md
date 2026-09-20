@@ -264,19 +264,42 @@ Three marks, one job each, from `docs/brand-core.md` section 6. The component is
 | Tier | Variant | Where | Sizing |
 |---|---|---|---|
 | **Wordmark** | `wordmark` | Header, footer, `public/og.png` | `--mark-w`, with a `max(100px, ...)` floor so it can never go below the brand core's minimum. 104px on a phone, 132px in the desktop bar, 168px in the footer |
-| **Icon** (the notched A) | `icon` | `favicon.svg`, `favicon.ico`, `favicon.png`, `apple-touch-icon.png`, the 404 mark | `--mark-size`, any size |
-| **Hero mark** (the profile) | `hero` | Nothing on the website | `--mark-size`, 96px and above only |
+| **Icon** (the notched A) | `icon` | `favicon.svg`, `favicon.ico` (16/32/48), the 404 mark | `--mark-size`, any size |
+| **Hero mark** (the profile) | `hero` | `apple-touch-icon.png` (180), `favicon.png` (192). Nothing in page markup | `--mark-size`, 96px and above only |
 
 **The icon is extracted, not redrawn.** `Mark.astro` pulls the A out of
 `WORDMARK_PATH` with a regular expression at build time and throws if it is not
 there, and `src/assets/brand/artemis-icon-a.svg` is written from the same
 substring by the icon generator. The two marks cannot drift.
 
-**The hero mark has no place on this website, and that is the finding.** The
-header and footer are the wordmark's job, everything under 96px is the icon's,
-and adding the profile somewhere in order to use it would be decoration. The
-variant stays in the component because the OG and social assets are generated
-from it.
+**The icon generator is `scripts/build-icons.mjs`**, and it is in the
+repository now. It used to live in a scratchpad outside the repo, which meant
+the four files in `public/` were hand-committed binaries nobody could
+reproduce - and left them carrying the retired `#000A08` ground for a whole
+palette revision after NOCTURNE landed. The script renders every icon from the
+two brand SVGs, so a brand change is one command rather than four exports.
+
+**Where the size split is enforced.** The brand core caps the hero mark at
+96px and above. That is not a stylistic preference: rendered at 16px the
+mark's leaf tips collapse into an unreadable smear, while the A survives. So
+the generator puts the A in `favicon.svg` and the 16/32/48 ICO, and the hero
+mark in the two icons that are always larger than the floor - 180 and 192. The
+rule and the code are the same decision.
+
+**One thing only the SVG can do.** Every icon ships on a transparent ground,
+and the marks are Signal, which the brand core notes is dark-mode only.
+`favicon.svg` carries a `prefers-color-scheme: light` rule that repaints the
+mark Night on light browser chrome; the rasters cannot, and stay Signal.
+Browsers that support SVG favicons prefer them over the ICO, so the adaptive
+one is what most readers get and the ICO is the legacy fallback.
+
+**The hero mark has no place in the page markup, and that is still the
+finding.** The header and footer are the wordmark's job, everything under 96px
+is the icon's, and adding the profile into a section in order to use it would
+be decoration. What changed is the icons: the two that are always rendered
+above the 96px floor - the 180px touch icon and the 192px logo - now carry the
+hero mark, because that is precisely the size band the brand core reserves for
+it. The `hero` variant stays in `Mark.astro` for the OG and social assets.
 
 The pass-5 `lockup` variant (mark + wordmark locked together) is gone: the
 brand core's first tier is the wordmark alone.
