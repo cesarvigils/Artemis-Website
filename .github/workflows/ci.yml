@@ -136,6 +136,27 @@ jobs:
       - name: Build with each data file emptied, then restore
         run: npm run test:empty --prefix tests
 
+  seo:
+    name: SEO structured data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # Not a Playwright spec and deliberately not `needs: build`: it
+      # asserts on bytes in the emitted HTML, needs no browser, and builds
+      # twice itself - once with a driver promoted out of placeholder state
+      # so the Person and indexable-page paths actually execute, then again
+      # with the real data restored.
+      - name: Check JSON-LD, canonicals, robots and the sitemap
+        run: npm run test:seo --prefix tests
+
   sync-tests:
     name: iRacing sync tests
     runs-on: ubuntu-latest
