@@ -136,6 +136,38 @@ jobs:
       - name: Build with each data file emptied, then restore
         run: npm run test:empty --prefix tests
 
+  types:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # `astro build` transpiles but does NOT typecheck, so until this job
+      # existed the interfaces in src/lib/data.ts were written and never
+      # verified. Six real errors had reached master that way: `_placeholder`
+      # was declared on Seat and Standing but not on Driver, RaceResult or
+      # RaceEvent, while every consumer filtered on it.
+      #
+      # The tools are installed here with --no-save rather than added to
+      # package.json, on purpose. The npm in this toolchain rewrites
+      # package-lock.json when dependencies are added and silently drops
+      # every `libc` field while doing it (34 entries, glibc/musl), which is
+      # the metadata that picks the right native binary per platform. Adding
+      # two devDependencies is not worth corrupting the lockfile for, and
+      # repairing a lockfile by hand is worse. Nothing ships from this job.
+      - name: Install the typechecker
+        run: npm i --no-save --no-audit --no-fund @astrojs/check typescript
+
+      - name: Typecheck every .astro and .ts file
+        run: npx --no-install astro check
+
   seo:
     name: SEO structured data
     runs-on: ubuntu-latest
