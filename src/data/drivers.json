@@ -8,7 +8,6 @@
     "country": "BRA",
     "focus": "GT3 / Endurance",
     "bio": "Runs the opening stint. Keeps the car clean when the pack is not.",
-    "iracingId": 123456,
     "active": true,
     "_placeholder": true
   },
@@ -57,7 +56,6 @@
     "country": "USA",
     "focus": "NASCAR ovals",
     "bio": "Short track closer. Saves the tyres nobody else remembered to save.",
-    "iracingId": 654321,
     "active": true,
     "_placeholder": true
   },

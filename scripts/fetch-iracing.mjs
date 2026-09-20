@@ -321,14 +321,36 @@ export function carCatalogue(payload) {
   return (id) => byId.get(Number(id)) ?? null;
 }
 
-/** One member payload + one recent-races payload -> one stats.json entry. */
-export function buildDriverEntry(driver, memberPayload, recentPayload, carName) {
-  const members = Array.isArray(memberPayload?.members) ? memberPayload.members : [];
-  const member =
-    members.find((m) => Number(m?.cust_id) === driver.iracingId) ?? members[0] ?? memberPayload ?? {};
+/**
+ * One member payload + one recent-races payload -> one stats.json entry.
+ *
+ * The member is matched on `cust_id` and nothing else. If the response does not
+ * contain the member that was asked for, the entry keeps the id and stays
+ * otherwise empty: everything this file produces is published on the team page
+ * under a named driver, so a licence or a race history that cannot be shown to
+ * belong to them is not written at all. The site renders nothing for a driver
+ * whose entry carries no numbers, which is the right outcome here.
+ */
+export function buildDriverEntry(driver, memberPayload, recentPayload, carName, warn = () => {}) {
+  // iRacing wraps the member in `members`; tolerate a bare member object too.
+  const candidates = Array.isArray(memberPayload?.members)
+    ? memberPayload.members
+    : memberPayload && typeof memberPayload === 'object'
+      ? [memberPayload]
+      : [];
+  const member = candidates.find((m) => Number(m?.cust_id) === driver.iracingId);
+
+  const entry = { iracingId: driver.iracingId };
+
+  if (!member) {
+    warn(
+      `${driver.id}: iRacing returned no member with cust_id ${driver.iracingId}; ` +
+        'leaving the entry empty rather than filling it from another member'
+    );
+    return entry;
+  }
 
   const { irating, safety } = mapLicenses(member.licenses ?? member.licences ?? []);
-  const entry = { iracingId: driver.iracingId };
   if (Object.keys(irating).length) entry.irating = irating;
   if (Object.keys(safety).length) entry.safety = safety;
   const recent = mapRecentRaces(recentPayload, carName);
@@ -681,7 +703,7 @@ export async function run(options = {}) {
         const recent = await source.get(
           `/data/stats/member_recent_races?cust_id=${driver.iracingId}`
         );
-        document.drivers[driver.id] = buildDriverEntry(driver, member, recent, carName);
+        document.drivers[driver.id] = buildDriverEntry(driver, member, recent, carName, warn);
       }
     }
 

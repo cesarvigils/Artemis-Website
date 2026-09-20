@@ -415,6 +415,55 @@ test('a member payload plus races becomes one stats entry', () => {
   assert.equal(entry.recent[0].car, 'BMW M4 GT3');
 });
 
+test('a member the response does not contain is never filled in from another one', () => {
+  // Everything in stats.json is published on the team page under a named
+  // driver, so a licence that cannot be shown to belong to them is not written.
+  const member = JSON.parse(readFileSync(join(FIXTURES, 'member-123456.json'), 'utf8'));
+  const recent = JSON.parse(readFileSync(join(FIXTURES, 'recent-races-123456.json'), 'utf8'));
+  const cars = carCatalogue(JSON.parse(readFileSync(join(FIXTURES, 'cars.json'), 'utf8')));
+
+  const warnings = [];
+  const entry = buildDriverEntry(
+    // The roster asks for 999999; the payload holds 123456.
+    { id: 'someone-else', iracingId: 999999 },
+    member,
+    recent,
+    cars,
+    (message) => warnings.push(message)
+  );
+
+  assert.deepEqual(entry, { iracingId: 999999 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /no member with cust_id 999999/);
+});
+
+test('an empty member response leaves the entry empty and warns', () => {
+  const warnings = [];
+  const entry = buildDriverEntry(
+    { id: 'mateo-ferreira', iracingId: 123456 },
+    { success: true, cust_ids: [123456], members: [] },
+    { races: [] },
+    () => null,
+    (message) => warnings.push(message)
+  );
+
+  assert.deepEqual(entry, { iracingId: 123456 });
+  assert.equal(warnings.length, 1);
+});
+
+test('a bare member object is still accepted when its cust_id matches', () => {
+  const member = JSON.parse(readFileSync(join(FIXTURES, 'member-123456.json'), 'utf8'));
+  const entry = buildDriverEntry(
+    { id: 'mateo-ferreira', iracingId: 123456 },
+    member.members[0],
+    { races: [] },
+    () => null
+  );
+
+  assert.equal(entry.iracingId, 123456);
+  assert.equal(entry.safety.sports_car, 'A 4.20');
+});
+
 /* End to end ---------------------------------------------------------- */
 
 test('the fixture run writes a contract-valid stats.json', async () => {

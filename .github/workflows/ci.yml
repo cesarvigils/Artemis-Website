@@ -123,3 +123,20 @@ jobs:
 
       - name: Build with each data file emptied, then restore
         run: npm run test:empty --prefix tests
+
+  sync-tests:
+    name: iRacing sync tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # No npm ci: scripts/fetch-iracing.mjs and its tests import nothing but
+      # node: builtins and each other, and the API calls are served from
+      # scripts/fixtures/iracing. Nothing here touches the network or needs a
+      # credential, so this runs in seconds.
+      - name: Run the sync suite
+        run: npm run test:sync
