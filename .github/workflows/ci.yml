@@ -162,11 +162,11 @@ jobs:
       # the metadata that picks the right native binary per platform. Adding
       # two devDependencies is not worth corrupting the lockfile for, and
       # repairing a lockfile by hand is worse. Nothing ships from this job.
-      - name: Install the typechecker
-        run: npm i --no-save --no-audit --no-fund @astrojs/check typescript
-
+      # `npm run check:types` rather than the two commands inline, so what
+      # CI runs and what a contributor runs locally are the same string and
+      # cannot drift apart.
       - name: Typecheck every .astro and .ts file
-        run: npx --no-install astro check
+        run: npm run check:types
 
   seo:
     name: SEO structured data
