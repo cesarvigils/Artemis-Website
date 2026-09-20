@@ -66,7 +66,8 @@ updates by itself. Press Ctrl+C in the terminal to stop it.
 | `npm run dev` | The local preview. Use this while editing. |
 | `npm run build` | Makes the real site in `dist/`. Takes a few seconds. |
 | `npm run preview` | Serves the built `dist/` so you can check the real thing. |
-| `npm run check:data` | Checks the three bot-owned JSON files against the rules. Runs automatically before every build. |
+| `npm run check:data` | Checks the bot-owned JSON files against the rules. Runs automatically before every build. |
+| `npm run build:icons` | Rebuilds the four favicons from the brand SVGs. Run it by hand when a brand mark changes, then commit the result. `-- --check` reports whether they are current without writing. |
 
 **`npm run build` fails if the data is wrong, and that is on purpose.** It runs
 `check:data` first, and if a record breaks a rule the build stops and prints

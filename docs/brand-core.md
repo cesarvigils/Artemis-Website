@@ -286,8 +286,9 @@ with no row here is a rule the website does not express.
 | Signal `#0FFFCF`, 5–10% | `--signal`. Allowed uses only: `.btn-solid` (one primary CTA per page), `.hero-pos` and `.hero-pos-rule`, `.nav-link[aria-current]::after`, `:focus-visible`, and every `:hover` colour step. Measured per screen in `docs/pass6-report.md` |
 | No graffiti, no splash; texture is material at 3–5% | `--grain` and `.grain::before` in `src/styles/global.css` (an inline `feTurbulence` tile at 4%), used on the join band and the 404. `src/assets/hunt-texture.jpg` is deleted |
 | Wordmark, the workhorse, holds to 100px | `src/components/Mark.astro` `variant="wordmark"`, sized by `--mark-w` with a `max(100px, …)` floor; used in `src/components/Nav.astro` and `src/components/Footer.astro`, and on `public/og.png` |
-| Icon, the notched A, one colour | `src/assets/brand/artemis-icon-a.svg`, extracted from the wordmark path; `Mark variant="icon"`; `public/favicon.svg`, `favicon.ico`, `favicon.png`, `apple-touch-icon.png`, and the `/404` mark |
-| Hero mark, 96px and above only | `Mark variant="hero"`. Not used on the website: the header and footer are the wordmark and everything small is the icon. Kept for social and OG assets |
+| Icon, the notched A, one colour | `src/assets/brand/artemis-icon-a.svg`, extracted from the wordmark path; `Mark variant="icon"`; `public/favicon.svg` and `favicon.ico` (16/32/48), and the `/404` mark |
+| Hero mark, 96px and above only | `src/assets/brand/artemis-mark.svg`; `Mark variant="hero"` (unused in page markup). Ships as `public/apple-touch-icon.png` (180) and `public/favicon.png` (192), both above the 96px floor. Below it the mark is unreadable, which is what the floor is for: measured at 16px it is a smear while the A still reads |
+| Both, generated not hand-made | `scripts/build-icons.mjs` renders all four icons from the two brand SVGs and enforces the size split. `--check` reports whether the committed files are current |
 | The Arc | Not implemented. Deferred to the designer (see `PRODUCT.md`, open decisions) |
 | Display: Archivo | `--font-display`; `public/fonts/archivo-{core,ext}.latin.v3.woff2`, `wght` 400–800 and `wdth` 75–100 |
 | Body, UI, numbers: Inter with tabular numerals | `--font-body` / `--font-data`; `public/fonts/inter-{core,ext}.latin.v3.woff2`, `wght` 400–700; `font-variant-numeric: tabular-nums` on `.data` |
