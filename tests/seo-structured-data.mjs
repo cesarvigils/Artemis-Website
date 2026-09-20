@@ -45,6 +45,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '..');
 const DIST = path.join(ROOT, 'dist');
 const DRIVERS = path.join(ROOT, 'src', 'data', 'drivers.json');
+const EVENTS = path.join(ROOT, 'src', 'data', 'events.json');
 const SITE = 'https://artemisesports.com';
 
 let failures = 0;
@@ -122,6 +123,57 @@ check('home emits one valid ld+json block holding a SportsTeam', () => {
   assert(org['@id'] === `${SITE}/#organization`, `org @id is ${org['@id']}`);
 });
 
+check('the WebSite node names the organisation as its publisher', () => {
+  const graph = graphOf(read('index.html'));
+  const website = nodeOf(graph, 'WebSite');
+  const org = nodeOf(graph, 'SportsTeam');
+  assert(website.publisher?.['@id'] === org['@id'], `publisher is ${JSON.stringify(website.publisher)}`);
+  assert(website.inLanguage === 'en-GB', `inLanguage is ${website.inLanguage}`);
+  /* SearchAction makes a site eligible for the sitelinks search box and
+     takes a URL template pointing at a real search endpoint. There is no
+     search route here, so declaring one would resolve to a 404. */
+  assert(!website.potentialAction, 'WebSite declares a SearchAction, but the site has no search route');
+});
+
+check('no placeholder event is asserted as a scheduled race', () => {
+  const graph = graphOf(read('index.html'));
+  const events = graph.filter((n) => n['@type'] === 'SportsEvent');
+  const source = JSON.parse(readFileSync(path.join(ROOT, 'src', 'data', 'events.json'), 'utf8'));
+  const placeholderNames = source.filter((e) => e._placeholder === true).map((e) => e.name);
+  const leaked = events.filter((e) => placeholderNames.includes(e.name));
+  assert(leaked.length === 0, `placeholder events in structured data: ${leaked.map((e) => e.name).join(', ')}`);
+});
+
+check('partner links carry rel="sponsored"', () => {
+  const html = read('partners/index.html');
+  const partners = JSON.parse(readFileSync(path.join(ROOT, 'src', 'data', 'partners.json'), 'utf8'));
+  for (const partner of partners) {
+    const anchors = [...html.matchAll(new RegExp(`<a\\b[^>]*href="${partner.url}"[^>]*>`, 'g'))].map((m) => m[0]);
+    assert(anchors.length > 0, `no link to ${partner.name} on /partners`);
+    /* A sponsorship link left plainly followed is what a link-spam manual
+       action looks for. The team's own socials and store stay followed. */
+    for (const anchor of anchors) {
+      assert(/rel="[^"]*\bsponsored\b/.test(anchor), `${partner.name} link is missing rel="sponsored": ${anchor}`);
+    }
+  }
+});
+
+check('driver descriptions are distinct from one another', () => {
+  const drivers = JSON.parse(readFileSync(DRIVERS, 'utf8'));
+  const seen = new Map();
+  for (const driver of drivers) {
+    const file = path.join(DIST, 'team', driver.id, 'index.html');
+    if (!existsSync(file)) continue;
+    const description = (readFileSync(file, 'utf8').match(/<meta name="description" content="([^"]*)"/) ?? [])[1];
+    assert(description, `${driver.id} has no meta description`);
+    /* Eight roster pages whose descriptions differ only by a name is the
+       thin-content shape a roster is most likely to produce. */
+    assert(!seen.has(description), `${driver.id} and ${seen.get(description)} share a description`);
+    seen.set(description, driver.id);
+  }
+  assert(seen.size > 1, 'fewer than two driver pages were built');
+});
+
 check('home declares og:type website and a canonical without a trailing slash', () => {
   const html = read('index.html');
   assert(html.includes('<meta property="og:type" content="website">'), 'og:type is not website');
@@ -176,7 +228,9 @@ check('every sitemap lastmod is a plain ISO date, and none is in the future', ()
 console.log('\nWith one driver promoted to real (restored afterwards):\n');
 
 const originalDrivers = readFileSync(DRIVERS, 'utf8');
+const originalEvents = readFileSync(EVENTS, 'utf8');
 let promoted;
+let promotedEvent;
 
 try {
   const drivers = JSON.parse(originalDrivers);
@@ -184,6 +238,17 @@ try {
   if (!promoted) throw new Error('no placeholder driver to promote');
   delete promoted._placeholder;
   writeFileSync(DRIVERS, `${JSON.stringify(drivers, null, 2)}\n`);
+
+  /* One event too, in the same build rather than a second promotion pass:
+     the SportsEvent path is switched off for exactly the same reason the
+     Person path is, and rebuilding twice to prove two independent gates
+     costs a build for nothing. */
+  const events = JSON.parse(originalEvents);
+  promotedEvent = events.find((e) => e._placeholder === true);
+  if (!promotedEvent) throw new Error('no placeholder event to promote');
+  delete promotedEvent._placeholder;
+  writeFileSync(EVENTS, `${JSON.stringify(events, null, 2)}\n`);
+
   run('npm run build');
 
   const html = read(`team/${promoted.id}/index.html`);
@@ -240,6 +305,27 @@ try {
     if (person.nationality) assert(person.nationality === promoted.country, 'nationality does not match the record');
   });
 
+  check(`"${promotedEvent.name}" is now asserted as a scheduled SportsEvent`, () => {
+    const graph = graphOf(read('index.html'));
+    const event = graph.find((n) => n['@type'] === 'SportsEvent' && n.name === promotedEvent.name);
+    assert(event, `no SportsEvent for ${promotedEvent.name}`);
+    assert(
+      event.startDate === (promotedEvent.startTime ?? promotedEvent.start),
+      `startDate is ${event.startDate}, record says ${promotedEvent.startTime ?? promotedEvent.start}`
+    );
+    /* A sim race happens on iRacing, not at the circuit whose name it
+       borrows, so it must never carry a physical address. */
+    assert(event.location?.['@type'] === 'VirtualLocation', `location is ${JSON.stringify(event.location)}`);
+    assert(
+      event.competitor?.['@id'] === `${SITE}/#organization`,
+      `competitor is ${JSON.stringify(event.competitor)}`
+    );
+    const others = JSON.parse(readFileSync(EVENTS, 'utf8')).filter((e) => e._placeholder === true);
+    const names = graph.filter((n) => n['@type'] === 'SportsEvent').map((n) => n.name);
+    const leaked = others.filter((e) => names.includes(e.name));
+    assert(leaked.length === 0, `promoting one event leaked others: ${leaked.map((e) => e.name).join(', ')}`);
+  });
+
   check('the other drivers are still placeholders and still excluded', () => {
     const sitemap = read('sitemap.xml');
     const others = JSON.parse(readFileSync(DRIVERS, 'utf8')).filter((d) => d._placeholder === true);
@@ -252,11 +338,13 @@ try {
   failures += 1;
 } finally {
   writeFileSync(DRIVERS, originalDrivers);
-  console.log('\n  restored src/data/drivers.json');
+  writeFileSync(EVENTS, originalEvents);
+  console.log('\n  restored src/data/drivers.json and events.json');
 }
 
-check('the restore put drivers.json back byte-for-byte', () => {
+check('the restore put both data files back byte-for-byte', () => {
   assert(readFileSync(DRIVERS, 'utf8') === originalDrivers, 'drivers.json differs from before the run');
+  assert(readFileSync(EVENTS, 'utf8') === originalEvents, 'events.json differs from before the run');
 });
 
 /* Leave dist/ built from the real data, not the promoted run. Best-effort:

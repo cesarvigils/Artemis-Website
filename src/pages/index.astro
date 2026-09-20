@@ -55,6 +55,36 @@ const featured = featuredDrivers(drivers as Driver[], 4);
 const driverCount = (drivers as Driver[]).filter(
   (driver) => driver.active !== false && driver.role === 'driver'
 ).length;
+
+/* SportsEvent for the calendar, under the same placeholder rule as the
+   roster: every record in events.json is `_placeholder: true` today, and a
+   structured claim that a race is scheduled - with a date a calendar
+   surface could show a person - must not be made about an invented one.
+   Emits for real events only, so it switches itself on when `_placeholder`
+   comes off a record, no code change.
+
+   Only the fields the record holds. `startTime` is the full timestamp
+   where one exists and the plain date otherwise; `endDate` only for a
+   multi-day entry. The track is a VirtualLocation, because the race
+   happens on iRacing and not at the circuit whose name it borrows -
+   saying otherwise would place a sim race at a physical address. */
+const eventSchema = upcoming
+  .filter((event) => event._placeholder !== true)
+  .map((event) => ({
+    '@type': 'SportsEvent',
+    '@id': new URL(`/#event-${event.id}`, Astro.site).href,
+    name: event.name,
+    startDate: event.startTime ?? event.start,
+    ...(event.end && event.end !== event.start ? { endDate: event.end } : {}),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    location: {
+      '@type': 'VirtualLocation',
+      name: `${event.track} (iRacing)`,
+      url: 'https://www.iracing.com/',
+    },
+    competitor: { '@id': new URL('/#organization', Astro.site).href },
+  }));
 ---
 
 <Base
@@ -68,6 +98,7 @@ const driverCount = (drivers as Driver[]).filter(
        browser selecting for 390px and displaying across 507px. */
     sizes: '(max-width: 900px) 130vw, 62vw',
   }}
+  schema={eventSchema}
 >
   <Hero
     image={heroImg}

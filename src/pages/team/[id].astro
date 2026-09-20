@@ -94,6 +94,33 @@ const person = provisional
       },
     ];
 
+/* Title and description, built from the record rather than a fixed
+   sentence. The old pair was `<name> | Artemis Esports` and `<name>,
+   <focus> for Artemis Esports. Race entries, form and ratings.` - which
+   made eight pages whose descriptions differed only by the name, and left
+   a 32-character title where a search result allows roughly 60.
+
+   Near-identical descriptions across a set of pages is the thin-content
+   shape a roster is most likely to produce, and the description is a
+   click-through input rather than a ranking one: it is what a person reads
+   when deciding between results. So both now carry what actually separates
+   one driver from another - the discipline, and their real record. */
+const title = `${driver.name} - ${driver.focus} | Artemis Esports`;
+
+/* Only counts that exist. A driver with no entries yet says so plainly
+   rather than padding with a zero, and never claims podiums they do not
+   have. `results.json` is the same source the table below renders, so the
+   description cannot drift from the page. */
+const record = entries.length
+  ? `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}${
+      podiums ? `, ${podiums} ${podiums === 1 ? 'podium' : 'podiums'}` : ''
+    }.`
+  : 'Yet to start a team entry.';
+
+const description =
+  `${driver.name}, ${driver.focus} for Artemis Esports on iRacing. ` +
+  `${record} Recent form, iRating and licence class.`;
+
 const meta = [
   driver.country,
   driver.number ? `No. ${driver.number}` : '',
@@ -106,8 +133,8 @@ const meta = [
 ---
 
 <Base
-  title={`${driver.name} | Artemis Esports`}
-  description={`${driver.name}, ${driver.focus} for Artemis Esports. Race entries, form and ratings.`}
+  title={title}
+  description={description}
   noindex={provisional}
   ogType="profile"
   schema={[breadcrumbs, ...person]}

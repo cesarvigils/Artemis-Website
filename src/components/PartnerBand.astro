@@ -69,10 +69,18 @@ const list = partners.map((partner) => {
         </div>
       ) : variant === 'row' ? (
         <>
+          {/* `sponsored` on partner marks, both here and in the list variant
+              below. GLYTCH is a paid partnership, and Google's link-attribute
+              guidance asks for `sponsored` on any link placed as part of an
+              ad, sponsorship or other compensated arrangement - leaving a
+              sponsor link plainly followed is what a link-spam manual action
+              is looking for. The team's own socials and store stay followed
+              on purpose: those are the same entity, and they are what the
+              `sameAs` in the organisation node points at. */}
           <ul class="partner-marks">
             {list.map((partner) => (
               <li>
-                <a href={partner.url} target="_blank" rel="noopener">
+                <a href={partner.url} target="_blank" rel="noopener sponsored">
                   <Image
                     src={partner.meta}
                     alt={`${partner.name} logo`}
@@ -113,7 +121,7 @@ const list = partners.map((partner) => {
           <ul class="partner-list">
             {list.map((partner) => (
               <li class="partner-item">
-                <a href={partner.url} target="_blank" rel="noopener">
+                <a href={partner.url} target="_blank" rel="noopener sponsored">
                   <Image
                     src={partner.meta}
                     alt={`${partner.name} logo`}
