@@ -1,0 +1,345 @@
+---
+/**
+ * The championship table.
+ *
+ * Built on the same bones as ResultsTable: explicit ARIA roles so the table
+ * semantics survive the `display: block` switch at 860px, a clipped-not-
+ * hidden `thead` so the column names stay in the accessibility tree, and
+ * `data-label` prefixes on the stacked layout.
+ *
+ * Two things are its own. Artemis rows are marked - a rule and full-strength
+ * ink against the rivals' muted ink - because the reason to look at this
+ * table is to find our drivers in it. And movement uses the data colours
+ * with a signed number, the same contract as FormLine: the sign is the
+ * glyph, so the meaning survives forced colours and a colour-blind reader.
+ */
+import type { Standing } from '../lib/data';
+
+interface Props {
+  rows: Standing[];
+  caption: string;
+}
+
+const { rows, caption } = Astro.props;
+
+const movementOf = (places?: number) => {
+  if (typeof places !== 'number' || !Number.isFinite(places) || places === 0) {
+    return { text: '0', label: 'no change', tone: 'level' };
+  }
+  return places > 0
+    ? { text: `+${places}`, label: `${places} gained`, tone: 'gain' }
+    : { text: String(places), label: `${-places} lost`, tone: 'loss' };
+};
+
+/* Only rendered when at least one row carries the field: a column of zeros
+   across a whole table is noise, and the bot may not have the numbers. */
+const showMovement = rows.some((row) => typeof row.movement === 'number');
+const showStarts = rows.some((row) => typeof row.starts === 'number');
+const showRecord = rows.some(
+  (row) => typeof row.wins === 'number' || typeof row.podiums === 'number'
+);
+---
+
+<table class="standings" role="table">
+  <caption class="sr-only">{caption}</caption>
+  <thead role="rowgroup">
+    <tr role="row">
+      <th role="columnheader" scope="col" class="field-label col-pos">Pos</th>
+      <th role="columnheader" scope="col" class="field-label col-driver">Driver</th>
+      <th role="columnheader" scope="col" class="field-label col-points">Points</th>
+      {
+        showMovement && (
+          <th role="columnheader" scope="col" class="field-label col-move">
+            Move
+          </th>
+        )
+      }
+      {
+        showStarts && (
+          <th role="columnheader" scope="col" class="field-label col-starts">
+            Starts
+          </th>
+        )
+      }
+      {
+        showRecord && (
+          <th role="columnheader" scope="col" class="field-label col-record">
+            Wins / podiums
+          </th>
+        )
+      }
+    </tr>
+  </thead>
+  <tbody role="rowgroup">
+    {
+      rows.map((row, i) => {
+        const move = movementOf(row.movement);
+        return (
+          <tr
+            role="row"
+            class:list={['reveal', { 'is-ours': !!row.driverId }]}
+            style={`--reveal-delay: ${Math.min(i, 5) * 45}ms`}
+          >
+            <td role="cell" class="col-pos" data-label="Pos">
+              <span class:list={['pos', { 'is-podium': row.position <= 3 }]}>
+                P{row.position}
+                {row.position <= 3 && <span class="sr-only"> podium</span>}
+              </span>
+            </td>
+            <td role="cell" class="col-driver" data-label="Driver">
+              {/* An Artemis driver's name is a link to their page; a rival's
+                  is plain text, because there is nowhere to send a reader
+                  who clicks it. */}
+              {row.driverId ? (
+                <a class="standings-link" href={`/team/${row.driverId}`}>
+                  {row.driver}
+                </a>
+              ) : (
+                row.driver
+              )}
+              {row.driverId && <span class="sr-only"> (Artemis)</span>}
+            </td>
+            <td role="cell" class="col-points" data-label="Points">
+              {row.points}
+            </td>
+            {showMovement && (
+              <td role="cell" class="col-move" data-label="Move">
+                <span class:list={['move', `is-${move.tone}`]} aria-hidden="true">
+                  {move.text}
+                </span>
+                <span class="sr-only">{move.label}</span>
+              </td>
+            )}
+            {showStarts && (
+              <td role="cell" class="col-starts" data-label="Starts">
+                {row.starts ?? ''}
+              </td>
+            )}
+            {showRecord && (
+              <td role="cell" class="col-record" data-label="Wins / podiums">
+                {row.wins ?? 0} <span class="record-sep">/</span> {row.podiums ?? 0}
+              </td>
+            )}
+          </tr>
+        );
+      })
+    }
+  </tbody>
+</table>
+
+<style>
+  .standings {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .standings th {
+    padding-block: 0 0.7rem;
+    border-bottom: 1px solid var(--line-strong);
+    font-weight: var(--weight-small);
+  }
+
+  .standings td {
+    padding-block: 0.85rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: baseline;
+  }
+
+  .standings th,
+  .standings td {
+    padding-inline-end: var(--space-l);
+  }
+
+  .standings th:last-child,
+  .standings td:last-child {
+    padding-inline-end: 0;
+  }
+
+  .standings tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .col-pos {
+    width: 5rem;
+  }
+  .col-points,
+  .col-move,
+  .col-starts {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .pos {
+    display: inline-block;
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-display);
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+    color: var(--muted);
+  }
+
+  .pos.is-podium {
+    color: var(--mist);
+    border-bottom: 2px solid currentColor;
+  }
+
+  /* The rivals are the context; our drivers are the reason to read it. A
+     left rule and full-strength ink, not a background fill: a tinted row
+     would read as a hover state on a row that is not clickable. */
+  td.col-driver {
+    font-size: var(--text-base);
+    color: var(--mist-dim);
+    overflow-wrap: anywhere;
+  }
+
+  .standings tr.is-ours td.col-driver {
+    color: var(--mist);
+    font-weight: var(--weight-small);
+  }
+
+  .standings tr.is-ours td.col-pos {
+    box-shadow: inset 2px 0 0 0 var(--mist);
+  }
+
+  .standings-link {
+    color: inherit;
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .standings-link:hover {
+      color: var(--signal-hover);
+    }
+  }
+
+  td.col-points,
+  td.col-starts,
+  td.col-record,
+  td.col-move {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--text-sm);
+    line-height: var(--leading-tight);
+    color: var(--muted);
+  }
+
+  .standings tr.is-ours td.col-points {
+    color: var(--mist);
+    font-weight: var(--weight-display);
+  }
+
+  .record-sep {
+    color: var(--muted-deep);
+  }
+
+  .move {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--track-data);
+  }
+
+  .move.is-gain {
+    color: var(--gain);
+  }
+
+  .move.is-loss {
+    color: var(--loss);
+  }
+
+  .move.is-level {
+    color: var(--muted);
+  }
+
+  /* Forced colours drop the data colours to one system ink, so the sign in
+     front of the number is what is left carrying the meaning - and the
+     Artemis marker becomes a border, which survives where a box-shadow
+     does not. */
+  @media (forced-colors: active) {
+    .move.is-gain,
+    .move.is-loss,
+    .move.is-level {
+      color: CanvasText;
+    }
+
+    .standings tr.is-ours td.col-pos {
+      box-shadow: none;
+      border-left: 2px solid CanvasText;
+    }
+  }
+
+  /* Under 860px the table becomes stacked entries, the same way the results
+     sheet does. The header row is clipped rather than removed so the
+     explicit `role="columnheader"` survives the display change. */
+  @media (max-width: 860px) {
+    .standings,
+    .standings tbody,
+    .standings tr,
+    .standings td {
+      display: block;
+      width: auto;
+    }
+
+    .standings thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .standings tr {
+      position: relative;
+      padding: var(--space-s) 0 var(--space-s) min(4rem, 26%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .standings tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .standings td {
+      padding-block: 0;
+      padding-inline-end: 0;
+      border-bottom: none;
+    }
+
+    .col-pos {
+      position: absolute;
+      left: 0;
+      top: var(--space-s);
+    }
+
+    .standings tr.is-ours td.col-pos {
+      box-shadow: none;
+    }
+
+    .standings tr.is-ours {
+      box-shadow: inset 2px 0 0 0 var(--mist);
+    }
+
+    td.col-points,
+    td.col-move,
+    td.col-starts,
+    td.col-record {
+      display: inline-block;
+      margin-top: 0.45rem;
+      margin-inline-end: var(--space-m);
+    }
+
+    td.col-points::before,
+    td.col-move::before,
+    td.col-starts::before,
+    td.col-record::before {
+      content: attr(data-label) ': ';
+      font-family: var(--font-data);
+      font-weight: var(--weight-small);
+      font-size: var(--text-2xs);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+  }
+</style>

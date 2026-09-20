@@ -11,9 +11,9 @@ changing any copy.
 
 Six pages, no database, no logins, no forms that submit anywhere. The build
 turns the source in this folder into plain HTML, CSS and images, and a host
-serves those files. Race results, the roster and the calendar come from three
-JSON files that a Discord bot writes for you, so nobody has to touch code to
-publish a result.
+serves those files. Race results, the roster, the calendar and the championship
+table come from four JSON files that a Discord bot writes for you, so nobody has
+to touch code to publish a result.
 
 Lead developer: Cesar Vigil.
 
@@ -25,6 +25,7 @@ Lead developer: Cesar Vigil.
 | `/team` | The full roster, grouped road, oval and pitwall |
 | `/team/<driver>` | One page per driver: their ratings, their form, and every team entry they appear in. Generated from `drivers.json`, so publishing a driver publishes their page |
 | `/join` | The open seats, what a season asks of a driver, and the one step to apply |
+| `/standings` | The championship table, with Artemis entries marked among the rivals. Empty until there is a league, and it says so rather than inventing one. Not in the header yet |
 | `/partners` | What a partner gets, the results and roster as evidence, the channels, the contact |
 | `/about` | Where the org came from, the photos, what we stand for, how to join |
 | a bad URL | A branded not-found page that points home |

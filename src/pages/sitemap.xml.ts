@@ -1,6 +1,13 @@
 import type { APIRoute } from 'astro';
 import drivers from '../data/drivers.json';
-import { activeDrivers, hasOwnPage, type Driver } from '../lib/data';
+import standings from '../data/standings.json';
+import {
+  activeDrivers,
+  hasOwnPage,
+  hasStandings,
+  type Driver,
+  type StandingsFile,
+} from '../lib/data';
 
 /**
  * The sitemap, generated.
@@ -53,6 +60,14 @@ export const GET: APIRoute = ({ site }) => {
       priority: '0.6',
     }));
 
+  /* /standings exists as a route whether or not there is a table, because a
+     page that says "no season is running" is a real answer. It only enters
+     the sitemap once it has rows. `standings.astro` sets `noindex` from the
+     same condition, so the page and the sitemap cannot disagree. */
+  const standingsPages = hasStandings(standings as StandingsFile)
+    ? [{ path: '/standings', changefreq: 'daily', priority: '0.9' }]
+    : [];
+
   /* No trailing slashes except on the root: `vercel.json` sets
      trailingSlash false, every internal link uses the bare form, and
      `Base.astro` normalises the canonical tag to match. All three have to
@@ -61,7 +76,7 @@ export const GET: APIRoute = ({ site }) => {
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...PAGES, ...driverPages]
+${[...PAGES, ...standingsPages, ...driverPages]
   .map(
     (page) => `  <url>
     <loc>${page.path === '/' ? site.href : url(page.path)}</loc>
