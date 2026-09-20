@@ -49,20 +49,38 @@ const socials = socialsOf(driver);
    `_placeholder` comes off the record. */
 const provisional = driver._placeholder === true;
 
-/* Breadcrumbs. A driver page is the only route on this site two levels
-   deep, so it is the only one where a trail says anything a search result
-   could not already infer - Google renders it in place of the raw URL. The
-   `item` values are absolute and match the canonical form exactly (no
-   trailing slash), or the trail points at URLs the sitemap does not list. */
+/* The trail, declared once. It is rendered as the visible address line
+   above the h1 AND serialised into the BreadcrumbList below, because
+   Google's structured-data policy is that markup describes what is on the
+   page - a BreadcrumbList with no visible trail is markup describing
+   nothing. Deriving both from this array is what stops them drifting.
+
+   It also fixes a dead end: before this, a driver page linked out to the
+   Scoreboard and the Discord but offered no way back to the roster it was
+   reached from. Internal links are the only link equity fully under our
+   control, and a leaf page that does not link up wastes its own.
+
+   A driver page is the only route on this site two levels deep, so it is
+   the only one where a trail says anything a reader or a search result
+   could not already infer. */
+const trail = [
+  { name: 'Home', href: '/' },
+  { name: 'Team', href: '/team' },
+  /* The current page, so it carries no href: that is what marks the end of
+     the trail rather than a link to self, in both renderings. */
+  { name: driver.name },
+];
+
 const breadcrumbs = {
   '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', Astro.site).href },
-    { '@type': 'ListItem', position: 2, name: 'Team', item: new URL('/team', Astro.site).href },
-    /* The last crumb is the current page, so it carries no `item` - that is
-       what tells a parser the trail ends here rather than linking to self. */
-    { '@type': 'ListItem', position: 3, name: driver.name },
-  ],
+  itemListElement: trail.map((crumb, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: crumb.name,
+    /* Absolute, and matching the canonical no-trailing-slash form, or the
+       trail points at URLs the sitemap does not list. */
+    ...(crumb.href ? { item: new URL(crumb.href, Astro.site).href.replace(/(?<!^https?:\/)\/$/, '') } : {}),
+  })),
 };
 
 /* A `Person` node, and the same placeholder rule the rest of the site uses.
@@ -139,7 +157,7 @@ const meta = [
   ogType="profile"
   schema={[breadcrumbs, ...person]}
 >
-  <PageHead title={driver.name} lead={driver.bio} meta={meta}>
+  <PageHead title={driver.name} lead={driver.bio} meta={meta} breadcrumb={trail}>
     {
       driver.number && (
         <p class="driver-hero-number" slot="aside" aria-hidden="true">
