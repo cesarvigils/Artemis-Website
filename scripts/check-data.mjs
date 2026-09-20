@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Validates src/data/{results,drivers,events}.json against docs/data-contract.md,
- * plus src/data/seats.json, which is hand-edited and has no bot behind it.
+ * Validates src/data/{results,drivers,events,standings}.json against
+ * docs/data-contract.md, plus src/data/seats.json, which is hand-edited and
+ * has no bot behind it.
  *
  * The Discord bot writes the first three straight to the deploy branch, so this
  * runs as `prebuild`: a bad write fails the build and the host keeps serving the
@@ -562,6 +563,131 @@ function checkDriverNames(results, drivers) {
   });
 }
 
+/* standings.json ----------------------------------------------------
+   An object, not an array, because it carries season metadata beside the
+   rows - so it gets its own reader rather than `load`. Hard errors, unlike
+   stats.json: this one is written by the bot from numbers a person read off
+   a league page, and a wrong championship table is a claim the site should
+   not be able to publish.
+------------------------------------------------------------------- */
+
+function checkStandings(driverRows) {
+  const file = 'standings.json';
+  const path = join(dataDir, file);
+  if (!existsSync(path)) {
+    warnings.push(`${file}: missing; the standings page will render its empty state.`);
+    return null;
+  }
+
+  let parsed;
+  try {
+    const raw = readFileSync(path, 'utf8');
+    if (!raw.endsWith('\n')) warnings.push(`${file}: should end with a newline`);
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    errors.push(`${file}: is not valid JSON (${error.message})`);
+    return null;
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    errors.push(`${file}: must be a JSON object with a "standings" array`);
+    return null;
+  }
+
+  checkString(file, 0, 'season', parsed.season, { min: 2, max: 80, optional: true });
+  checkString(file, 0, 'series', parsed.series, { min: 2, max: 60, optional: true });
+  checkString(file, 0, 'url', parsed.url, { min: 8, max: 300, optional: true });
+  if (parsed.url !== undefined && typeof parsed.url === 'string' && !/^https:\/\//.test(parsed.url)) {
+    fail(file, 0, 'url', 'must be an https URL');
+  }
+  if (parsed.updated !== undefined) checkDate(file, 0, 'updated', parsed.updated);
+
+  if (parsed.rounds !== undefined) {
+    if (typeof parsed.rounds !== 'object' || parsed.rounds === null || Array.isArray(parsed.rounds)) {
+      fail(file, 0, 'rounds', 'must be an object like {"run": 4, "total": 10}');
+    } else {
+      checkInteger(file, 0, 'rounds.run', parsed.rounds.run, { min: 0, max: 99, optional: true });
+      checkInteger(file, 0, 'rounds.total', parsed.rounds.total, { min: 1, max: 99, optional: true });
+      if (
+        typeof parsed.rounds.run === 'number' &&
+        typeof parsed.rounds.total === 'number' &&
+        parsed.rounds.run > parsed.rounds.total
+      ) {
+        fail(file, 0, 'rounds.run', `cannot exceed rounds.total (${parsed.rounds.run} of ${parsed.rounds.total})`);
+      }
+    }
+  }
+
+  const rows = parsed.standings;
+  if (rows === undefined) {
+    errors.push(`${file}: must have a "standings" array (use [] for no table yet)`);
+    return parsed;
+  }
+  if (!Array.isArray(rows)) {
+    errors.push(`${file}: "standings" must be an array`);
+    return parsed;
+  }
+
+  const driverIds = new Set((driverRows ?? []).map((row) => row?.id).filter(Boolean));
+  const positions = new Map();
+
+  rows.forEach((row, i) => {
+    if (typeof row !== 'object' || row === null || Array.isArray(row)) {
+      errors.push(`${file}[${i}]: must be an object`);
+      return;
+    }
+    checkInteger(file, i, 'position', row.position, { min: 1, max: 999 });
+    checkString(file, i, 'driver', row.driver, { min: 2, max: 40 });
+    checkInteger(file, i, 'points', row.points, { min: 0, max: 99999 });
+    checkInteger(file, i, 'starts', row.starts, { min: 0, max: 999, optional: true });
+    checkInteger(file, i, 'wins', row.wins, { min: 0, max: 999, optional: true });
+    checkInteger(file, i, 'podiums', row.podiums, { min: 0, max: 999, optional: true });
+    checkInteger(file, i, 'movement', row.movement, { min: -998, max: 998, optional: true });
+    checkFlag(file, i, '_placeholder', row._placeholder);
+
+    if (
+      typeof row.wins === 'number' &&
+      typeof row.podiums === 'number' &&
+      row.wins > row.podiums
+    ) {
+      fail(file, i, 'wins', `cannot exceed podiums (${row.wins} wins, ${row.podiums} podiums)`);
+    }
+    if (
+      typeof row.starts === 'number' &&
+      typeof row.podiums === 'number' &&
+      row.podiums > row.starts
+    ) {
+      fail(file, i, 'podiums', `cannot exceed starts (${row.podiums} of ${row.starts})`);
+    }
+
+    /* A driverId is what marks the row as ours and links it to a page, so a
+       typo would quietly demote one of our drivers to a rival. */
+    if (row.driverId !== undefined) {
+      if (checkString(file, i, 'driverId', row.driverId, { min: 3, max: 80 })) {
+        if (!ID.test(row.driverId)) {
+          fail(file, i, 'driverId', 'must be lowercase letters, numbers and hyphens');
+        } else if (driverIds.size && !driverIds.has(row.driverId)) {
+          fail(file, i, 'driverId', `"${row.driverId}" is not an id in drivers.json`);
+        }
+      }
+    }
+
+    if (typeof row.position === 'number') {
+      if (positions.has(row.position)) {
+        fail(file, i, 'position', `P${row.position} is already used by row ${positions.get(row.position)}`);
+      } else {
+        positions.set(row.position, i);
+      }
+    }
+  });
+
+  if (rows.length === 0) {
+    warnings.push(`${file}: no rows; the standings page will render its empty state.`);
+  }
+
+  return parsed;
+}
+
 /* Run ---------------------------------------------------------------- */
 
 const results = load('results.json');
@@ -574,6 +700,8 @@ if (drivers) checkDrivers(drivers);
 if (events) checkEvents(events);
 if (seats) checkSeats(seats);
 checkDriverNames(results, drivers);
+
+const standings = checkStandings(drivers);
 
 /* Never fails the build. See the note at the top of checkStats. */
 const stats = checkStats(drivers);
@@ -609,6 +737,7 @@ const counts = [
   drivers ? `${drivers.length} drivers` : null,
   events ? `${events.length} events` : null,
   seats ? `${seats.length} seats` : null,
+  standings ? `${standings.standings?.length ?? 0} standings rows` : null,
   stats ? `${stats.__count ?? 0} synced drivers` : null,
 ]
   .filter(Boolean)

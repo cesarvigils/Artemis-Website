@@ -459,6 +459,14 @@ things a visitor acts on and `/about` is the one they read last.
 Adding a page means adding a file in `src/pages/`, a line in `primary`, a line
 in `footer`, and an entry in the `PAGES` list in `src/pages/sitemap.xml.ts`.
 
+`/standings` already has its file and its route; what it does not have is a nav
+line. While `standings.json` holds `{"standings": []}` the page renders an
+empty state saying no season table is published, carries `noindex` and stays
+out of the sitemap. Publishing a real table means the bot writing rows into
+that file - and then, once, adding `{ "href": "/standings", "label":
+"Standings" }` to `primary` in `nav.json`. Do not add that line before there
+are rows: a header link to an empty page is worse than no link.
+
 Driver pages are the exception and need none of that. `/team/<id>` is generated
 from `drivers.json`, one per active record whose `role` is `driver`, and the
 sitemap picks it up from the same file. Publishing a driver publishes their

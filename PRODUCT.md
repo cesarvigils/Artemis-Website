@@ -51,6 +51,7 @@ One primary CTA per page, at most one quieter secondary action.
 | `/` | Join the Discord | See the Scoreboard (in-page anchor) |
 | `/team` | Join the Discord | - |
 | `/team/<driver>` | Join the Discord | "The Scoreboard" to the home results module |
+| `/standings` | Join the Discord | The league's own table, when a season is published |
 | `/join` | Apply in the Discord | - |
 | `/about` | Join the Discord | - |
 | `/partners` | Partner with us (mailto) | "The Scoreboard" to the home results module |

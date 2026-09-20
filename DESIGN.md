@@ -97,6 +97,11 @@ redefined in the print block, and read by nothing - `--surface-3`'s job as the
 opaque divider step is now `--line-strong`, and no area of Deep Teal was ever
 placed on the site. A token nothing uses is a value that drifts.
 
+Where they are used today: `FormLine.astro` (a driver's recent races) and
+`StandingsTable.astro` (movement since the last round). Both render movement
+as a signed number - `+7`, `-3` - so the sign carries the meaning and the
+colour only reinforces it.
+
 **The data colours are not brand colours.** They sit outside the Signal budget
 because they are not directing the eye, they are labelling a value. Never
 decorative, and never alone: each use pairs with a glyph or a rule, the same
