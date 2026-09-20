@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "check:data": "node scripts/check-data.mjs",
-    "check:types": "npm i --no-save --no-audit --no-fund @astrojs/check typescript && astro check",
+    "check:types": "npm i --no-save --no-audit --no-fund @astrojs/check typescript && npm ci --prefix tests && astro check",
     "build:icons": "node scripts/build-icons.mjs",
     "prebuild": "npm run check:data && node scripts/guard-placeholders.mjs",
     "build": "astro build",

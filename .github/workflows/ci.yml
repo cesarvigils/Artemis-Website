@@ -162,9 +162,13 @@ jobs:
       # the metadata that picks the right native binary per platform. Adding
       # two devDependencies is not worth corrupting the lockfile for, and
       # repairing a lockfile by hand is worse. Nothing ships from this job.
-      # `npm run check:types` rather than the two commands inline, so what
-      # CI runs and what a contributor runs locally are the same string and
-      # cannot drift apart.
+      # `npm run check:types` rather than the commands inline, so what CI
+      # runs and what a contributor runs locally are the same string and
+      # cannot drift apart. That script also installs the tests workspace,
+      # because tsconfig.json includes `**/*` and the specs under tests/
+      # import @playwright/test - whose types live in tests/node_modules.
+      # Without it this job reported 41 errors that do not exist, while a
+      # developer who had run the suite saw none.
       - name: Typecheck every .astro and .ts file
         run: npm run check:types
 
