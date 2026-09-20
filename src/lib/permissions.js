@@ -24,6 +24,25 @@ export const REQUIRED_PERMISSION = PermissionFlagsBits.ManageGuild;
 /** Wording of the refusal, kept short and plain. */
 export const REFUSAL_TEXT = 'You need the Manage Server permission to use this command.';
 
+/** Wording used when the command arrives from a server the bot does not serve. */
+export const WRONG_GUILD_TEXT = 'This bot only answers in the Artemis team server.';
+
+/**
+ * True when the interaction came from the configured server.
+ *
+ * Commands are registered per guild by default, so this rarely fires. It
+ * matters when they are registered globally: without it, Manage Server in any
+ * server the bot has joined would grant write access to the website's data.
+ *
+ * @param {{ guildId?: string | null }} interaction
+ * @param {{ discordGuildId?: string }} [config]
+ * @returns {boolean}
+ */
+export function isConfiguredGuild(interaction, config) {
+  if (!config?.discordGuildId) return true;
+  return interaction.guildId === config.discordGuildId;
+}
+
 /**
  * True when the interaction was sent by a member who may use the bot.
  * @param {import('discord.js').BaseInteraction & { memberPermissions?: import('discord.js').PermissionsBitField | null }} interaction
@@ -38,23 +57,32 @@ export function isAllowed(interaction) {
  * Check the caller and, when they are not allowed, reply ephemerally and log it.
  *
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {{ discordGuildId?: string }} [config]
  * @returns {Promise<boolean>} true when the command may continue
  */
-export async function ensureAllowed(interaction) {
-  if (isAllowed(interaction)) return true;
+export async function ensureAllowed(interaction, config) {
+  const wrongGuild = !isConfiguredGuild(interaction, config);
+  if (!wrongGuild && isAllowed(interaction)) return true;
 
   log.warn('Refused a command', {
     user: interaction.user?.tag ?? interaction.user?.username,
     userId: interaction.user?.id,
     command: interaction.commandName,
     guild: interaction.guildId,
+    reason: wrongGuild ? 'wrong server' : 'missing Manage Server',
   });
 
-  const embed = errorEmbed({
-    title: 'Not allowed',
-    message: REFUSAL_TEXT,
-    details: ['Ask a server administrator if you should have it.'],
-  });
+  const embed = wrongGuild
+    ? errorEmbed({
+        title: 'Not allowed',
+        message: WRONG_GUILD_TEXT,
+        details: ['Run the command in the server the bot was set up for.'],
+      })
+    : errorEmbed({
+        title: 'Not allowed',
+        message: REFUSAL_TEXT,
+        details: ['Ask a server administrator if you should have it.'],
+      });
 
   if (interaction.deferred || interaction.replied) {
     await interaction.editReply({ embeds: [embed] });

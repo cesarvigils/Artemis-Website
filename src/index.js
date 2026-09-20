@@ -23,11 +23,12 @@
 import { Client, Events, GatewayIntentBits, MessageFlags } from 'discord.js';
 import { buildConfig, describeStorage, loadConfigOrExit } from './lib/config.js';
 import { createStorage, readRecords } from './lib/storage.js';
-import { validateArray } from './lib/validate.js';
-import { ensureAllowed, isAllowed } from './lib/permissions.js';
+import { runProbes, summarize, worstState } from './lib/health.js';
+import { startHeartbeat } from './lib/heartbeat.js';
+import { ensureAllowed, isAllowed, isConfiguredGuild } from './lib/permissions.js';
 import { commands } from './commands/index.js';
 import { replyError } from './commands/shared.js';
-import { FILES, KINDS } from './lib/schema.js';
+import { KINDS } from './lib/schema.js';
 import { log } from './lib/log.js';
 
 /**
@@ -50,34 +51,37 @@ export async function runCheck() {
   log.info('Configuration OK');
   log.info(`  storage mode: ${config.storage}`);
   log.info(`  data source:  ${describeStorage(config)}`);
-  log.info(`  audit channel: ${config.logChannelId || 'not set'}`);
 
+  // The same probes /health runs, minus the ones that need a gateway
+  // connection: no client is passed, so those are skipped.
   const storage = createStorage(config);
-  let failed = false;
+  const probes = await runProbes({ config, storage });
 
-  for (const kind of KINDS) {
-    try {
-      const { records } = await readRecords(storage, kind, { validate: false });
-      const { errors: problems } = validateArray(kind, records);
-      if (problems.length === 0) {
-        log.info(`  ${FILES[kind]}: ${records.length} record(s), valid`);
-      } else {
-        failed = true;
-        log.error(`  ${FILES[kind]}: ${records.length} record(s), ${problems.length} problem(s)`);
-        for (const problem of problems.slice(0, 20)) log.error(`      ${problem}`);
-        if (problems.length > 20) log.error(`      and ${problems.length - 20} more`);
-      }
-    } catch (error) {
-      failed = true;
-      log.error(`  ${FILES[kind]}: could not be read. ${error.message}`);
-    }
+  for (const probe of probes) {
+    const line = `  ${probe.name}: ${probe.state} - ${probe.detail}`;
+    if (probe.state === 'fail') log.error(line);
+    else if (probe.state === 'warn') log.warn(line);
+    else log.info(line);
   }
 
+  // The contract probe reports how many problems there are, not what they are,
+  // so print the list here where there is room for it.
+  const failed = worstState(probes) === 'fail';
   if (failed) {
+    for (const kind of KINDS) {
+      try {
+        const { errors: problems } = await readRecords(storage, kind, { validate: false });
+        for (const problem of problems.slice(0, 20)) log.error(`      ${problem}`);
+        if (problems.length > 20) log.error(`      and ${problems.length - 20} more`);
+      } catch {
+        // The probe above already reported that this file could not be read.
+      }
+    }
     log.error('Check finished with problems.');
     return 1;
   }
-  log.info('Check finished. All three files are valid.');
+
+  log.info(`Check finished. ${summarize(probes)}`);
   return 0;
 }
 
@@ -100,7 +104,7 @@ async function handleCommand(interaction, ctx) {
 
   // Second permission check. Discord already hides these commands from members
   // without Manage Server, but a server override could let one through.
-  if (!(await ensureAllowed(interaction))) return;
+  if (!(await ensureAllowed(interaction, ctx.config))) return;
 
   // Every reply is ephemeral: the audit channel is where the team sees changes.
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -130,7 +134,7 @@ async function handleAutocomplete(interaction, ctx) {
     await interaction.respond([]);
     return;
   }
-  if (!isAllowed(interaction)) {
+  if (!isAllowed(interaction) || !isConfiguredGuild(interaction, ctx.config)) {
     await interaction.respond([]);
     return;
   }
@@ -153,6 +157,9 @@ async function main() {
     log.info(`Logged in as ${ready.user.tag}`);
     log.info(`Data source: ${describeStorage(config)}`);
     log.info(`Commands ready: ${[...commands.keys()].join(', ')}`);
+    // Optional dead man's switch: without it, a bot that stops answering is
+    // only noticed the next time somebody runs a command.
+    stopHeartbeat = startHeartbeat(ctx);
   });
 
   client.on(Events.InteractionCreate, async (interaction) => {
@@ -185,6 +192,7 @@ async function main() {
   process.on('unhandledRejection', (reason) => log.error('Unhandled promise rejection', reason));
   process.on('uncaughtException', (error) => log.error('Uncaught exception', error));
 
+  let stopHeartbeat = null;
   let shuttingDown = false;
   /**
    * Log out and exit.
@@ -194,6 +202,7 @@ async function main() {
     if (shuttingDown) return;
     shuttingDown = true;
     log.info(`Received ${signal}, shutting down`);
+    if (stopHeartbeat) stopHeartbeat();
     try {
       await client.destroy();
     } catch (error) {

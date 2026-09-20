@@ -164,6 +164,43 @@ function describeDriver(record) {
 }
 
 /**
+ * Refuse an iRacing id that another driver already carries.
+ *
+ * The nightly sync keys stats.json by driver, so the website's build check
+ * rejects two drivers sharing one iRacing member id. The file validator catches
+ * it as well, but only as a "Change refused" list; this names the other driver.
+ *
+ * @param {Array<Record<string, any>>} records the current file
+ * @param {unknown} iracingId the id about to be written
+ * @param {string} [ownId] id of the record being edited, which may keep its own
+ */
+export function ensureIracingIdIsFree(records, iracingId, ownId) {
+  if (!Number.isInteger(iracingId)) return;
+  const owner = records.find((entry) => entry?.iracingId === iracingId && entry?.id !== ownId);
+  if (!owner) return;
+  throw new BotError(`iRacing id ${iracingId} already belongs to ${owner.name ?? owner.id}.`, {
+    title: 'Invalid input',
+    details: [
+      'The nightly iRacing sync keys its output by driver, so two drivers cannot be the same iRacing member.',
+      `Clear it from ${owner.id} first, or check the customer id on the member page.`,
+    ],
+  });
+}
+
+/**
+ * Refuse a record left without a car number when its group needs one.
+ * @param {Record<string, any>} record
+ */
+export function ensureNumberIsAllowed(record) {
+  if (record.group === 'crew') return;
+  if (String(record.number ?? '').length > 0) return;
+  throw new BotError('A car number is required for road and oval drivers.', {
+    title: 'Missing number',
+    details: ['Give the number option a value, or move the person to the crew group.'],
+  });
+}
+
+/**
  * Read the social link options into an object, keeping only the links supplied.
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  * @returns {Record<string, string>}
@@ -356,6 +393,11 @@ function applyEdits(interaction, record) {
     changed.push(`${clear} cleared`);
   }
 
+  // Both the number option and clear:number can leave a road or oval driver
+  // without one, which the contract rejects. Checked once, after every edit has
+  // been applied, so a group change in the same command counts.
+  ensureNumberIsAllowed(next);
+
   return { record: next, changed };
 }
 
@@ -379,6 +421,7 @@ export async function execute(interaction, ctx) {
       ctx,
       'drivers',
       (records) => {
+        ensureIracingIdIsFree(records, draft.iracingId);
         const id = makeId('drivers', draft, idSet(records), explicitId);
         const record = { id, ...draft };
         records.push(record);
@@ -403,6 +446,7 @@ export async function execute(interaction, ctx) {
           });
         }
         const { record, changed } = applyEdits(interaction, records[index]);
+        ensureIracingIdIsFree(records, record.iracingId, id);
         if (changed.length === 0) {
           throw new BotError('No fields were supplied, so there was nothing to change.', {
             title: 'Nothing to do',

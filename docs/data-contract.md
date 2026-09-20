@@ -47,7 +47,7 @@ Every file is a JSON array, UTF-8, 2-space indent, LF line endings, trailing new
 | `series` | string | 2–60 chars (league or "iRacing Special Event") |
 | `class` | string | one of: `GTP`, `LMP2`, `GT3`, `GT4`, `TCR`, `NASCAR Cup`, `NASCAR Xfinity`, `NASCAR Trucks`, `ARCA`, `Formula`, `Other` |
 | `position` | integer | 1–99 |
-| `entries` | integer | optional, 2–999: number of cars in the class/split, so the site can show `P4 / 41` |
+| `entries` | integer | optional, 2–999: number of cars in the class/split, so the site can show `P4 / 41`. When present, `position` may not exceed it |
 | `drivers` | string[] | 1–6 names, each 2–40 chars, displayed in order; the site matches these names against `drivers.json` `name` to show each driver's latest finish |
 | `note` | string | optional, max 140 chars |
 
@@ -83,9 +83,9 @@ Site usage: home "Recent results" = first 6 records; hero proof row = record wit
 | `bio` | string | max 140 chars, may be empty |
 | `stats.irating` | integer | optional, 0–15000 |
 | `stats.licence` | string | optional, pattern `^[A-DRP] \d\.\d{2}$` (e.g. `A 4.20`) |
-| `socials.*` | string | optional https URLs, may be empty; keys `x`, `twitch`, `youtube`, `instagram` |
+| `socials.*` | string | optional https URLs, may be empty; keys `x`, `twitch`, `youtube`, `instagram` and no others — an unrecognised key is rejected |
 | `active` | boolean | default `true`; inactive drivers are hidden on the site but kept in the file |
-| `iracingId` | integer | optional, the driver's iRacing customer id (1–99999999). When present, the nightly iRacing sync fills `stats.json` for this driver; when absent, the site shows only what is in `stats` above. |
+| `iracingId` | integer | optional, the driver's iRacing customer id (1–99999999), unique within the file: `stats.json` is keyed by driver id, so one iRacing member cannot belong to two drivers. When present, the nightly iRacing sync fills `stats.json` for this driver; when absent, the site shows only what is in `stats` above. |
 
 Site usage: home "Who drives" = first 4 active with `role: driver`; team page = all active grouped by `group`; `stats` renders only when present.
 

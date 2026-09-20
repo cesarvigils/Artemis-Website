@@ -219,11 +219,12 @@ export function validateResult(record, options = {}) {
   // site to render a finish as "P4 / 41".
   if (Object.prototype.hasOwnProperty.call(record, 'entries') && record.entries !== undefined) {
     const entries = record.entries;
-    // The contract sets no relation between position and entries, so a file
-    // that a human edited is never rejected for one. The commands still refuse
-    // a position larger than the field size when new input is typed.
     if (!Number.isInteger(entries) || entries < ENTRIES_MIN || entries > ENTRIES_MAX) {
       bag.add('entries', `must be a whole number between ${ENTRIES_MIN} and ${ENTRIES_MAX} when present`);
+    } else if (Number.isInteger(position) && position > entries) {
+      // The website's build check rejects this, so accepting it here would let
+      // the bot commit a file that cannot be deployed.
+      bag.add('position', `cannot be worse than the field size (P${position} of ${entries})`);
     }
   }
 
@@ -305,10 +306,15 @@ export function validateDriver(record, options = {}) {
     if (!isPlainObject(record.socials)) {
       bag.add('socials', 'must be an object when present');
     } else {
-      for (const key of SOCIAL_KEYS) {
+      // Every key is checked, not just the known ones: the website's build
+      // check rejects an unrecognised channel, so ignoring it here would let
+      // the bot report a file as valid that cannot be deployed.
+      for (const key of Object.keys(record.socials)) {
         const value = record.socials[key];
         if (value === undefined) continue;
-        if (typeof value !== 'string') {
+        if (!SOCIAL_KEYS.includes(key)) {
+          bag.add(`socials.${key}`, `is not a known channel; use one of: ${SOCIAL_KEYS.join(', ')}`);
+        } else if (typeof value !== 'string') {
           bag.add(`socials.${key}`, 'must be text when present');
         } else if (value.length > 0 && !/^https:\/\/\S+$/.test(value)) {
           bag.add(`socials.${key}`, 'must be an https link, or empty');
@@ -432,6 +438,9 @@ export function validateArray(kind, records, options = {}) {
 
   const errors = [];
   const seen = new Map();
+  // The nightly iRacing sync keys stats.json by driver id, so two drivers may
+  // not be the same iRacing member. The website's build check rejects it.
+  const seenIracingIds = new Map();
 
   records.forEach((record, index) => {
     const prefix = `${label}[${index}]`;
@@ -443,6 +452,18 @@ export function validateArray(kind, records, options = {}) {
       } else {
         seen.set(id, index);
       }
+    }
+
+    if (kind !== 'drivers') return;
+    const iracingId = isPlainObject(record) ? record.iracingId : undefined;
+    if (!Number.isInteger(iracingId)) return;
+    const first = seenIracingIds.get(iracingId);
+    if (first !== undefined) {
+      errors.push(
+        `${prefix}.iracingId: duplicate iRacing id ${iracingId}, already used at index ${first}`
+      );
+    } else {
+      seenIracingIds.set(iracingId, index);
     }
   });
 

@@ -21,7 +21,8 @@ import { sortRecords } from '../lib/serialize.js';
 import { validateArray } from '../lib/validate.js';
 import { BotError, isBotError } from '../lib/errors.js';
 import { parsePage } from '../lib/options.js';
-import { postAudit } from '../lib/audit.js';
+import { postAudit, postDeployFailure } from '../lib/audit.js';
+import { watchCommit } from '../lib/deploy-watch.js';
 import { FILES, SINGULAR } from '../lib/schema.js';
 import { log } from '../lib/log.js';
 
@@ -216,7 +217,10 @@ export async function writeChange(interaction, ctx, kind, mutate, options) {
     },
   ];
 
-  const description = [summary ?? '', liveNote(ctx.storage.mode), announceLine].filter(Boolean).join('\n');
+  const watching = ctx.storage.mode === 'github' && ctx.config.deployWatch !== false && Boolean(outcome.commit.sha);
+  const description = [summary ?? '', liveNote(ctx.storage.mode, { watching }), announceLine]
+    .filter(Boolean)
+    .join('\n');
 
   const embed =
     outcome.action === 'remove'
@@ -234,6 +238,35 @@ export async function writeChange(interaction, ctx, kind, mutate, options) {
     commit: outcome.commit,
     actor,
   });
+
+  // The command is finished. Following the build it started runs on after the
+  // reply, reports only a failure, and can never fail the command.
+  if (watching) {
+    void watchCommit(ctx, {
+      sha: outcome.commit.sha,
+      shortSha: outcome.commit.shortSha,
+      url: outcome.commit.url,
+      onFailure: async (report) => {
+        await interaction
+          .followUp({
+            embeds: [
+              errorEmbed({
+                title: 'The website build failed',
+                message: `${FILES[kind]} was committed as ${report.shortSha}, but the build did not pass, so the change is not live.`,
+                details: [
+                  `Failing: ${report.failed.join(', ')}.`,
+                  ...(report.url ? [report.url] : []),
+                  'The previous deployment is still being served.',
+                ],
+              }),
+            ],
+            flags: MessageFlags.Ephemeral,
+          })
+          .catch((error) => log.warn('Could not follow up about a failed build', error?.message ?? error));
+        await postDeployFailure(ctx.client, ctx.config, { kind, id: outcome.id, actor, ...report });
+      },
+    }).catch((error) => log.warn('The deploy watcher stopped early', error?.message ?? error));
+  }
 }
 
 /**

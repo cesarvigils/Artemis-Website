@@ -1,0 +1,47 @@
+# systemd unit for the Artemis data bot.
+#
+# The bot is a long running process that holds a Discord gateway connection.
+# Restart=always covers a crash or a dropped connection; the heartbeat covers
+# the case systemd cannot see, where the process is alive but cannot do its job.
+#
+# Install:
+#   sudo cp deploy/artemis-data-bot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now artemis-data-bot
+#   journalctl -u artemis-data-bot -f
+#
+# Expects the checkout in /opt/artemis-data-bot with .env beside it, owned by
+# the artemis user. Change the paths and User below if yours differ.
+
+[Unit]
+Description=Artemis data bot
+Documentation=https://github.com/cesarvigils/Artemis-Website/tree/bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=artemis
+WorkingDirectory=/opt/artemis-data-bot
+EnvironmentFile=/opt/artemis-data-bot/.env
+ExecStart=/usr/bin/node /opt/artemis-data-bot/src/index.js
+
+# The bot handles SIGTERM and logs out of Discord before exiting.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+Restart=always
+RestartSec=10
+
+# It reads its own files and talks to two APIs. Nothing else is needed.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/artemis-data-bot
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

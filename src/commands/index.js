@@ -15,9 +15,10 @@ import * as result from './result.js';
 import * as driver from './driver.js';
 import * as event from './event.js';
 import * as dataCommand from './data.js';
+import * as health from './health.js';
 
 /** Every command module, in the order they are registered. */
-export const commandModules = [result, driver, event, dataCommand];
+export const commandModules = [result, driver, event, dataCommand, health];
 
 /** Command name -> module, for routing an interaction. */
 export const commands = new Map(commandModules.map((module) => [module.data.name, module]));

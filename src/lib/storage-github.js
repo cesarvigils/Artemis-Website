@@ -32,6 +32,14 @@ export const COMMIT_IDENTITY = Object.freeze({
 const REQUEST_TIMEOUT_MS = 15000;
 
 /**
+ * Header GitHub sends back on every response authenticated with a fine-grained
+ * personal access token, for example "2026-12-01 09:00:00 +0000". Classic
+ * tokens and GitHub App installation tokens do not send it, so its absence
+ * means "unknown", never "does not expire".
+ */
+const TOKEN_EXPIRY_HEADER = 'github-authentication-token-expiration';
+
+/**
  * Create the GitHub storage backend.
  * @param {import('./config.js').BotConfig} config
  * @returns {object} storage backend
@@ -56,10 +64,17 @@ export function createGithubStorage(config) {
   }
 
   /**
+   * Expiry of the fine-grained token, as last reported by GitHub. Null until
+   * the first call, and null forever for a token type that does not say.
+   * @type {string | null}
+   */
+  let tokenExpiry = null;
+
+  /**
    * Call the GitHub API and parse the JSON body.
    * @param {string} url absolute URL
    * @param {RequestInit} [init]
-   * @returns {Promise<{ status: number, body: any }>}
+   * @returns {Promise<{ status: number, body: any, headers: Headers }>}
    */
   async function call(url, init = {}) {
     let response;
@@ -85,6 +100,9 @@ export function createGithubStorage(config) {
       });
     }
 
+    const expiry = response.headers.get(TOKEN_EXPIRY_HEADER);
+    if (expiry) tokenExpiry = expiry;
+
     const text = await response.text();
     let body = null;
     if (text) {
@@ -94,7 +112,7 @@ export function createGithubStorage(config) {
         body = { message: text.slice(0, 200) };
       }
     }
-    return { status: response.status, body };
+    return { status: response.status, body, headers: response.headers };
   }
 
   /**
@@ -154,6 +172,44 @@ export function createGithubStorage(config) {
     /** @returns {string} one line for status embeds and log lines */
     describe() {
       return `${owner}/${repo} on branch ${branch}, folder ${dataDir || '(repository root)'}`;
+    },
+
+    /** Where this backend points, for the health probes and the deploy watcher. */
+    target: Object.freeze({ owner, repo, branch, dataDir }),
+
+    /**
+     * Call any GitHub endpoint with the same headers, timeout and error
+     * handling as the read and write paths. The health probes and the deploy
+     * watcher use this rather than a second fetch wrapper of their own.
+     *
+     * @param {string} path repository-relative or absolute API path, for
+     *   example "/repos/o/r/commits/sha/check-runs" or "/rate_limit"
+     * @param {RequestInit} [init]
+     * @returns {Promise<{ status: number, body: any, headers: Headers }>}
+     */
+    async request(path, init = {}) {
+      const url = path.startsWith('http') ? path : `${apiBase}${path}`;
+      return call(url, { method: 'GET', ...init });
+    },
+
+    /**
+     * Turn a failed response from request() into a BotError.
+     * @param {number} status
+     * @param {any} body
+     * @param {string} what
+     * @returns {BotError}
+     */
+    toError(status, body, what) {
+      return apiError(status, body, what);
+    },
+
+    /**
+     * Expiry of the fine-grained token as GitHub last reported it, or null
+     * when no call has been made yet or the token type does not say.
+     * @returns {string | null}
+     */
+    tokenExpiry() {
+      return tokenExpiry;
     },
 
     /**

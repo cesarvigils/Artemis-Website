@@ -35,6 +35,8 @@ const BRANCH_PATTERN = /^[^\s~^:?*[\\]+$/;
  * @property {string} githubApiBase
  * @property {string} logChannelId empty when auditing is off
  * @property {string} resultsChannelId empty when the public results announcement is off
+ * @property {boolean} deployWatch whether a write is followed until the build finishes
+ * @property {string} heartbeatUrl empty when no dead man's switch is configured
  * @property {string} logLevel
  */
 
@@ -74,6 +76,8 @@ export function buildConfig(options = {}) {
     githubApiBase: read('GITHUB_API_BASE', 'https://api.github.com').replace(/\/+$/, ''),
     logChannelId: read('LOG_CHANNEL_ID'),
     resultsChannelId: read('RESULTS_CHANNEL_ID'),
+    deployWatch: read('DEPLOY_WATCH', 'on').toLowerCase() !== 'off',
+    heartbeatUrl: read('HEARTBEAT_URL'),
     logLevel: read('LOG_LEVEL', 'info').toLowerCase(),
   };
 
@@ -109,7 +113,7 @@ export function buildConfig(options = {}) {
     else if (!REPO_PATTERN.test(config.githubOwner)) errors.push('GITHUB_OWNER contains characters GitHub does not allow.');
     if (!config.githubRepo) errors.push('GITHUB_REPO is missing, for example Artemis-Website.');
     else if (!REPO_PATTERN.test(config.githubRepo)) errors.push('GITHUB_REPO contains characters GitHub does not allow.');
-    if (!config.githubBranch) errors.push('GITHUB_BRANCH is missing, for example maintenance.');
+    if (!config.githubBranch) errors.push('GITHUB_BRANCH is missing, for example master.');
     else if (!BRANCH_PATTERN.test(config.githubBranch)) errors.push('GITHUB_BRANCH is not a valid branch name.');
   }
 
@@ -119,6 +123,10 @@ export function buildConfig(options = {}) {
 
   if (config.resultsChannelId && !SNOWFLAKE_PATTERN.test(config.resultsChannelId)) {
     errors.push('RESULTS_CHANNEL_ID must be a numeric Discord channel id, or left empty.');
+  }
+
+  if (config.heartbeatUrl && !/^https?:\/\/\S+$/.test(config.heartbeatUrl)) {
+    errors.push('HEARTBEAT_URL must be an http or https URL, or left empty.');
   }
 
   if (!['debug', 'info', 'warn', 'error'].includes(config.logLevel)) {

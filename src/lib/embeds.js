@@ -19,6 +19,9 @@ export const BRAND_COLOUR = 0x0fffcf;
 /** A muted red, used only for errors so they are easy to spot. */
 export const ERROR_COLOUR = 0xc0392b;
 
+/** Amber, used only by /health for a report that works but needs attention. */
+export const WARN_COLOUR = 0xd08b18;
+
 /** Text of the footer on every embed. */
 export const FOOTER_TEXT = 'Artemis data bot';
 
@@ -90,7 +93,16 @@ export function successEmbed(options) {
 
 /**
  * An error an operator can act on.
- * @param {{ title?: string, message: string, details?: string[] }} options
+ *
+ * Fields are optional and only used where an error carries structured detail
+ * as well as a sentence, as the failed build post in audit.js does.
+ *
+ * @param {{
+ *   title?: string,
+ *   message: string,
+ *   details?: string[],
+ *   fields?: Array<{ name: string, value: string, inline?: boolean }>
+ * }} options
  * @returns {EmbedBuilder}
  */
 export function errorEmbed(options) {
@@ -98,9 +110,19 @@ export function errorEmbed(options) {
   if (options.details?.length) {
     lines.push('', ...options.details.map((detail) => `- ${detail}`));
   }
-  return base(ERROR_COLOUR)
+  const embed = base(ERROR_COLOUR)
     .setTitle(truncate(options.title || 'Error', LIMITS.title))
     .setDescription(truncate(lines.join('\n'), LIMITS.description));
+  if (options.fields?.length) {
+    embed.addFields(
+      options.fields.slice(0, 25).map((field) => ({
+        name: truncate(field.name, LIMITS.fieldName),
+        value: fieldValue(field.value),
+        inline: field.inline ?? false,
+      })),
+    );
+  }
+  return embed;
 }
 
 /**
@@ -257,13 +279,54 @@ export function listEmbed(kind, pageRecords, options) {
 
 /**
  * The line the contract asks every write confirmation to carry.
+ *
+ * In GitHub mode the wording depends on whether the bot will follow the build:
+ * when it will, it promises to come back rather than promising a result it has
+ * not seen yet. A build that fails leaves the previous deployment live, so
+ * "live in about a minute" was only ever true when the build passed.
+ *
  * @param {'local'|'github'} mode
+ * @param {{ watching?: boolean }} [options]
  * @returns {string}
  */
-export function liveNote(mode) {
-  return mode === 'github'
-    ? 'Live in about a minute once Vercel finishes building.'
-    : 'Local storage mode. The file on disk was changed, nothing was pushed.';
+export function liveNote(mode, options = {}) {
+  if (mode !== 'github') {
+    return 'Local storage mode. The file on disk was changed, nothing was pushed.';
+  }
+  return options.watching
+    ? 'Committed. The build takes about a minute; the bot will follow up here only if it fails.'
+    : 'Live in about a minute once Vercel finishes building.';
+}
+
+/**
+ * The /health report: one line per probe, coloured by the worst result.
+ *
+ * States are written as words rather than emoji, which is the house style the
+ * command tests enforce, and the worst result decides the colour so the answer
+ * is readable before a single line is.
+ *
+ * @param {{
+ *   probes: Array<{ name: string, state: 'ok'|'warn'|'fail', detail: string }>,
+ *   state: 'ok'|'warn'|'fail',
+ *   summary: string
+ * }} report
+ * @returns {EmbedBuilder}
+ */
+export function healthEmbed(report) {
+  const colour = report.state === 'fail' ? ERROR_COLOUR : report.state === 'warn' ? WARN_COLOUR : BRAND_COLOUR;
+  const embed = base(colour)
+    .setTitle(truncate(`Bot health: ${report.state}`, LIMITS.title))
+    .setDescription(truncate(report.summary, LIMITS.description));
+
+  embed.addFields(
+    report.probes.slice(0, 25).map((probe) => ({
+      name: truncate(`${probe.name} - ${probe.state}`, LIMITS.fieldName),
+      value: fieldValue(probe.detail),
+      inline: false,
+    })),
+  );
+
+  return embed;
 }
 
 /** Footer of the public results announcement, a different name from the rest of the bot on purpose. */

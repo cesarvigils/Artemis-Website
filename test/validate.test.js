@@ -132,6 +132,18 @@ test('result entries is optional and bounded', () => {
   }
 });
 
+test('a position worse than the field size is refused', () => {
+  // The website's build check rejects this, so the bot has to as well: a file
+  // it accepts but the site refuses cannot be deployed.
+  const record = { ...goodResult(), position: 42, entries: 41 };
+  const errors = validateResult(record, { now });
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /\.position: cannot be worse than the field size \(P42 of 41\)/);
+
+  const equal = { ...goodResult(), position: 41, entries: 41 };
+  assert.deepEqual(validateResult(equal, { now }), []);
+});
+
 test('a result is rejected when it is not an object', () => {
   assert.match(validateResult('nope')[0], /must be a JSON object/);
   assert.match(validateResult(null)[0], /must be a JSON object/);
@@ -198,6 +210,33 @@ test('iracingId is optional and bounded, 1 to 99999999', () => {
     assert.equal(errors.length, 1, `expected an error for iracingId ${bad}`);
     assert.match(errors[0], /\.iracingId:/);
   }
+});
+
+test('an unrecognised social channel is refused', () => {
+  // The website's build check rejects an unknown key, so accepting it here
+  // would let /data validate report a file as fine that cannot be built.
+  const record = goodDriver();
+  record.socials = { x: 'https://x.com/example', tiktok: 'https://tiktok.com/@example' };
+  const errors = validateDriver(record);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /\.socials\.tiktok: is not a known channel/);
+});
+
+test('validateArray refuses two drivers sharing one iRacing id', () => {
+  // The nightly sync keys stats.json by driver, so one iRacing member cannot
+  // belong to two of them.
+  const first = { ...goodDriver(), iracingId: 123456 };
+  const second = { ...goodDriver(), id: 'nolan-walker', name: 'Nolan Walker', number: '22', iracingId: 123456 };
+  const { ok, errors } = validateArray('drivers', [first, second]);
+  assert.equal(ok, false);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /drivers\.json\[1\]\.iracingId: duplicate iRacing id 123456, already used at index 0/);
+});
+
+test('validateArray allows two drivers with no iRacing id at all', () => {
+  const first = goodDriver();
+  const second = { ...goodDriver(), id: 'nolan-walker', name: 'Nolan Walker', number: '22' };
+  assert.equal(validateArray('drivers', [first, second]).ok, true);
 });
 
 test('a valid event passes, with and without an end date', () => {

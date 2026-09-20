@@ -11,7 +11,7 @@
  */
 
 import { FILES } from './schema.js';
-import { infoEmbed, resultAnnouncementEmbed } from './embeds.js';
+import { errorEmbed, infoEmbed, resultAnnouncementEmbed } from './embeds.js';
 import { log } from './log.js';
 
 /**
@@ -90,6 +90,56 @@ export async function postResultAnnouncement(client, config, record) {
     // Never let the announcement affect the command the operator ran.
     log.warn('Could not post the results announcement', error?.message ?? error);
     return { posted: false };
+  }
+}
+
+/**
+ * Post a failed website build to the audit channel.
+ *
+ * The person who ran the command is told in their own reply; this is the copy
+ * the rest of the team sees, because a failed build means the site is still
+ * serving the previous deployment and someone has to fix the data.
+ *
+ * Like the other two posts here, a failure to post is logged and swallowed.
+ *
+ * @param {import('discord.js').Client} client
+ * @param {import('./config.js').BotConfig} config
+ * @param {{
+ *   kind: 'results'|'drivers'|'events',
+ *   id: string,
+ *   shortSha: string,
+ *   failed: string[],
+ *   url?: string | null,
+ *   actor: { username: string, id: string }
+ * }} report
+ * @returns {Promise<void>}
+ */
+export async function postDeployFailure(client, config, report) {
+  if (!config.logChannelId) return;
+
+  try {
+    const channel = await client.channels.fetch(config.logChannelId);
+    if (!channel || typeof channel.send !== 'function') return;
+
+    const fields = [
+      { name: 'Change', value: `${FILES[report.kind]} - ${report.id}`, inline: true },
+      { name: 'Commit', value: report.url ? `${report.shortSha} - ${report.url}` : report.shortSha, inline: true },
+      { name: 'By', value: `${report.actor.username} (${report.actor.id})`, inline: true },
+      { name: 'Failing', value: report.failed.join(', ') || 'unknown' },
+    ];
+
+    await channel.send({
+      embeds: [
+        errorEmbed({
+          title: 'The website build failed',
+          message: 'The commit landed but the build did not pass, so the change is not live.',
+          details: ['The previous deployment is still being served.', 'Run /data validate to see what is wrong.'],
+          fields,
+        }),
+      ],
+    });
+  } catch (error) {
+    log.warn('Could not post the build failure to the audit channel', error?.message ?? error);
   }
 }
 

@@ -25,6 +25,7 @@ import {
   BRAND_COLOUR,
 } from '../src/lib/embeds.js';
 import { REFUSAL_TEXT } from '../src/lib/permissions.js';
+import { ensureIracingIdIsFree, ensureNumberIsAllowed } from '../src/commands/driver.js';
 
 /** Discord limits, applied to every command, subcommand and option. */
 const NAME_MAX = 32;
@@ -36,15 +37,20 @@ const EMOJI_PATTERN =
 
 const payload = toJSON();
 
-test('all four commands are defined and routable', () => {
+test('all five commands are defined and routable', () => {
   assert.deepEqual(
     payload.map((command) => command.name),
-    ['result', 'driver', 'event', 'data'],
+    ['result', 'driver', 'event', 'data', 'health'],
   );
-  assert.equal(commands.size, 4);
-  for (const name of ['result', 'driver', 'event', 'data']) {
+  assert.equal(commands.size, 5);
+  for (const name of ['result', 'driver', 'event', 'data', 'health']) {
     assert.equal(typeof commands.get(name).execute, 'function');
   }
+});
+
+test('the health command takes no options and no subcommands', () => {
+  const command = payload.find((entry) => entry.name === 'health');
+  assert.deepEqual(command.options ?? [], []);
 });
 
 test('every command requires Manage Server and is blocked in direct messages', () => {
@@ -389,4 +395,33 @@ test('embeds carry the house footer, colour and no emoji', () => {
   assert.equal(EMOJI_PATTERN.test(JSON.stringify(embed)), false);
   assert.equal(embed.description.includes('!'), false);
   assert.equal(BRAND_COLOUR, 0x0fffcf);
+});
+
+test('a driver edit is refused by name when another driver holds that iRacing id', () => {
+  // The file validator catches this too, but only as a "Change refused" list.
+  // This is the message that names who already has it.
+  const records = [
+    { id: 'mateo-ferreira', name: 'Mateo Ferreira', iracingId: 123456 },
+    { id: 'dane-kowalczyk', name: 'Dane Kowalczyk' },
+  ];
+
+  assert.throws(
+    () => ensureIracingIdIsFree(records, 123456),
+    (error) => error.title === 'Invalid input' && /Mateo Ferreira/.test(error.message),
+  );
+
+  // A record keeping its own id is not a clash.
+  assert.equal(ensureIracingIdIsFree(records, 123456, 'mateo-ferreira'), undefined);
+  // Neither is an id nobody holds, or no id at all.
+  assert.equal(ensureIracingIdIsFree(records, 654321), undefined);
+  assert.equal(ensureIracingIdIsFree(records, undefined), undefined);
+});
+
+test('clearing the number of a road driver is refused with a message that says why', () => {
+  assert.throws(
+    () => ensureNumberIsAllowed({ group: 'road', number: '' }),
+    (error) => error.title === 'Missing number',
+  );
+  assert.equal(ensureNumberIsAllowed({ group: 'crew', number: '' }), undefined);
+  assert.equal(ensureNumberIsAllowed({ group: 'oval', number: '22' }), undefined);
 });

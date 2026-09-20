@@ -16,6 +16,7 @@ of it the operator needs.
   - [/driver](#driver)
   - [/event](#event)
   - [/data](#data)
+  - [/health](#health)
 - [Shared behaviour](#shared-behaviour)
 - [Embed layouts](#embed-layouts)
 - [Error handling](#error-handling)
@@ -50,6 +51,12 @@ You need the Manage Server permission to use this command.
 Every reply the bot sends is ephemeral: only the person who ran the command sees
 it. The team's shared record of changes is the optional audit channel
 (`LOG_CHANNEL_ID`), which gets one compact embed per change.
+
+A command is also refused when it arrives from a server other than the one in
+`DISCORD_GUILD_ID`. Commands are registered to that one server by default, so
+this rarely fires; it matters when they are registered globally, where Manage
+Server in any server the bot has joined would otherwise be enough to rewrite
+the website's data.
 
 ## Commands
 
@@ -233,6 +240,38 @@ is never validated and never written here. A missing or malformed
 `stats.json` is reported plainly in `/data status` and never fails the
 command.
 
+### /health
+
+Read only, and the only command that is about the bot rather than the data.
+Everything it reports can otherwise fail silently: the audit and announcement
+posts swallow their own errors on purpose, and a token expires without a word.
+No options and no subcommands.
+
+| Probe | What it reports | When it is not ok |
+|---|---|---|
+| Process | uptime, bot version, Node version | never |
+| Discord | gateway ping and the account the bot is logged in as | fail when the gateway is not ready |
+| GitHub | an authenticated round trip to the repository and branch, with the time it took | fail on a rejected, unscoped or unreachable token |
+| Token | how long the fine-grained token has left, from the expiry header GitHub returns | warn inside 14 days, fail once expired |
+| Rate limit | requests left of the hourly quota, and when it resets | warn below a tenth of the quota |
+| Data files | that all three read and parse, with record counts | fail when one cannot be read |
+| Contract | whether every record matches the contract | fail when any does not; `/data validate` has the list |
+| Sync file | `stats.json`: how many drivers and when it was updated | warn when it is present but unreadable, never fail |
+| Deploy watch | whether builds are being followed, and how the last one went | warn when the token cannot read checks, fail when the last build failed |
+| Audit channel | the channel `LOG_CHANNEL_ID` names, and whether the bot can post in it | fail when it cannot be found or the bot lacks View Channel, Send Messages or Embed Links |
+| Results channel | the same for `RESULTS_CHANNEL_ID` | the same |
+
+A probe that cannot reach what it is checking reports a failure rather than
+throwing, so one broken thing never costs the rest of the report. A probe that
+does not answer within ten seconds is reported as a failure.
+
+The embed title carries the worst state of the list, the colour follows it
+(brand for ok, amber for warn, red for fail), and the description says how many
+checks passed. `npm run check` prints the same list from the command line,
+minus the three probes that need a gateway connection.
+
+`/data status` is the counterpart for the data itself and is unchanged.
+
 ## Shared behaviour
 
 **Autocomplete.** The `id` option of every edit and remove reads the current
@@ -395,6 +434,10 @@ failing command never takes the bot down.
 | Wrong owner, repo, branch or folder | Not found on GitHub | prints what was checked |
 | GitHub unreachable or slow | Network error | asks to try again; requests time out after 15 seconds |
 | Confirm not pressed in 60 seconds | Confirmation expired | nothing is written |
+| Another driver already has that iRacing id | Invalid input | names the driver who holds it; nothing is read or written |
+| An edit would leave a road or oval driver without a number | Missing number | says to give a number or move the person to crew |
+| The command came from another server | Not allowed | refuses before doing any work |
+| The build for a committed change failed | The website build failed | follows up in the reply and posts to the audit channel, naming the failing check |
 
 Startup is separate: a missing or malformed variable stops the process before it
 logs in, printing every problem at once with the variable name and what to do.
@@ -419,7 +462,18 @@ Exactly the protocol in the data contract. One command, one commit.
    reads again, reapplies the change and retries once. A second conflict is
    reported and nothing is written.
 5. **Reply.** An embed with what changed, the record, the short commit sha and
-   "Live in about a minute once Vercel finishes building."
+   "Committed. The build takes about a minute; the bot will follow up here only
+   if it fails."
+6. **Follow.** The commit's check runs and commit statuses are polled every 15
+   seconds for up to 5 minutes, which is inside the 15 minute life of the
+   interaction token. Both APIs are read because Vercel posts commit statuses
+   and GitHub Actions posts check runs. A pass is silent. A failure follows up
+   in the same reply and posts to the audit channel, naming the failing check:
+   the commit landed, the build did not pass, and the previous deployment is
+   still being served. This needs Checks: Read and Commit statuses: Read on the
+   token; without them the watcher reports itself unavailable once, `/health`
+   says so, and writes carry on unaffected. `DEPLOY_WATCH=off` turns it off,
+   and the reply reverts to the older wording.
 
 Nothing is cached between commands, so a hand edit made in GitHub is never
 silently overwritten. The only cache is the 30 second one behind autocomplete,

@@ -13,7 +13,9 @@ It manages three files in `cesarvigils/Artemis-Website`:
 | `src/data/drivers.json` | `/driver` | home page "Who drives", the team page |
 | `src/data/events.json` | `/event` | the "Next race" strip and its countdown |
 
-`/data` reports on all three without changing anything.
+`/data` reports on all three without changing anything, and `/health` reports
+on the bot itself: whether it can reach Discord and GitHub, how long the token
+has left, and whether it can post in the channels it was given.
 
 There is a fourth file, `src/data/stats.json`, but the bot does not manage it:
 it is generated nightly by a separate iRacing sync job. `/data status` shows a
@@ -81,10 +83,12 @@ be the same channel, different channels, or left empty.
 2. Resource owner: the account that owns `cesarvigils/Artemis-Website`.
 3. Repository access: **Only select repositories**, and pick
    `cesarvigils/Artemis-Website`.
-4. Repository permissions: set **Contents** to **Read and write**. Leave every
+4. Repository permissions: set **Contents** to **Read and write**. Also set
+   **Checks** and **Commit statuses** to **Read**, which is what lets the bot
+   follow the build its commit starts and tell you when one fails. Leave every
    other permission at No access.
 5. Set an expiry you can live with, generate the token and copy it. That is
-   `GITHUB_TOKEN`.
+   `GITHUB_TOKEN`. `/health` warns in Discord two weeks before it expires.
 
 A fine-grained token that cannot see the repository reports 404 rather than 403,
 so if the bot says "Not found on GitHub", check the repository list on the token
@@ -126,7 +130,8 @@ npm start
 whether the configuration is right. When the bot starts you should see
 `Logged in as ...` followed by the data source.
 
-Run `npm run register` again whenever an option or description changes.
+Run `npm run register` again whenever an option or description changes, and
+after any update that adds a command.
 `npm run register:dry` prints the command JSON without contacting Discord. The
 JSON is the only thing on stdout, so `npm run --silent register:dry > commands.json`
 gives a file you can inspect; npm's own banner is what `--silent` removes.
@@ -152,11 +157,17 @@ in its replies. See `sample-data/README.md`.
    `Artemis Data Bot <bot@artemisesports.com>`.
 3. The push to the deployed branch starts a Vercel build. The website reads the
    JSON at build time.
-4. The site is live with the change in about a minute. The reply says so.
+4. The bot follows that build for up to five minutes. If it passes, the bot says
+   nothing more: the site is live. If it fails, the bot follows up in the same
+   reply and posts to the audit channel, naming the failing check.
+5. The site is live with the change in about a minute.
 
 If the data were ever invalid, the website's own `npm run check:data` fails the
 build and Vercel keeps the previous deployment. The bot validates before it
-writes, so that should not happen.
+writes, against the same rules: `test/contract-parity.test.js` runs the bot's
+validator and the website's `check-data.mjs` over the same fixtures on every CI
+run and fails when the two disagree, so the bot cannot quietly become the looser
+of the two. Step 4 is the backstop for everything that check cannot see.
 
 ## Running it 24/7
 
@@ -172,9 +183,24 @@ pm2 startup          # prints the command that starts pm2 at boot
 pm2 logs artemis-data-bot
 ```
 
-With systemd, a unit that runs `node /path/to/bot/src/index.js` with
-`Restart=always` is enough. The bot handles SIGTERM, so `systemctl stop` and
-`pm2 stop` shut it down cleanly.
+With systemd, `deploy/artemis-data-bot.service` is ready to copy into
+`/etc/systemd/system/`; it expects the checkout in `/opt/artemis-data-bot` with
+`.env` beside it. The bot handles SIGTERM, so `systemctl stop` and `pm2 stop`
+shut it down cleanly.
+
+With Docker, the `Dockerfile` builds a small image:
+
+```bash
+docker build -t artemis-data-bot .
+docker run -d --name artemis-data-bot --env-file .env --restart unless-stopped artemis-data-bot
+```
+
+**Know when it stops.** A restart policy covers a crash, not a bot that is
+running but cannot reach GitHub, and nothing in Discord announces either one:
+the commands simply stop working. Set `HEARTBEAT_URL` to a dead man's switch
+(healthchecks.io has a free tier) and the bot pings it every five minutes, with
+the same checks `/health` runs. A ping that stops arriving, or arrives on the
+`/fail` path, raises the alarm where you will see it.
 
 Free tier notes:
 
@@ -202,7 +228,11 @@ Free tier notes:
 | "Existing data is invalid" | Someone hand edited a file into a shape the contract rejects | Run `/data validate`, fix the named records in GitHub, try again |
 | "Write conflict" | The file changed twice while the command ran | Wait a moment and run the command again |
 | "Confirmation expired" | The Confirm button was not pressed within 60 seconds | Run the remove command again |
-| The change is not on the site | The Vercel build is still running, or it failed | Check the Vercel dashboard for the branch in `GITHUB_BRANCH` |
+| The change is not on the site | The Vercel build is still running, or it failed | Run `/health`, then check the Vercel dashboard for the branch in `GITHUB_BRANCH` |
+| "The website build failed" | The commit landed but the build did not pass, so the previous deployment is still being served | Run `/data validate`, fix what it names, and commit again |
+| `/health` says the token cannot read checks | The token has Contents but not Checks and Commit statuses | Add **Checks: Read** and **Commit statuses: Read** to the token |
+| `/health` warns that the token expires soon | Fine-grained tokens expire, and the bot stops writing when this one does | Create a replacement token now and update `.env` |
+| `/health` fails on a channel | `LOG_CHANNEL_ID` or `RESULTS_CHANNEL_ID` is wrong, or the bot cannot post there | Check the id, and give the bot View Channel, Send Messages and Embed Links |
 | Ids do not autocomplete | The bot cannot read the file, or the list is still cached | Run `/data status`; suggestions refresh at most every 30 seconds |
 
 ## Development
@@ -213,10 +243,23 @@ npm test              # node --test, no test framework
 npm run register:dry  # prints the command JSON
 ```
 
+One suite needs the website branch. `test/contract-parity.test.js` runs the
+bot's validator and the website's real `scripts/check-data.mjs` over the same
+fixtures and fails when they disagree; without the script it skips, so `npm test`
+still works offline. To run it:
+
+```bash
+git show origin/master:scripts/check-data.mjs > /tmp/check-data.mjs
+WEBSITE_CHECK_DATA=/tmp/check-data.mjs npm test
+```
+
+CI always sets it. Run it yourself whenever you touch `src/lib/validate.js`.
+
 Layout:
 
 ```
 src/index.js             the bot process, routing and shutdown
+deploy/                  systemd unit; Dockerfile is in the root
 src/register-commands.js registers the commands with Discord
 src/commands/            one module per command, plus shared plumbing
 src/lib/                 configuration, storage, validation, embeds, logging

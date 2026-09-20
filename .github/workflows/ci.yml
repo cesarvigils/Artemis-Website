@@ -12,13 +12,31 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # The parity test below needs the website branch as well as this one, so
+      # fetch the whole history rather than the single commit being tested.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - run: npm ci
+
+      # The bot and the website are two implementations of one data contract
+      # (see docs/data-contract.md). The bot decides what it will commit; the
+      # website's check-data.mjs decides what will build. When the bot is the
+      # looser of the two it commits data that cannot be deployed and reports
+      # success. test/contract-parity.test.js runs both over the same fixtures
+      # and fails when they disagree, so the drift cannot come back.
+      - name: Fetch the website's data check
+        run: |
+          git fetch --no-tags origin master
+          mkdir -p .parity
+          git show origin/master:scripts/check-data.mjs > .parity/check-data.mjs
+          echo "WEBSITE_CHECK_DATA=$PWD/.parity/check-data.mjs" >> "$GITHUB_ENV"
 
       - run: npm test
 
@@ -26,8 +44,7 @@ jobs:
       # and catches a malformed command payload before it reaches production.
       - run: npm run register:dry
 
-      # The bot and the website must implement the same data contract version
-      # (see docs/data-contract.md). This is a cheap guard against the two
-      # drifting apart: a bump on one side without the other fails CI here.
+      # The version line is still worth a look: the parity test proves the rules
+      # agree, this proves both sides are describing the same contract version.
       - name: Check the data contract is version 1.2
         run: grep -q "Version 1.2" docs/data-contract.md
