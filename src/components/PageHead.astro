@@ -116,10 +116,13 @@ const hasAction = Astro.slots.has('action');
 
   /* Not `ch`: this line is tracked mono, and `ch` under-measures tracked text
      by roughly a fifth, which orphaned the last two words on every page. */
-  /* The address line, in the same register as `.page-meta` below: the
-     pit-wall label vocabulary, not a second navigation bar. Separators are
-     real text rather than a ::before, so the trail still reads as a trail
-     when styles fail and when it is copied out of the page. */
+  /* An address line, deliberately NOT in the field-label register.
+     Uppercase + tracked + 2xs is the pit-wall vocabulary for LABELLING A
+     VALUE - a column head, a data cell's name. A breadcrumb is neither; it
+     is navigation, and dressing it as a data label both misuses the system
+     and adds to the one pattern this site already leans on hardest.
+     Sentence case, quiet, small. Separators are real text rather than a
+     ::before so the trail survives a stylesheet failure and a copy-paste. */
   .crumbs {
     margin-bottom: var(--space-s);
   }
@@ -133,9 +136,7 @@ const hasAction = Astro.slots.has('action');
     padding: 0;
     list-style: none;
     color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: var(--track-label);
-    font-size: var(--text-2xs);
+    font-size: var(--text-xs);
   }
 
   .crumbs li {
