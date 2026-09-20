@@ -137,6 +137,9 @@ const hasAction = Astro.slots.has('action');
     list-style: none;
     color: var(--muted);
     font-size: var(--text-xs);
+    /* The brand core's small-type floor: 600 at `--text-xs` or below,
+       because light type on this ground reads lighter than it is. */
+    font-weight: var(--weight-small);
   }
 
   .crumbs li {
@@ -149,7 +152,8 @@ const hasAction = Astro.slots.has('action');
     color: var(--muted);
     text-decoration: none;
     border-bottom: 1px solid transparent;
-    transition: color 160ms var(--ease), border-color 160ms var(--ease);
+    transition: color var(--dur-2) var(--ease-out-quart),
+      border-color var(--dur-2) var(--ease-out-quart);
   }
 
   .crumbs a:hover {
@@ -161,8 +165,11 @@ const hasAction = Astro.slots.has('action');
     color: var(--mist-dim);
   }
 
+  /* `--muted` and not `--muted-deep`: the brand core reserves muted-deep
+     for large decorative type, disabled states and the 404 mark, never for
+     anything at body size. A 13px separator is not large decorative type. */
   .crumb-sep {
-    color: var(--muted-deep);
+    color: var(--muted);
   }
 
   @media (prefers-reduced-motion: reduce) {
