@@ -1,29 +1,28 @@
 ---
 /**
- * The three things a visitor can be here for, said in three words each and
- * pointed at the page that answers them. It sits directly under the next-race
- * strip because that is the first moment the reader has seen enough to know
- * which of the three they are.
+ * The three things a visitor can be here for, pointed at the page that
+ * answers them. It sits directly under the next-race strip because that is
+ * the first moment the reader has seen enough to know which of the three
+ * they are.
  *
- * Hairlines, no cards, no icons: this is a router, not a feature grid, and
- * the moment it grows a box it starts competing with the Scoreboard below it.
+ * A SIGNPOST, ON ONE LINE
+ *   This used to be three equal columns, each with a label and a sentence
+ *   under it. The comment here already said "a router, not a feature grid",
+ *   but three equal thirds with body copy in them IS a feature grid however
+ *   it is described, and the home page carried four such triads - which
+ *   DESIGN.md section 1 lists as deliberately absent and forbids twice on
+ *   one page.
+ *
+ *   The sentences are gone rather than restyled, because they were already
+ *   on the page: "every race goes public within 48 hours" is the first
+ *   pillar, in nearly the same words, three sections below. A signpost
+ *   names directions; it does not re-argue them. Widths are content-sized,
+ *   so this can never read as thirds again.
  */
 const ROUTES = [
-  {
-    href: '/#scoreboard',
-    label: 'Follow the team',
-    line: 'Every race we enter goes public within 48 hours, win or loss.',
-  },
-  {
-    href: '/join',
-    label: 'Race for us',
-    line: 'Open seats, what a season asks of you, and the one step to apply.',
-  },
-  {
-    href: '/partners',
-    label: 'Partner with us',
-    line: 'Livery placement, result posts and a channel in the Discord.',
-  },
+  { href: '/#scoreboard', label: 'Follow the team' },
+  { href: '/join', label: 'Race for us' },
+  { href: '/partners', label: 'Partner with us' },
 ];
 ---
 
@@ -35,7 +34,9 @@ const ROUTES = [
           <li>
             <a class="router-link" href={route.href}>
               <span class="router-label">{route.label}</span>
-              <span class="router-line">{route.line}</span>
+              <span class="router-arrow" aria-hidden="true">
+                &#8594;
+              </span>
             </a>
           </li>
         ))
@@ -46,31 +47,28 @@ const ROUTES = [
 
 <style>
   .router {
-    padding-block: var(--space-m);
+    padding-block: var(--space-s);
   }
 
+  /* Flex, not grid: the items are sized by their own words. That is the
+     whole point - a grid of `1fr`s is what made this read as thirds. */
   .router-list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .router-list li + li {
-    border-left: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-l);
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
   .router-link {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    height: 100%;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6ch;
     min-height: 44px;
-    padding: var(--space-xs) var(--space-l) var(--space-xs) 0;
-    transition: color var(--dur-2) var(--ease-out-quart),
-      opacity var(--dur-1) var(--ease-out-quart);
-  }
-
-  .router-list li + li .router-link {
-    padding-left: var(--space-l);
+    padding-block: var(--space-xs);
+    transition: color var(--dur-2) var(--ease-out-quart);
   }
 
   .router-label {
@@ -82,38 +80,51 @@ const ROUTES = [
     text-transform: uppercase;
     line-height: var(--leading-tight);
     color: var(--mist);
-    overflow-wrap: anywhere;
     transition: color var(--dur-2) var(--ease-out-quart);
   }
 
-  .router-line {
-    font-size: var(--text-sm);
-    line-height: var(--leading-snug);
+  /* The arrow carries the hover, so the label is not the only thing moving
+     and the direction is legible before the pointer arrives. */
+  .router-arrow {
     color: var(--muted);
-    max-width: 38ch;
+    font-size: var(--text-sm);
+    transform: translateX(0);
+    transition: transform var(--dur-2) var(--ease-out-quart),
+      color var(--dur-2) var(--ease-out-quart);
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .router-link:hover .router-label {
+    .router-link:hover .router-label,
+    .router-link:hover .router-arrow {
       color: var(--signal);
+    }
+    .router-link:hover .router-arrow {
+      transform: translateX(0.25rem);
     }
   }
 
-  .router-link:focus-visible .router-label {
+  .router-link:focus-visible .router-label,
+  .router-link:focus-visible .router-arrow {
     color: var(--signal);
   }
 
-  @media (max-width: 900px) {
+  @media (prefers-reduced-motion: reduce) {
+    .router-arrow {
+      transition: color var(--dur-2) var(--ease-out-quart);
+    }
+    .router-link:hover .router-arrow {
+      transform: none;
+    }
+  }
+
+  /* Below 560px the three wrap to their own lines on their own, without a
+     column rule to remove or a grid to collapse. */
+  @media (max-width: 560px) {
     .router-list {
-      grid-template-columns: 1fr;
+      gap: 0;
     }
-    .router-list li + li {
-      border-left: none;
-      border-top: 1px solid var(--line);
-    }
-    .router-link,
-    .router-list li + li .router-link {
-      padding: var(--space-s) 0;
+    .router-link {
+      padding-block: var(--space-xs);
     }
   }
 </style>
