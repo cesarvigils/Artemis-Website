@@ -4,7 +4,12 @@ on:
   push:
     branches: [preview, master]
   pull_request:
-    branches: [master]
+    # `master` plus the branches Claude works on, because a stack of
+    # dependent PRs bases each one on the branch below it rather than on
+    # master. With `master` alone only the bottom PR of a stack ran CI and
+    # the ones above it showed whatever their commits happened to have run
+    # earlier - green ticks that no longer meant "tested against this base".
+    branches: [master, 'claude/**']
 
 concurrency:
   group: ci-${{ github.ref }}
