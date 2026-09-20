@@ -20,6 +20,8 @@ export const ROUTES = [
   { name: 'standings', path: '/standings', status: 200 },
   { name: 'about', path: '/about', status: 200 },
   { name: 'partners', path: '/partners', status: 200 },
+  { name: 'privacy', path: '/privacy', status: 200 },
+  { name: 'terms', path: '/terms', status: 200 },
   { name: '404', path: '/this-page-does-not-exist', status: 404 },
 ] as const;
 
@@ -30,7 +32,9 @@ export const ROUTES = [
  */
 /* `/standings` is not here either, and will not be until there is a league:
    its nav line in `nav.json` is held back while the table is empty, so the
-   page has no nav entry to check against. */
+   page has no nav entry to check against. `/privacy` and `/terms` are
+   deliberately never here - they live in the footer's base row, not in
+   `nav.json`, because they are not what anyone came for. */
 const NAV_PATHS = new Set(['/', '/team', '/join', '/about', '/partners']);
 export const REAL_PAGES = ROUTES.filter(
   (r) => r.status === 200 && NAV_PATHS.has(r.path)

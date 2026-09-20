@@ -1,0 +1,121 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import site from '../data/site.json';
+
+/* Short on purpose. This site sells nothing, hosts no accounts and takes no
+   submissions, so most of what a terms page normally governs does not exist
+   here. Padding it out with clauses about services we do not run would make
+   it less true, not more protective. */
+
+const revised = '20 September 2026';
+---
+
+<Base
+  title="Terms | Artemis Esports"
+  description="The terms for using the Artemis Esports website: what is published here, what you may do with it, and what it does not promise."
+  cta="none"
+>
+  <PageHead
+    title="Terms"
+    lead="What is published here, what you may do with it, and what it does not promise."
+    meta={`Last revised ${revised}`}
+  />
+
+  <section class="section rule-top" aria-labelledby="site-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="site-heading">What this site is</h2>
+      <p class="lead">
+        A published record of an iRacing team: results, the roster, the
+        calendar and how to join. There is nothing to buy here, nothing to
+        sign up for, and no account to hold. Reading it costs you nothing and
+        commits you to nothing.
+      </p>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="use-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="use-heading">Using what is here</h2>
+      <p>
+        Quote us, link to us, screenshot a result, put a finishing position in
+        a league write-up. That is what publishing it is for, and no
+        permission is needed.
+      </p>
+      <p>
+        The Artemis name, the wordmark, the notched A and the hero mark are
+        ours, and passing yourself off as the team or implying a partnership
+        that does not exist is the line. If you want to use the marks for
+        something, ask.
+      </p>
+      <p>
+        Driver names, liveries and photographs belong to the people and
+        parties they came from. Car models, track names and series names
+        belong to their own owners, and their appearance here is description,
+        not a claim.
+      </p>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="accuracy-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="accuracy-heading">What it does not promise</h2>
+      <p>
+        Results, ratings and the calendar are published in good faith from
+        what the team and iRacing report, and they can be wrong, stale, or
+        briefly missing while something is being fixed. Nothing here is a
+        guarantee of a seat, a result, or that a scheduled race will happen.
+        If a number matters to you, check it against the league's own record.
+      </p>
+      <p>
+        Open seats are described as honestly as we can manage, and applying is
+        not an offer. The site can go down, and we do not promise it will be
+        available at any given moment.
+      </p>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="elsewhere-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="elsewhere-heading">Off this site</h2>
+      <p>
+        Links to Discord, the social channels and the store leave this site.
+        We do not control them and these terms stop at the edge. The Discord
+        has its own rules and Discord's terms apply there; the store is
+        operated by someone else and their terms cover anything you buy.
+      </p>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="changes-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="changes-heading">Changes and contact</h2>
+      <p>
+        These terms change when the site does, and the revision date above
+        moves with them. There is no notification list, because there is no
+        list.
+      </p>
+      <a class="text-link" href={`mailto:${site.contactEmail}`}>
+        {site.contactEmail}
+        <Icon name="arrow-right" size={16} />
+      </a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .prose {
+    max-width: var(--measure);
+  }
+
+  .prose > * + * {
+    margin-top: var(--space-m);
+  }
+
+  .prose p {
+    color: var(--mist-dim);
+    line-height: var(--leading-body);
+    text-wrap: pretty;
+  }
+</style>

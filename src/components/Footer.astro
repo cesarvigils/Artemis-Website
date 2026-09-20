@@ -68,6 +68,14 @@ const channels = channelLinks(site.socials, site.store);
     <p class="footer-copy">
       &copy; <span data-year>{buildYear}</span> Artemis Esports
     </p>
+    {/* Legal lives in the base row, not the Pages column: those five are
+        what a visitor came for, and burying Join between Privacy and Terms
+        would spend the column's attention on the two links nobody opens
+        until they need them. */}
+    <ul class="footer-legal">
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/terms">Terms</a></li>
+    </ul>
     {/* Two states, one sentence each, and the build decides which is true. */}
     <p class="footer-note">
       {
@@ -206,10 +214,26 @@ const channels = channelLinks(site.socials, site.store);
   }
 
   .footer-copy,
-  .footer-note {
+  .footer-note,
+  .footer-legal {
     color: var(--muted);
     font-size: var(--text-xs);
     font-weight: var(--weight-small);
+  }
+
+  .footer-legal {
+    display: flex;
+    gap: var(--space-m);
+  }
+
+  .footer-legal a {
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .footer-legal a:hover {
+      color: var(--signal-hover);
+    }
   }
 
   @media (max-width: 820px) {

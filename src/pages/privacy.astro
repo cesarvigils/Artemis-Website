@@ -1,0 +1,212 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import site from '../data/site.json';
+import { analyticsEnabled } from '../lib/analytics';
+import { channelLinks } from '../lib/links';
+
+/* The analytics section reads the same build flag the footer line reads
+   (`src/components/Footer.astro`), so the page and the footer cannot
+   contradict each other. Turning analytics on rewrites both at once; there
+   is no second place to remember to edit. */
+
+const channels = channelLinks(site.socials, site.store);
+
+/* Stated as a date rather than a timestamp: a privacy page that claims to
+   have been revised at 14:03 is claiming a precision nobody needs. This is
+   the date of the change that introduced the page, updated by hand when the
+   text changes - not the build date, which would move on every deploy and
+   imply revisions that never happened. */
+const revised = '20 September 2026';
+---
+
+<Base
+  title="Privacy | Artemis Esports"
+  description="What the Artemis Esports website collects, what it does not, and who to contact about it."
+  cta="none"
+>
+  <PageHead
+    title="Privacy"
+    lead="What this site collects, what it does not, and who to ask about it."
+    meta={`Last revised ${revised}`}
+  />
+
+  <section class="section rule-top" aria-labelledby="short-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="short-heading">The short version</h2>
+      <p class="lead">
+        This is a static website. It has no accounts, no logins, and no forms
+        that submit anywhere. It sets no cookies, stores nothing in your
+        browser, and asks you for nothing.
+        {
+          analyticsEnabled
+            ? ' It counts page views without cookies and without identifying you.'
+            : ' It runs no analytics at all.'
+        }
+      </p>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="collect-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="collect-heading">What reaches us</h2>
+
+      <h3 class="display-sm">Your request to the server</h3>
+      <p>
+        The site is hosted by Vercel. Like every web host, Vercel handles the
+        request your browser makes in order to answer it, and keeps
+        operational logs of that traffic. We do not control what those logs
+        contain and we do not use them to build any picture of you. Vercel's
+        own privacy documentation covers what it retains.
+      </p>
+
+      {
+        analyticsEnabled ? (
+          <>
+            <h3 class="display-sm">Page counts</h3>
+            <p>
+              We use Umami, a cookieless analytics tool, to count which pages
+              are read and which buttons are pressed. It sets no cookies, uses
+              no browser storage, does not follow you to other websites, and
+              does not collect anything that identifies you. That is why this
+              site has no cookie banner: there is nothing to consent to.
+            </p>
+            <p>
+              What we can see: how many people opened a page, roughly where in
+              the world the request came from, which site sent them, and which
+              of our own buttons were pressed. What we cannot see: who you
+              are.
+            </p>
+          </>
+        ) : (
+          <>
+            <h3 class="display-sm">Page counts</h3>
+            <p>
+              None. There is no analytics tool on this site today. If that
+              changes, it will be a cookieless one, this section will say so,
+              and the line in the footer will change with it.
+            </p>
+          </>
+        )
+      }
+
+      <h3 class="display-sm">If you email us</h3>
+      <p>
+        The address on this site opens your own mail app. If you write to us,
+        we have your message and your address, and we keep them for as long as
+        the conversation is useful. We do not add you to a mailing list,
+        because there is no mailing list.
+      </p>
+
+      <h3 class="display-sm">Fonts and files</h3>
+      <p>
+        Every font, image and script this site uses is served from this site.
+        There are no font CDNs, no tag managers, no embedded players and no
+        social widgets, so loading a page here does not quietly tell anyone
+        else that you did.
+      </p>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="elsewhere-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="elsewhere-heading">Where the links go</h2>
+      <p>
+        Several links leave this site. Once you follow one you are on someone
+        else's service, under their rules and their privacy policy, not ours.
+        Joining the Discord in particular means agreeing to Discord's terms,
+        and anything you post there is visible to the people in that server.
+      </p>
+      {/* A compact row, not the bordered channel module the partners page
+          uses: this is a sentence's worth of destinations inside prose, and
+          a full-width data block here would read as a call to action on a
+          page that is not asking for anything. */}
+      <ul class="link-row">
+        {
+          channels.map((channel) => (
+            <li>
+              <a href={channel.url} target="_blank" rel="noopener">
+                <span>{channel.label}</span>
+                <Icon name="arrow-up-right" size={13} />
+                <span class="sr-only"> (opens in a new tab)</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section rule-top" aria-labelledby="ask-heading">
+    <div class="container prose">
+      <h2 class="display-md" id="ask-heading">Asking us about your data</h2>
+      <p>
+        There is very little to ask about, which is the point. If you have
+        written to us and want that correspondence deleted, say so and it will
+        be. If you are in a place whose law gives you rights over your
+        personal data, exercise them at the same address and we will answer.
+      </p>
+      <p>
+        Under 16? The team's own minimum age is 16, because that is the floor
+        for the leagues we enter. We do not knowingly keep correspondence from
+        anyone younger.
+      </p>
+      <a class="text-link" href={`mailto:${site.contactEmail}`}>
+        {site.contactEmail}
+        <Icon name="arrow-right" size={16} />
+      </a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* A reading column, which nothing else on this site needs: every other
+     page is a data layout. Prose is the one place a measure matters more
+     than a grid. */
+  .prose {
+    max-width: var(--measure);
+  }
+
+  .prose > * + * {
+    margin-top: var(--space-m);
+  }
+
+  .prose h3 {
+    margin-top: var(--space-l);
+  }
+
+  .prose p {
+    color: var(--mist-dim);
+    line-height: var(--leading-body);
+    text-wrap: pretty;
+  }
+
+  .link-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-m);
+  }
+
+  .link-row a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    /* 44px of touch target without 44px of visible row: the padding is
+       vertical so the links still read as one line of prose. */
+    padding-block: 0.6rem;
+    font-family: var(--font-data);
+    font-weight: var(--weight-small);
+    font-size: var(--text-2xs);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color var(--dur-2) var(--ease-out-quart);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .link-row a:hover {
+      color: var(--signal-hover);
+    }
+  }
+</style>
