@@ -53,7 +53,12 @@ const VIEWBOX = {
 
 const PATH = { wordmark: WORDMARK_PATH, icon: ICON_PATH, hero: HERO_PATH }[variant];
 
-const a11y = label
+/* Annotated rather than inferred. Without the type this is a UNION of two
+   object shapes, and spreading a union into <svg> makes each branch carry
+   the other's keys as `undefined` - which is not assignable to
+   SVGAttributes, even though every value is valid. The annotation collapses
+   it to one shape with optional members, which is what it always was. */
+const a11y: astroHTML.JSX.SVGAttributes = label
   ? { role: 'img', 'aria-label': label }
   : { 'aria-hidden': 'true', focusable: 'false' };
 ---

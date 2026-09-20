@@ -18,6 +18,11 @@ export interface RaceResult {
   entries?: number;
   drivers: string[];
   note?: string;
+  /* Seed data, not a real race. Every consumer filters on this before
+     publishing: the sitemap, the structured data, the feed and the
+     production build guard. Declared here so the compiler enforces that
+     rather than each caller reaching for a property the type denies. */
+  _placeholder?: boolean;
 }
 
 export interface Driver {
@@ -34,6 +39,8 @@ export interface Driver {
   active?: boolean;
   /** iRacing customer id. When present the nightly sync fills stats.json. */
   iracingId?: number;
+  /** Seed data, not a real person. See the note on `RaceResult`. */
+  _placeholder?: boolean;
 }
 
 export interface RaceEvent {
@@ -47,6 +54,8 @@ export interface RaceEvent {
   classes: string[];
   status: 'planned' | 'confirmed' | 'done' | 'skipped' | string;
   note?: string;
+  /** Seed data, not a real entry. See the note on `RaceResult`. */
+  _placeholder?: boolean;
 }
 
 /** An open (or filled) seat, hand-edited in src/data/seats.json. */
