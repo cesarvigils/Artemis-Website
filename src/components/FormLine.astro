@@ -1,0 +1,165 @@
+---
+/**
+ * The form line: one driver's recent official races as a single horizontal
+ * run, oldest on the left, the way a form guide reads.
+ *
+ * This is the one place on a driver's page that is not hairline rows. The
+ * page already carries a results table for team entries, and DESIGN.md
+ * section 1 allows a layout family once per page, so the sync's own race
+ * list had to be a different shape - a register of markers rather than a
+ * second sheet.
+ *
+ * It is also the first use of the data colours. Movement is signed text
+ * (`+7`, `-3`) in `--gain` / `--loss`, never a bare colour: the sign is the
+ * glyph, so the meaning survives forced colours, a monochrome print and a
+ * colour-blind reader. No arrow, because the icon set on this site is
+ * affordances only - an arrow here would read as "go somewhere".
+ */
+import { raceDate } from '../lib/format';
+import type { DriverStats } from '../lib/data';
+
+interface Props {
+  races: NonNullable<DriverStats['recent']>;
+  driverName: string;
+  /** Oldest-first is the reading order; the sync hands them newest-first. */
+  limit?: number;
+}
+
+const { races, driverName, limit = 10 } = Astro.props;
+
+/* Newest `limit`, then reversed so the line reads left to right in time.
+   Slicing before reversing keeps the most recent races, not the oldest. */
+const line = races.slice(0, limit).reverse();
+
+const movement = (start: number, finish: number) => {
+  /* Positions count down, so a lower finish than start is places gained. */
+  const places = start - finish;
+  if (!Number.isFinite(places) || places === 0) return { label: 'level', text: '0', tone: 'level' };
+  return places > 0
+    ? { label: `${places} gained`, text: `+${places}`, tone: 'gain' }
+    : { label: `${-places} lost`, text: String(places), tone: 'loss' };
+};
+---
+
+{/* `tabindex="0"` because this row scrolls sideways and holds no links: a
+    scrollable region with no focusable content is unreachable by keyboard
+    (and by VoiceOver in Safari), which axe flags as
+    `scrollable-region-focusable`. The aria-label is what gives the stop a
+    name once it is focusable, so the two belong together. */}
+<ol
+  class="form-line"
+  tabindex="0"
+  aria-label={`${driverName}: recent official races, oldest first`}
+>
+  {
+    line.map((race) => {
+      const move = movement(race.start, race.finish);
+      return (
+        <li class="form-entry">
+          <span class="form-finish data">P{race.finish}</span>
+          <span class:list={['form-move data', `is-${move.tone}`]} aria-hidden="true">
+            {move.text}
+          </span>
+          {/* The whole entry as one sentence, for a reader who cannot see
+              the column. The visible parts above are hidden from the
+              accessibility tree so it is not announced twice. */}
+          <span class="sr-only">
+            {`${race.series}, ${raceDate(race.date)}: started P${race.start}, finished P${race.finish}, ${move.label}.`}
+          </span>
+          <span class="form-date data" aria-hidden="true">
+            {raceDate(race.date).slice(0, 6)}
+          </span>
+        </li>
+      );
+    })
+  }
+</ol>
+
+<style>
+  /* A run of markers, not a grid: the entries size to their content and the
+     row scrolls if a long season outgrows the container, which is what a
+     timing monitor does rather than wrapping into a second block. */
+  .form-line {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid var(--line-strong);
+    overflow-x: auto;
+    /* The scrollbar is the only affordance here, so it keeps its space
+       rather than overlaying the bottom row of type. */
+    scrollbar-width: thin;
+  }
+
+  /* A tab stop that cannot be seen is worse than no tab stop. Same ring as
+     every other focus state on the site - one of Signal's five allowed
+     jobs - and offset outward so it does not sit on the first entry's type. */
+  .form-line:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+  }
+
+  .form-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+    min-width: 5.5rem;
+    padding: var(--space-s) var(--space-m) var(--space-s) 0;
+  }
+
+  .form-entry + .form-entry {
+    border-left: 1px solid var(--line);
+    padding-left: var(--space-m);
+  }
+
+  .form-finish {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-display);
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+    color: var(--mist);
+  }
+
+  .form-move {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-small);
+    font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-data);
+  }
+
+  .form-move.is-gain {
+    color: var(--gain);
+  }
+
+  .form-move.is-loss {
+    color: var(--loss);
+  }
+
+  .form-move.is-level {
+    color: var(--muted);
+  }
+
+  .form-date {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--weight-small);
+    font-size: var(--text-2xs);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--track-data);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* Forced colours drop the data colours to one system ink, so the sign in
+     front of the number is the only thing left carrying the meaning. That is
+     the reason it is text and not a triangle. */
+  @media (forced-colors: active) {
+    .form-move.is-gain,
+    .form-move.is-loss,
+    .form-move.is-level {
+      color: CanvasText;
+    }
+  }
+</style>

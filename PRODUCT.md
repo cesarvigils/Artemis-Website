@@ -9,7 +9,8 @@ system), `CONTENT.md` (content editing).
 
 The marketing site for **Artemis**, an iRacing endurance / GT and NASCAR oval
 team. Five pages plus a 404, static, no CMS, no backend. Built with Astro,
-deployed by Vercel from the repository.
+deployed by Vercel from the repository. Plus one generated page per driver
+under `/team/<id>`, which the roster links to and the sitemap tracks.
 
 **The team is "Artemis."** One roster means the org name is the team name
 (brand core, section 5). "Artemis Esports" is the org, and it appears only where
@@ -49,6 +50,7 @@ One primary CTA per page, at most one quieter secondary action.
 |---|---|---|
 | `/` | Join the Discord | See the Scoreboard (in-page anchor) |
 | `/team` | Join the Discord | - |
+| `/team/<driver>` | Join the Discord | "The Scoreboard" to the home results module |
 | `/join` | Apply in the Discord | - |
 | `/about` | Join the Discord | - |
 | `/partners` | Partner with us (mailto) | "The Scoreboard" to the home results module |

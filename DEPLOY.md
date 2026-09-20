@@ -100,7 +100,8 @@ all 301.
 `sitemap.xml` all use the bare form (`/team`, not `/team/`), which is also what
 every internal link in `nav.json` uses - so no internal navigation costs a
 redirect. **All three have to agree.** If you ever flip this, flip the canonical
-in `src/layouts/Base.astro` and every `<loc>` in `public/sitemap.xml` with it.
+in `src/layouts/Base.astro` and the `url()` helper in
+`src/pages/sitemap.xml.ts` with it.
 
 Not covered by `vercel.json`, because it cannot be: **preview deployments are
 crawlable.** Every `*.vercel.app` preview serves the same `robots.txt` with
@@ -136,8 +137,11 @@ Largest files in a normal build:
 | all CSS | inlined into each page, 5 to 9 KB gzipped per route |
 | all client JavaScript | 5.8 KB, inlined, no external request |
 
-`robots.txt` and `sitemap.xml` are hand-maintained in `public/`. Adding a page
-means adding a `<url>` to the sitemap.
+`robots.txt` is hand-maintained in `public/`. **`sitemap.xml` is generated** by
+`src/pages/sitemap.xml.ts`: the five fixed pages are a list at the top of that
+file, and the driver pages come from `drivers.json`, so the bot publishing a
+driver publishes their URL too. Drivers still flagged `_placeholder` are left
+out, which matches the `noindex` their own page carries.
 
 ## 2. Upload (only when not deploying through Vercel)
 
