@@ -112,7 +112,7 @@
      decorative type, disabled states, hairline-ish uses only. */
   --mist: #e8f0ee; /* 16.8:1 on Night */
   --mist-dim: rgba(232, 240, 238, 0.76); /*  9.8:1 on Night */
-  --muted: #93a5a1; /*  7.5:1 on Night, 6.8:1 on --surface-1 */
+  --muted: #97a9a5; /*  7.9:1 on Night, 7.2:1 on --surface-1 - AAA on both */
   --muted-deep: #687c78; /*  4.4:1 on Night - large/decorative/disabled only */
 
   /* Signal. 5-10% of any layout, and only where the eye should land:
@@ -130,11 +130,21 @@
   /* Hairlines. The pit-wall rule vocabulary, and opaque as of the NOCTURNE
      migration. They were alpha so one value could hold its weight on three
      different grounds; measured against the two grounds actually in use,
-     these opaque steps land in the same perceptual band (border 1.50 on
-     Night / 1.36 on --surface-1, against alpha's 1.32 / 1.39). If anything
+     these opaque steps land in the same perceptual band (border 1.48 on
+     Night / 1.34 on --surface-1, against alpha's 1.32 / 1.39). If anything
      ever paints a hairline on `--surface-2`, re-measure: that is where the
-     opaque value falls off and the alpha one did not. */
-  --line: #26333b;
+     opaque value falls off and the alpha one did not.
+
+     `--line`'s blue channel is 47, not the 59 first committed. Every other
+     token in this ramp is green-dominant - Night G-B 1, surface-1 1,
+     surface-2 2, line-strong 5 - and 59 made this the single blue-dominant
+     step, at G-B -8. Its red and green channels already sat exactly on the
+     ramp's progression, which is what a misread final hex pair looks like
+     rather than a deliberate hue shift. 47 puts G-B at 4, between
+     surface-2 and line-strong where this step belongs. Weight barely
+     moved (1.50 -> 1.48 on Night), so this is a hue correction, not a
+     lightening. */
+  --line: #26332f;
   --line-strong: #34443f;
 
   /* Data colours. NOT brand colours, and deliberately outside the Signal
@@ -871,7 +881,7 @@ html.js .reveal.in-view {
   :root {
     --mist-dim: #e8f0ee;
     --muted: #c2cecb; /* 12.0:1 on Night */
-    --muted-deep: #93a5a1; /*  7.5:1 on Night */
+    --muted-deep: #97a9a5; /*  7.9:1 on Night - the base --muted, one rung up */
     --line: rgba(232, 240, 238, 0.34);
     --line-strong: rgba(232, 240, 238, 0.6);
   }

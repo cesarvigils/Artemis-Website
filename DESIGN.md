@@ -72,12 +72,12 @@ exactly five jobs and everything else is Mist or muted.
 | `--surface-2` | `#1b2422` | Panels sitting on a tinted band | - |
 | `--mist` | `#e8f0ee` | Most text and UI | 16.8:1 |
 | `--mist-dim` | `rgba(232,240,238,.76)` | Secondary prose: leads, blurbs, bios | 9.8:1 |
-| `--muted` | `#93a5a1` | Captions, metadata, field labels, dates | 7.5:1 |
+| `--muted` | `#97a9a5` | Captions, metadata, field labels, dates | 7.9:1 |
 | `--muted-deep` | `#687c78` | Large decorative type, disabled states. **Never body-size text** | 4.4:1 |
 | `--signal` | `#0fffcf` | The one thing the eye lands on | 15.0:1 |
 | `--signal-ink` | `#0a0e0d` | Text on a Signal fill. The ground, never white | 15.0:1 on `--signal` |
 | `--signal-hover` | `#7dffe3` | Solid-button hover, every link hover step | 16.0:1 |
-| `--line` | `#26333b` | Hairline rules | - |
+| `--line` | `#26332f` | Hairline rules | - |
 | `--line-strong` | `#34443f` | Table head, ghost button border, first row of a data block | - |
 | `--night-rgb` | `10 14 13` | `--night` as channels, for the hero scrims | - |
 | `--gain` | `#5bd98a` | Data: a position gained | 10.9:1 |
