@@ -90,43 +90,62 @@
 :root {
   color-scheme: dark;
 
-  /* Field and surfaces. The brand core's names, values and jobs. */
-  --night: #000a08; /* the field, ~80% of every screen */
-  --surface-1: #0a1714; /* tinted bands: next race, pillars, footer */
-  --surface-2: #12211d; /* panels sitting on a tinted band */
-  --surface-3: #1e322c; /* the one opaque divider/border step */
+  /* Field and surfaces. The NOCTURNE ramp: a neutral charcoal ground rather
+     than the green-black the first palette used. The names are the brand's
+     (a token called `--signal` states its job; one called `--teal` invites a
+     designer to reach for teal), the values are NOCTURNE's. */
+  --night: #0a0e0d; /* the field, ~80% of every screen */
+  --surface-1: #131a19; /* tinted bands: next race, pillars, footer */
+  --surface-2: #1b2422; /* panels sitting on a tinted band */
   /* The same ground as `--night`, as channels, for the legibility scrims
-     over the hero photo. Those need the brand black at several alphas and a
+     over the hero photo. Those need the ground at several alphas and a
      colour token cannot carry one. Deliberately not redefined in the print
      or forced-colours blocks: every element that uses it is hidden in both,
-     and a scrim that inverted with the page would paint white over white. */
-  --night-rgb: 0 10 8;
+     and a scrim that inverted with the page would paint white over white.
+     Must track `--night` by hand - CSS cannot derive one from the other. */
+  --night-rgb: 10 14 13;
 
   /* Type colour. Three steps, and only three.
      `--mist` is most text. `--mist-dim` is the same ink, quieter, for
-     secondary prose. `--muted` is the brand's caption/metadata colour at
-     7.9:1 on Night. `--muted-deep` is 3.4:1 and therefore NEVER carries
-     body-size text: large decorative type, disabled states, hairline-ish
-     uses only. */
-  --mist: #ebfffb; /* 19.3:1 on Night */
-  --mist-dim: rgba(235, 255, 251, 0.76); /* 11.2:1 on Night */
-  --muted: #8fa8a1; /*  7.9:1 on Night, 6.6:1 on --surface-2 */
-  --muted-deep: #486b62; /*  3.4:1 on Night - large/decorative/disabled only */
+     secondary prose. `--muted` is the caption/metadata colour. `--muted-deep`
+     is 4.4:1 and therefore still NEVER carries body-size text: large
+     decorative type, disabled states, hairline-ish uses only. */
+  --mist: #e8f0ee; /* 16.8:1 on Night */
+  --mist-dim: rgba(232, 240, 238, 0.76); /*  9.8:1 on Night */
+  --muted: #93a5a1; /*  7.5:1 on Night, 6.8:1 on --surface-1 */
+  --muted-deep: #687c78; /*  4.4:1 on Night - large/decorative/disabled only */
 
   /* Signal. 5-10% of any layout, and only where the eye should land:
      the one primary CTA per page, the hero position marker and its podium
      rule, the active-nav underline, focus rings, link hover. Every other
-     accent on this site is Mist, muted or Deep Teal. */
-  --signal: #0fffcf; /* 15.5:1 on Night */
-  --signal-ink: #001410; /* 14.7:1 on --signal */
-  --signal-hover: #7dffe3;
+     accent on this site is Mist or muted. The one value both palettes
+     agree on, so it did not move. */
+  --signal: #0fffcf; /* 15.0:1 on Night */
+  --signal-ink: #0a0e0d; /* 15.0:1 on --signal - the ground, never white */
+  /* Hover LIGHTENS. NOCTURNE darkens instead (#0bd4ab, 10.5:1); on a
+     near-black ground that reads as dimming on approach, so the brighter
+     step was kept. See DESIGN.md section 0. */
+  --signal-hover: #7dffe3; /* 16.0:1 on Night */
 
-  /* Deep Teal: the brand colour when it needs area rather than a line. */
-  --teal-deep: #0e7f6b;
+  /* Hairlines. The pit-wall rule vocabulary, and opaque as of the NOCTURNE
+     migration. They were alpha so one value could hold its weight on three
+     different grounds; measured against the two grounds actually in use,
+     these opaque steps land in the same perceptual band (border 1.50 on
+     Night / 1.36 on --surface-1, against alpha's 1.32 / 1.39). If anything
+     ever paints a hairline on `--surface-2`, re-measure: that is where the
+     opaque value falls off and the alpha one did not. */
+  --line: #26333b;
+  --line-strong: #34443f;
 
-  /* Hairlines. The pit-wall rule vocabulary. */
-  --line: rgba(235, 255, 251, 0.12);
-  --line-strong: rgba(235, 255, 251, 0.24);
+  /* Data colours. NOT brand colours, and deliberately outside the Signal
+     budget: they carry meaning in data (a position gained, a position lost)
+     rather than directing the eye. Never used decoratively, and never alone -
+     every use pairs with a glyph or a rule so the meaning survives forced
+     colours and reads for a colour-blind visitor. */
+  --gain: #5bd98a; /* 10.9:1 on Night */
+  --loss: #f2766b; /*  7.0:1 on Night */
+  --caution: #e8b84b; /* 10.5:1 on Night */
+  --info: #6fb6e8; /*  8.8:1 on Night */
 
   /* Material grain. An inline feTurbulence tile at 3-5% opacity, which is
      what replaced the graffiti texture. Texture is material, never
@@ -839,17 +858,22 @@ html.js .reveal.in-view {
 
 /* More contrast ----------------------------------------------------
    Nothing on the site hardcodes these values, so raising the tokens raises
-   every hairline and every quiet step at once. The 0.12-alpha rules are the
+   every hairline and every quiet step at once. The hairline rules are the
    whole structural vocabulary of this direction; a reader who has asked for
    more contrast should be able to see them.
+
+   The two hairlines go back to alpha here, against the opaque defaults in
+   `:root`. That is deliberate rather than an oversight: this block has to
+   lift the rule on every ground at once, and an alpha value is the only one
+   that raises its weight identically on Night and on a tinted band.
 ------------------------------------------------------------------- */
 @media (prefers-contrast: more) {
   :root {
-    --mist-dim: #ebfffb;
-    --muted: #c3d6d1;
-    --muted-deep: #8fa8a1;
-    --line: rgba(235, 255, 251, 0.34);
-    --line-strong: rgba(235, 255, 251, 0.6);
+    --mist-dim: #e8f0ee;
+    --muted: #c2cecb; /* 12.0:1 on Night */
+    --muted-deep: #93a5a1; /*  7.5:1 on Night */
+    --line: rgba(232, 240, 238, 0.34);
+    --line-strong: rgba(232, 240, 238, 0.6);
   }
 }
 
@@ -901,7 +925,6 @@ html.js .reveal.in-view {
     --night: #fff;
     --surface-1: #fff;
     --surface-2: #fff;
-    --surface-3: #bbb;
     --mist: #000;
     --mist-dim: #333;
     --muted: #555;
@@ -909,9 +932,14 @@ html.js .reveal.in-view {
     --signal: #046b58;
     --signal-hover: #046b58;
     --signal-ink: #fff;
-    --teal-deep: #046b58;
     --line: #bbb;
     --line-strong: #888;
+    /* The data colours darken for paper the way Signal does: the screen
+       values are tuned against a near-black ground and wash out on white. */
+    --gain: #1d7a45;
+    --loss: #a8322a;
+    --caution: #8a6410;
+    --info: #1c5e8c;
     color-scheme: light;
   }
 
