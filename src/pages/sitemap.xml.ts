@@ -35,6 +35,10 @@ const PAGES: { path: string; changefreq: string; priority: string }[] = [
   { path: '/join', changefreq: 'monthly', priority: '0.9' },
   { path: '/partners', changefreq: 'monthly', priority: '0.8' },
   { path: '/about', changefreq: 'yearly', priority: '0.5' },
+  /* Indexable on purpose. A privacy page a search engine cannot find is one
+     a reader cannot check, and being checkable is the whole point of it. */
+  { path: '/privacy', changefreq: 'yearly', priority: '0.3' },
+  { path: '/terms', changefreq: 'yearly', priority: '0.3' },
 ];
 
 export const GET: APIRoute = ({ site }) => {
