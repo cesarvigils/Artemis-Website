@@ -100,8 +100,8 @@ palette did not have.
 |---|---|---|---|
 | `#0A0E0D` | Night | The field. | ~80% |
 | `#131A19` `#1B2422` | Surface ramp | Panels and bands so the black has depth. | as needed |
-| `#26333B` `#34443F` | Hairlines | Rules and edges. Opaque. | as needed |
-| `#687C78` `#93A5A1` | Muted text | Captions, metadata. | as needed |
+| `#26332F` `#34443F` | Hairlines | Rules and edges. Opaque. | as needed |
+| `#687C78` `#97A9A5` | Muted text | Captions, metadata. | as needed |
 | `#E8F0EE` | Mist | Type and UI on dark. | most text |
 | `#0FFFCF` | **Signal** | The one thing the eye lands on. The A, the Arc, one accent per layout. | **5–10%** |
 
@@ -278,8 +278,8 @@ with no row here is a rule the website does not express.
 | The Scoreboard | `src/pages/index.astro` → `#scoreboard`; nav label in `src/data/nav.json`; the `/results` redirect in `vercel.json` |
 | Night `#0A0E0D` | `--night` in `src/styles/global.css`, plus `--night-rgb` for the hero scrims, which must be updated by hand alongside it |
 | Surface ramp `#131A19` `#1B2422` | `--surface-1` / `--surface-2` |
-| Hairlines `#26333B` `#34443F` | `--line` / `--line-strong`. Opaque since the NOCTURNE migration; they were alpha so one value held its weight on three grounds |
-| Muted text `#93A5A1` | `--muted` — captions, metadata, field labels, dates |
+| Hairlines `#26332F` `#34443F` | `--line` / `--line-strong`. Opaque since the NOCTURNE migration; they were alpha so one value held its weight on three grounds |
+| Muted text `#97A9A5` | `--muted` — captions, metadata, field labels, dates |
 | Muted deep `#687C78` | `--muted-deep` — large decorative type, disabled states, the 404 mark. Never body-size text (4.4:1) |
 | Mist `#E8F0EE` | `--mist`, plus `--mist-dim` for secondary prose |
 | Data colours | `--gain` / `--loss` / `--caution` / `--info`. Outside the Signal budget; never used without a glyph or rule beside them |
