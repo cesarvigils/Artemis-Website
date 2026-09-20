@@ -77,49 +77,60 @@ const { heading, lead, variant = 'row' } = Astro.props;
     line-height: var(--leading-snug);
   }
 
-  /* Row variant: the heading sits on its own line and the three commitments
-     run across the band as one horizontal register. Three across rather than
-     the old four is also why no title reserve is needed any more: the titles
-     are one line each in a third of the band at every width it is
-     horizontal. */
+  /* ROW VARIANT - stacked statement bands, not three columns.
+     This used to be `repeat(3, 1fr)`, which put the brand's three
+     commitments in small type in a third of the band each. Two problems.
+     DESIGN.md section 1 lists equal card grids as deliberately absent and
+     allows no layout family twice on a page, and the home page was running
+     four equal triads. And thirds are the wrong emphasis for the section
+     that states what the team promises: it was the quietest band on a page
+     whose loudest thing is a results table.
+
+     So each commitment gets the full measure and display type. Distinct
+     from the `long` variant below, which holds a small title in a left
+     column beside its text, and from the Scoreboard, whose rows are dense
+     tabular data rather than statements. No column rules to unwind at
+     small widths either - it is already one column. */
   .is-row .pillars-head h2 {
     max-width: 16em;
   }
 
   .is-row .pillars-list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin-top: var(--space-xl);
-    border-top: 1px solid var(--line-strong);
+    margin-top: var(--space-l);
   }
 
   .is-row .pillar {
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-m) var(--space-m) 0 0;
+    padding-block: var(--space-l);
+    border-top: 1px solid var(--line);
   }
 
-  .is-row .pillar + .pillar {
-    padding-left: var(--space-m);
-    border-left: 1px solid var(--line);
+  .is-row .pillar:first-child {
+    border-top-color: var(--line-strong);
+  }
+
+  .is-row .pillar:last-child {
+    border-bottom: 1px solid var(--line);
   }
 
   .is-row .pillar dt {
-    font-size: var(--text-lg);
+    font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
   }
 
   .is-row .pillar-line {
     margin-top: var(--space-2xs);
-    font-size: var(--text-sm);
+    max-width: var(--measure-lead);
+    font-size: var(--text-lg);
+    color: var(--mist);
+    line-height: var(--leading-snug);
   }
 
-  /* `margin-top: auto` on the test: three commitments of different sentence
-     length would otherwise start their test lines at three different
-     heights, with full-height hairlines between the columns to make it
-     obvious. The tests share a baseline instead. */
+  /* The test keeps the caption colour and the hairline above it: it is
+     metadata about the claim, and at this size the claim needs the
+     separation more, not less. */
   .is-row .pillar-test {
-    margin-top: auto;
-    padding-top: var(--space-s);
+    margin-top: var(--space-s);
+    padding-top: var(--space-xs);
+    max-width: var(--measure-lead);
   }
 
   /* Long variant: one entry per row, the title held against the commitment
@@ -159,24 +170,6 @@ const { heading, lead, variant = 'row' } = Astro.props;
     margin-top: 0.4rem;
   }
 
-  @media (max-width: 1024px) {
-    .is-row .pillars-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .is-row .pillar:nth-child(3) {
-      margin-top: var(--space-m);
-      border-top: 1px solid var(--line);
-    }
-    /* Same selector shape as the rule it overrides, so source order decides.
-       Written as `.is-row .pillar:nth-child(3)` it was (0,4,0) against the
-       across-the-band rule's (0,5,0) and never applied: the second row kept a
-       24px indent and a vertical hairline with nothing to its left. */
-    .is-row .pillar + .pillar:nth-child(3) {
-      padding-left: 0;
-      border-left: none;
-    }
-  }
-
   /* The long variant kept two columns down to 640px, so on a portrait tablet
      a 24px title sat in a 279px cell beside a 388px sentence and the two
      halves never settled into a ratio. It stacks where the page head does. */
@@ -190,19 +183,4 @@ const { heading, lead, variant = 'row' } = Astro.props;
     }
   }
 
-  @media (max-width: 640px) {
-    .is-row .pillars-list {
-      grid-template-columns: 1fr;
-    }
-    .is-row .pillar + .pillar {
-      padding-left: 0;
-      margin-top: 0;
-      border-left: none;
-      border-top: 1px solid var(--line);
-    }
-    .is-row .pillar-test {
-      margin-top: var(--space-2xs);
-      padding-top: var(--space-2xs);
-    }
-  }
 </style>
