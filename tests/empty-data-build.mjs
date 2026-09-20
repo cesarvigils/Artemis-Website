@@ -12,9 +12,9 @@
  * `npm run build` with all four data files emptied must still exit 0.
  *
  * Steps:
- *   1. Read and hold results.json, events.json, drivers.json, partners.json
- *      from src/data/ in memory.
- *   2. Overwrite each with `[]\n`.
+ *   1. Read and hold every file named in EMPTY below from src/data/ in
+ *      memory.
+ *   2. Overwrite each with its own empty-but-valid form (see EMPTY).
  *   3. Run `npm run build` in the project root; record whether it exited 0.
  *   4. Restore the four files from memory - in a `finally`, so this runs
  *      even if the build throws.
@@ -35,7 +35,20 @@ import path from 'node:path';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(here, '..');
 const DATA_DIR = path.join(PROJECT_ROOT, 'src', 'data');
-const FILES = ['results.json', 'events.json', 'drivers.json', 'partners.json', 'seats.json'];
+/* file -> what "empty but contract-valid" looks like for it. All but one are
+   arrays. standings.json is an object carrying season metadata beside its
+   rows, so emptying it means `{"standings": []}` - writing `[]` there would
+   be an invalid file, which tests check:data's error path rather than the
+   empty-state rendering this script is about. */
+const EMPTY = {
+  'results.json': '[]\n',
+  'events.json': '[]\n',
+  'drivers.json': '[]\n',
+  'partners.json': '[]\n',
+  'seats.json': '[]\n',
+  'standings.json': '{\n  "standings": []\n}\n',
+};
+const FILES = Object.keys(EMPTY);
 
 // A plain command string through execSync (a real shell) rather than
 // execFileSync with an argv array: on Windows, `npm` resolves to `npm.cmd`,
@@ -57,7 +70,7 @@ let buildOutput = '';
 
 try {
   for (const file of FILES) {
-    writeFileSync(path.join(DATA_DIR, file), '[]\n');
+    writeFileSync(path.join(DATA_DIR, file), EMPTY[file]);
   }
   console.log(`empty-data-build: emptied ${FILES.join(', ')}, running "npm run build"...`);
 

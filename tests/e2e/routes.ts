@@ -17,6 +17,7 @@ export const ROUTES = [
   { name: 'team', path: '/team', status: 200 },
   { name: 'driver', path: '/team/mateo-ferreira', status: 200 },
   { name: 'join', path: '/join', status: 200 },
+  { name: 'standings', path: '/standings', status: 200 },
   { name: 'about', path: '/about', status: 200 },
   { name: 'partners', path: '/partners', status: 200 },
   { name: '404', path: '/this-page-does-not-exist', status: 404 },
@@ -27,6 +28,9 @@ export const ROUTES = [
  * apply. Driver pages are deliberately not here: they are reached from the
  * roster, not from the header, and `nav.json` has no line for them.
  */
+/* `/standings` is not here either, and will not be until there is a league:
+   its nav line in `nav.json` is held back while the table is empty, so the
+   page has no nav entry to check against. */
 const NAV_PATHS = new Set(['/', '/team', '/join', '/about', '/partners']);
 export const REAL_PAGES = ROUTES.filter(
   (r) => r.status === 200 && NAV_PATHS.has(r.path)

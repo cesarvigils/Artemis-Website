@@ -1,18 +1,19 @@
 ﻿# Artemis data contract (website <-> Discord bot <-> iRacing sync)
 
-Version 1.2, 14 Sep 2026. Changes since 1.0: `results.entries` (1.1); `drivers.iracingId`, `events.startTime`, and the generated file `stats.json` (1.2). All additive; old records stay valid. Both the website (`preview` branch, Astro) and the Discord bot (`bot` branch) implement exactly this. Any change to this file must be applied on both sides.
+Version 1.3, 20 Sep 2026. Changes since 1.0: `results.entries` (1.1); `drivers.iracingId`, `events.startTime`, and the generated file `stats.json` (1.2); the new file `standings.json` (1.3). All additive; old records stay valid. Both the website (`preview` branch, Astro) and the Discord bot (`bot` branch) implement exactly this. Any change to this file must be applied on both sides.
 
 ## Where the data lives
 
-Three JSON files in the website repo `cesarvigils/Artemis-Website`, on the branch that Vercel deploys (configurable in the bot as `GITHUB_BRANCH`; production is `master`, testing uses `preview`):
+Four JSON files in the website repo `cesarvigils/Artemis-Website`, on the branch that Vercel deploys (configurable in the bot as `GITHUB_BRANCH`; production is `master`, testing uses `preview`):
 
 - `src/data/results.json`
 - `src/data/drivers.json`
 - `src/data/events.json`
+- `src/data/standings.json`
 
 The bot is the writer (GitHub Contents API, one commit per command). The website is the reader (imports the JSON at build time; Vercel rebuilds on every push). Humans may still edit the files by hand; the bot must tolerate hand edits (re-read before every write, never cache across commands).
 
-Every file is a JSON array, UTF-8, 2-space indent, LF line endings, trailing newline, records sorted as stated below. The bot writes files in exactly this format so diffs stay minimal.
+Every file is a JSON array — except `standings.json`, which is an object carrying season metadata beside its rows — UTF-8, 2-space indent, LF line endings, trailing newline, records sorted as stated below. The bot writes files in exactly this format so diffs stay minimal.
 
 ## Common rules
 
@@ -117,6 +118,59 @@ Site usage: home "Who drives" = first 4 active with `role: driver`; team page = 
 | `note` | string | optional, max 140 chars |
 
 Site usage: "Next race" strip = the first event whose `end` (or `start`) is today or later and whose status is `planned` or `confirmed`; if none, the strip shows "No race scheduled" with the last `done` event as a subtitle. The countdown targets `start` at 00:00 in the site's timezone (America/Chicago).
+
+## standings.json  (an OBJECT, not an array; `standings` sorted by `position` ascending)
+
+`src/data/standings.json`. The championship table, written whole rather than record by record: a season's points are one document that gets replaced after each round, not a list that gets appended to.
+
+**Points are never computed by the website.** League scoring is league-specific — drop weeks, bonus points for pole or laps led, split-dependent multipliers — so a table derived from `results.json` would disagree with the league's own and be confidently wrong. Whoever has the real numbers writes them here: the bot today, and a `/data/league/season_standings` call inside `fetch-iracing.mjs` later, once there is a league id to ask about. Both write this same shape.
+
+This is the one file that is an object rather than an array, because it carries season metadata beside its rows. Emptying it means `{"standings": []}`, not `[]`.
+
+```json
+{
+  "season": "2026 IMSA GT3 Challenge",
+  "series": "IMSA Sportscar Championship",
+  "url": "https://members.iracing.com/standings/...",
+  "updated": "2026-09-18",
+  "rounds": { "run": 6, "total": 10 },
+  "standings": [
+    {
+      "position": 2,
+      "driver": "Mateo Ferreira",
+      "driverId": "mateo-ferreira",
+      "points": 204,
+      "starts": 6,
+      "wins": 1,
+      "podiums": 4,
+      "movement": 2
+    }
+  ]
+}
+```
+
+| Field | Type | Rules |
+|---|---|---|
+| `season` | string | optional, 2–80 chars. Becomes the page's heading when present |
+| `series` | string | optional, 2–60 chars |
+| `url` | string | optional, must start `https://`. The league's own table, linked as the source |
+| `updated` | string | optional ISO date |
+| `rounds.run` | integer | optional, 0–99, not greater than `rounds.total` |
+| `rounds.total` | integer | optional, 1–99 |
+| `standings` | array | required; `[]` is valid and means "no table yet" |
+| `standings[].position` | integer | 1–999, unique within the file |
+| `standings[].driver` | string | 2–40 chars. The name as the league spells it |
+| `standings[].driverId` | string | optional; **must match an `id` in `drivers.json`**. Present marks the row as ours and links the name to that driver's page; absent means a rival |
+| `standings[].points` | integer | 0–99999 |
+| `standings[].starts` | integer | optional, 0–999 |
+| `standings[].wins` | integer | optional, 0–999, not greater than `podiums` |
+| `standings[].podiums` | integer | optional, 0–999, not greater than `starts` |
+| `standings[].movement` | integer | optional, −998 to 998. Places gained (positive) or lost (negative) since the last round |
+| `standings[]._placeholder` | boolean | optional, as elsewhere |
+
+**Include the rivals.** A table holding only Artemis drivers is a roster with points beside it. The rows around ours are what make a position mean anything, so write the league's table as it stands and mark ours with `driverId`.
+
+Site usage: `/standings`. With `standings: []` the page renders an empty state that says no season table is published, carries `noindex`, and stays out of the sitemap — all three from the same condition, so they cannot disagree. Its nav entry in `nav.json` is deliberately held back until there is a real league; adding the line is the whole publishing step. `starts`, `wins`, `podiums` and `movement` each render as a column only when at least one row carries them.
 
 ## stats.json  (GENERATED by the nightly iRacing sync; never edited by the bot or by hand)
 

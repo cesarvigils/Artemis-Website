@@ -273,6 +273,66 @@ export function driverStats(
   return { category, irating, safety, recent };
 }
 
+/* Standings ---------------------------------------------------------
+   Points are NOT computed from results.json, and that is deliberate.
+   League scoring is league-specific - drop weeks, bonus points for pole or
+   laps led, split-dependent multipliers - so a table worked out here would
+   disagree with the league's own table, and a standings sheet that is
+   subtly wrong is worse than no standings sheet. results.json also has no
+   season or round to compute over.
+
+   So standings.json is written whole, by whoever has the real numbers: the
+   Discord bot today, and a /data/league/season_standings call inside
+   fetch-iracing.mjs later, once there is a league id to ask about. Both
+   write the same shape, which is why the shape carries its own season
+   metadata rather than borrowing any from elsewhere.
+------------------------------------------------------------------- */
+
+export interface Standing {
+  position: number;
+  driver: string;
+  /**
+   * Set when this row is one of ours, and it must match an id in
+   * drivers.json. Present means the name links to their page and the row is
+   * marked as the team's; absent means a rival. Listing rivals is what makes
+   * this a championship table rather than a roster with points beside it.
+   */
+  driverId?: string;
+  points: number;
+  starts?: number;
+  wins?: number;
+  podiums?: number;
+  /** Places gained (positive) or lost (negative) since the last round. */
+  movement?: number;
+  _placeholder?: boolean;
+}
+
+export interface StandingsFile {
+  season?: string;
+  series?: string;
+  /** The league's own table, so the page can point at its source. */
+  url?: string;
+  updated?: string;
+  rounds?: { run?: number; total?: number };
+  standings?: Standing[];
+}
+
+/**
+ * True when there is a real table to show.
+ *
+ * The page exists either way and renders an honest empty state when this is
+ * false. It must never render a placeholder table: a made-up championship
+ * is exactly the kind of claim the rest of this site refuses to make.
+ */
+export function hasStandings(file: StandingsFile | undefined): boolean {
+  return Array.isArray(file?.standings) && file.standings.length > 0;
+}
+
+/** The table, by position. Sorted here so a hand-edited file still reads right. */
+export function standingsRows(file: StandingsFile | undefined): Standing[] {
+  return [...(file?.standings ?? [])].sort((a, b) => a.position - b.position);
+}
+
 /* A driver's own page ------------------------------------------------
    `driverStats` above answers "what does the roster row show": one
    category, three races, chosen by the driver's group. The page under

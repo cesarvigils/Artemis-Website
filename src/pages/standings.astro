@@ -1,0 +1,171 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import StandingsTable from '../components/StandingsTable.astro';
+import JoinCta from '../components/JoinCta.astro';
+import Icon from '../components/Icon.astro';
+
+import standings from '../data/standings.json';
+import { hasStandings, standingsRows, type StandingsFile } from '../lib/data';
+import { raceDate } from '../lib/format';
+
+const file = standings as StandingsFile;
+const rows = standingsRows(file);
+const live = hasStandings(file);
+
+/* Ours in the table, for the meta line. A championship page whose first
+   line answers "where are we" is doing its job; one that makes the reader
+   scan forty rows for a familiar name is not. */
+const ours = rows.filter((row) => row.driverId);
+const best = ours.length
+  ? ours.reduce((a, b) => (a.position <= b.position ? a : b))
+  : undefined;
+
+const rounds = file.rounds;
+const roundLine =
+  typeof rounds?.run === 'number'
+    ? `Round ${rounds.run}${typeof rounds.total === 'number' ? ` of ${rounds.total}` : ''}`
+    : '';
+
+const meta = live
+  ? [file.series, roundLine, best ? `Best Artemis entry P${best.position}` : '']
+      .filter(Boolean)
+      .join(' / ')
+  : '';
+
+/* An empty championship page is not something to hand a search engine, the
+   same rule the placeholder driver pages follow. It clears itself the
+   moment standings.json has rows, and sitemap.xml.ts reads the same
+   condition so the two cannot disagree. */
+---
+
+<Base
+  title="Standings | Artemis Esports"
+  description={
+    live
+      ? `Championship standings for ${file.season ?? 'the current Artemis season'}, with every Artemis entry marked.`
+      : 'Championship standings for Artemis Esports. No season table is published yet.'
+  }
+  noindex={!live}
+>
+  <PageHead
+    title={live ? (file.season ?? 'Standings') : 'Standings'}
+    lead={
+      live
+        ? 'Where the season stands. Artemis entries are marked; everyone else is the field we are running against.'
+        : 'There is no championship table here yet, and an invented one would be worse than none.'
+    }
+    meta={meta}
+  >
+    {
+      live && file.updated && (
+        <dl class="standings-dossier" slot="aside">
+          <div>
+            <dt class="field-label">Updated</dt>
+            <dd class="data">{raceDate(file.updated)}</dd>
+          </div>
+          {file.series && (
+            <div>
+              <dt class="field-label">Series</dt>
+              <dd class="data">{file.series}</dd>
+            </div>
+          )}
+          {typeof rounds?.run === 'number' && (
+            <div>
+              <dt class="field-label">Rounds run</dt>
+              <dd class="data">
+                {rounds.run}
+                {typeof rounds.total === 'number' ? ` of ${rounds.total}` : ''}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )
+    }
+  </PageHead>
+
+  {
+    live ? (
+      <section class="section rule-top" aria-labelledby="table-heading">
+        <div class="container">
+          <div class="section-head">
+            <h2 class="display-md" id="table-heading">
+              The table
+            </h2>
+            {file.url && (
+              <a class="text-link" href={file.url} target="_blank" rel="noopener">
+                The league's own table
+                <Icon name="arrow-up-right" size={16} />
+                <span class="sr-only"> (opens in a new tab)</span>
+              </a>
+            )}
+          </div>
+          <StandingsTable
+            rows={rows}
+            caption={`${file.season ?? 'Season'} championship standings, Artemis entries marked`}
+          />
+        </div>
+      </section>
+    ) : (
+      /* The empty state carries the reason, not an apology, and sends the
+         reader at the thing that IS published. */
+      <section class="section rule-top" aria-labelledby="empty-heading">
+        <div class="container standings-empty">
+          <h2 class="display-md" id="empty-heading">
+            Nothing to report yet
+          </h2>
+          <p class="lead">
+            A championship table needs a league behind it, and points that
+            somebody else keeps. Until Artemis is running a season with a
+            table of its own, this page stays empty rather than inventing one.
+          </p>
+          <p class="lead">
+            What is published is every race we have finished, with the field
+            size beside it.
+          </p>
+          <a class="text-link" href="/#scoreboard">
+            The Scoreboard
+            <Icon name="arrow-right" size={16} />
+          </a>
+        </div>
+      </section>
+    )
+  }
+
+  <JoinCta
+    heading="Race with us."
+    lead="Seats open when there is a car and a calendar behind them. The current list, and what a season asks of a driver, are on the join page."
+    steps={false}
+  />
+</Base>
+
+<style>
+  .standings-dossier {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .standings-dossier > div {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+    gap: var(--space-m);
+    align-items: baseline;
+    padding-block: var(--space-s);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .standings-dossier > div:last-child {
+    border-bottom: none;
+  }
+
+  .standings-dossier dd {
+    color: var(--mist);
+  }
+
+  .standings-empty > * + * {
+    margin-top: var(--space-m);
+  }
+
+  .standings-empty .lead {
+    max-width: var(--measure-lead);
+  }
+</style>
