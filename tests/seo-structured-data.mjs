@@ -23,6 +23,16 @@
  *   exactly one driver by deleting `_placeholder`, which is precisely the
  *   edit that publishing a real driver will make.
  *
+ * WHY IT BUILDS FIRST RATHER THAN TRUSTING dist/
+ *   It builds three times: the shipping state, the promoted state, then
+ *   the restore. The first one is not redundant. Reading whatever `dist/`
+ *   happens to contain makes the result depend on what the last command in
+ *   the working tree left behind - which passes on a developer's machine,
+ *   where a build just ran, and fails on a clean CI checkout, where there
+ *   is no `dist/` at all. That is precisely how this file failed its own
+ *   first CI run. Owning the build makes the check depend on the source
+ *   and nothing else, and is why the job needs no `needs: build`.
+ *
  * Wired as `test:seo` in tests/package.json. Run from anywhere; paths
  * resolve relative to this file, not the working directory.
  */
@@ -50,9 +60,13 @@ function check(label, fn) {
 
 const read = (rel) => {
   const file = path.join(DIST, rel);
-  if (!existsSync(file)) throw new Error(`no ${rel} in dist/. Run "npm run build" first.`);
+  if (!existsSync(file)) throw new Error(`no ${rel} in dist/ after a build - the route is missing.`);
   return readFileSync(file, 'utf8');
 };
+
+function run(command) {
+  return execSync(command, { cwd: ROOT, encoding: 'utf8', stdio: 'pipe' });
+}
 
 /**
  * Every ld+json block in a document, parsed. Parsing is the point: a block
@@ -90,11 +104,16 @@ const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
 
-function run(command) {
-  return execSync(command, { cwd: ROOT, encoding: 'utf8', stdio: 'pipe' });
-}
-
 /* ---- What ships today: placeholders everywhere ------------------- */
+
+/* From the committed source, not from whatever was in dist/ already. */
+try {
+  run('npm run build');
+} catch (error) {
+  console.error('seo-structured-data: the initial build failed, so there is nothing to check.');
+  console.error(String(error.stdout ?? '') + String(error.stderr ?? ''));
+  process.exit(1);
+}
 
 console.log('\nAs the site ships (every driver a placeholder):\n');
 
