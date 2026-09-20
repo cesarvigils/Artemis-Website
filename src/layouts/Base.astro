@@ -41,6 +41,19 @@ interface Props {
    * not be asserting facts on the way past.
    */
   schema?: Record<string, unknown>[];
+  /**
+   * The schema.org type of this document. Every page gets a node for
+   * itself, not just for the team that publishes it: `WebPage` is the
+   * honest default, and the subtypes below say what KIND of page it is,
+   * which is the difference between "a page exists here" and "this is the
+   * page about the organisation".
+   *
+   * `ProfilePage` is the one with a documented Google use - it marks a
+   * page as being about one person or account - so driver pages take it.
+   * `CollectionPage` is for a page whose point is a list (the roster, the
+   * standings table). `AboutPage` and `ContactPage` are self-describing.
+   */
+  pageType?: 'WebPage' | 'AboutPage' | 'ContactPage' | 'CollectionPage' | 'ProfilePage';
 }
 
 const {
@@ -52,6 +65,7 @@ const {
   noindex = false,
   ogType = 'website',
   schema = [],
+  pageType = 'WebPage',
 } = Astro.props;
 
 /* One slash policy, everywhere. Astro emits `/team/` as the page's own
@@ -76,6 +90,15 @@ const structuredData = {
   sport: ['Sim racing', 'Esports'],
   foundingDate: String(site.founded),
   email: site.contactEmail,
+  /* The same address as a typed node. `email` alone is a bare string; a
+     ContactPoint says what the address is FOR, which is what lets a result
+     surface it as "contact" rather than as an unlabelled property. */
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'general enquiries',
+    email: site.contactEmail,
+    availableLanguage: 'English',
+  },
   slogan: site.tagline,
   image: new URL(ogImage, Astro.site).href,
   logo: {
@@ -107,13 +130,61 @@ const website = {
   publisher: { '@id': new URL('/#organization', Astro.site).href },
 };
 
+/* The document itself. Without this the graph described a team and a site
+   but never the page a crawler was actually holding, which left every
+   page-level fact - its title, its description, its image, its position in
+   the site - asserted only in meta tags that carry no relationships.
+
+   `isPartOf` binds it to the WebSite node, `about` to the organisation,
+   and `primaryImageOfPage` names which of the page's images represents it.
+   A page that passed a BreadcrumbList gets `breadcrumb` pointing at that
+   node by @id rather than repeating the trail, which is the whole reason
+   these live in one @graph. */
+const breadcrumbNode = schema.find((node) => node['@type'] === 'BreadcrumbList');
+
+const webPage = {
+  '@type': pageType,
+  '@id': `${canonical.href}#webpage`,
+  url: canonical.href,
+  name: title,
+  description,
+  inLanguage: 'en-GB',
+  isPartOf: { '@id': new URL('/#website', Astro.site).href },
+  about: { '@id': new URL('/#organization', Astro.site).href },
+  primaryImageOfPage: { '@id': `${new URL(ogImage, Astro.site).href}#primaryimage` },
+  ...(breadcrumbNode ? { breadcrumb: { '@id': `${canonical.href}#breadcrumb` } } : {}),
+};
+
+/* The image as a node rather than a bare URL, so `primaryImageOfPage` above
+   resolves to something with dimensions instead of dangling. Same file the
+   OG tags point at. */
+const primaryImage = {
+  '@type': 'ImageObject',
+  '@id': `${new URL(ogImage, Astro.site).href}#primaryimage`,
+  url: new URL(ogImage, Astro.site).href,
+  contentUrl: new URL(ogImage, Astro.site).href,
+  width: 1200,
+  height: 630,
+};
+
 /* One script tag, not several. Multiple ld+json blocks are legal and
    parsers accept them, but nodes in separate blocks cannot reference each
    other by `@id`, so a breadcrumb or a person emitted alongside would be a
    second anonymous island rather than something attached to this team. A
    single `@graph` lets a page's own nodes point back at `/#organization`
    and be read as one description of one entity. */
-const graph = [structuredData, website, ...schema];
+/* A BreadcrumbList needs an @id for `webPage.breadcrumb` to point at. The
+   page passes the trail; the @id is this layout's job, because only it
+   knows the canonical URL the node hangs off. */
+const graph = [
+  structuredData,
+  website,
+  webPage,
+  primaryImage,
+  ...schema.map((node) =>
+    node['@type'] === 'BreadcrumbList' ? { '@id': `${canonical.href}#breadcrumb`, ...node } : node
+  ),
+];
 ---
 
 <!doctype html>
@@ -130,11 +201,39 @@ const graph = [structuredData, website, ...schema];
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0a0e0d" />
     {noindex && <meta name="robots" content="noindex, follow" />}
+    {/* Preview limits, on indexable pages only - a noindex page has nothing
+        to preview and the two directives would contradict each other.
+
+        Google clamps text snippets and image previews conservatively unless
+        told otherwise, and the defaults cost this site specifically:
+        `max-image-preview:large` is what allows a full-width image in a
+        result and is a stated requirement for Google Discover eligibility,
+        which for a team whose content is liveries and race photography is
+        the difference between a thumbnail and the actual car. `max-snippet`
+        and `max-video-preview` at -1 lift the length caps rather than set
+        one, so Google picks the most useful snippet instead of a truncated
+        default.
+
+        This is a permission, not a demand: Google still chooses what to
+        show. There is nothing here to hold back - every image is the
+        team's own and every page is meant to be read in full. */}
+    {!noindex && (
+      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    )}
     {!noindex && <link rel="canonical" href={canonical} />}
 
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {/* Generated from site.json - see src/pages/site.webmanifest.ts. No
+        `crossorigin`: the manifest is same-origin and fetching it with
+        credentials would only narrow what can serve it. */}
+    <link rel="manifest" href="/site.webmanifest" />
+    {/* The results feed. `rel="alternate"` is the standard pointer from a
+        document to the machine-readable stream of the same content, and it
+        is how feed readers and aggregators discover one without being
+        told. See src/pages/feed.xml.ts. */}
+    <link rel="alternate" type="application/rss+xml" title="Artemis Esports results" href="/feed.xml" />
 
     {/* The two core faces, preloaded on every route because both are above
         the fold on every route: Archivo sets the h1 and Inter sets the lead,

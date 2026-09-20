@@ -36,7 +36,7 @@
  * Wired as `test:seo` in tests/package.json. Run from anywhere; paths
  * resolve relative to this file, not the working directory.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import fs, { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -196,6 +196,111 @@ check('a placeholder driver page is noindex and asserts nothing at all', () => {
   assert(!html.includes('rel="canonical"'), 'a noindex page should not claim a canonical URL');
 });
 
+check('indexable pages permit large previews; noindex pages do not', () => {
+  const home = read('index.html');
+  /* Google clamps snippet length and image preview size unless told
+     otherwise. `max-image-preview:large` is also a stated requirement for
+     Google Discover eligibility. */
+  const directive = home.match(/<meta name="robots" content="([^"]*)"/);
+  assert(directive, 'home has no robots meta');
+  for (const token of ['index', 'max-image-preview:large', 'max-snippet:-1', 'max-video-preview:-1']) {
+    assert(directive[1].includes(token), `home robots meta lacks "${token}": ${directive[1]}`);
+  }
+  /* The two must never coexist: a preview directive on a noindex page is
+     a contradiction, and noindex is the one that has to win. */
+  for (const file of ['404.html', 'team/mateo-ferreira/index.html']) {
+    const meta = read(file).match(/<meta name="robots" content="([^"]*)"/);
+    assert(meta, `${file} has no robots meta`);
+    assert(meta[1].startsWith('noindex'), `${file} is not noindex: ${meta[1]}`);
+    assert(!meta[1].includes('max-image-preview'), `${file} is noindex but still asks for previews`);
+  }
+});
+
+check('every page describes itself with a typed WebPage node', () => {
+  const expected = {
+    'index.html': 'WebPage',
+    'about/index.html': 'AboutPage',
+    'team/index.html': 'CollectionPage',
+    'partners/index.html': 'ContactPage',
+    'join/index.html': 'ContactPage',
+    'standings/index.html': 'CollectionPage',
+  };
+  for (const [file, type] of Object.entries(expected)) {
+    const html = read(file);
+    if (/name="robots" content="noindex/.test(html)) continue;
+    const graph = graphOf(html);
+    const page = nodeOf(graph, type);
+    /* The @id relationships are the point: without them the graph is a
+       pile of nodes rather than a description of one site. */
+    assert(page.isPartOf?.['@id'] === `${SITE}/#website`, `${file} isPartOf is ${JSON.stringify(page.isPartOf)}`);
+    assert(page.about?.['@id'] === `${SITE}/#organization`, `${file} about is ${JSON.stringify(page.about)}`);
+    const image = nodeOf(graph, 'ImageObject');
+    assert(
+      page.primaryImageOfPage?.['@id'] === image['@id'],
+      `${file} primaryImageOfPage does not resolve to the ImageObject in its own graph`
+    );
+  }
+});
+
+check('every @id a node points at resolves inside the same graph', () => {
+  for (const file of ['index.html', 'team/index.html', 'about/index.html']) {
+    const html = read(file);
+    if (/name="robots" content="noindex/.test(html)) continue;
+    const graph = graphOf(html);
+    const ids = new Set(graph.map((n) => n['@id']).filter(Boolean));
+    const refs = [];
+    const walk = (value) => {
+      if (Array.isArray(value)) return value.forEach(walk);
+      if (value && typeof value === 'object') {
+        /* A bare {"@id": x} with no other keys is a reference, not a
+           definition - those are the ones that must resolve. */
+        const keys = Object.keys(value);
+        if (keys.length === 1 && keys[0] === '@id') refs.push(value['@id']);
+        else Object.entries(value).forEach(([k, v]) => k !== '@id' && walk(v));
+      }
+    };
+    walk(graph);
+    const dangling = refs.filter((ref) => !ids.has(ref));
+    assert(dangling.length === 0, `${file} has dangling @id references: ${[...new Set(dangling)].join(', ')}`);
+  }
+});
+
+check('the manifest is served, valid, and linked', () => {
+  assert(read('index.html').includes('rel="manifest"'), 'no manifest link in the head');
+  const manifest = JSON.parse(read('site.webmanifest'));
+  assert(manifest.name, 'manifest has no name');
+  assert(manifest.icons?.length >= 2, 'manifest lists fewer than two icons');
+  /* These marks carry no safe-zone padding, so a launcher told they are
+     maskable would crop into the glyph. */
+  assert(
+    !manifest.icons.some((icon) => icon.purpose === 'maskable'),
+    'an icon claims purpose "maskable" without safe-zone padding'
+  );
+  assert(manifest.theme_color === '#0a0e0d', `theme_color ${manifest.theme_color} does not track --night`);
+});
+
+check('the results feed is valid, linked, and free of placeholders', () => {
+  assert(
+    read('index.html').includes('type="application/rss+xml"'),
+    'no rel="alternate" feed link in the head'
+  );
+  const feed = read('feed.xml');
+  assert(feed.startsWith('<?xml'), 'feed does not start with an XML declaration');
+  assert(feed.includes('<channel>') && feed.includes('</rss>'), 'feed is not a well-formed RSS document');
+  assert(feed.includes('rel="self"'), 'feed has no atom:self link');
+  const source = JSON.parse(readFileSync(path.join(ROOT, 'src', 'data', 'results.json'), 'utf8'));
+  for (const result of source.filter((r) => r._placeholder === true)) {
+    assert(!feed.includes(result.id), `placeholder result ${result.id} was syndicated`);
+  }
+});
+
+check('no IndexNow key file ships without the environment variable', () => {
+  const stray = fs
+    .readdirSync(DIST)
+    .filter((name) => name.endsWith('.txt') && name !== 'robots.txt');
+  assert(stray.length === 0, `unexpected root .txt file(s): ${stray.join(', ')}`);
+});
+
 check('the 404 document is noindex and absent from the sitemap', () => {
   assert(/name="robots" content="noindex/.test(read('404.html')), '404 is not noindex');
   assert(!read('sitemap.xml').includes('/404'), '404 is listed in the sitemap');
@@ -229,8 +334,11 @@ console.log('\nWith one driver promoted to real (restored afterwards):\n');
 
 const originalDrivers = readFileSync(DRIVERS, 'utf8');
 const originalEvents = readFileSync(EVENTS, 'utf8');
+const RESULTS = path.join(ROOT, 'src', 'data', 'results.json');
+const originalResults = readFileSync(RESULTS, 'utf8');
 let promoted;
 let promotedEvent;
+let promotedResult;
 
 try {
   const drivers = JSON.parse(originalDrivers);
@@ -248,6 +356,14 @@ try {
   if (!promotedEvent) throw new Error('no placeholder event to promote');
   delete promotedEvent._placeholder;
   writeFileSync(EVENTS, `${JSON.stringify(events, null, 2)}\n`);
+
+  /* And one result, so the feed and the completed-race SportsEvent are
+     exercised by the same rebuild. Three gates, one build. */
+  const resultsData = JSON.parse(originalResults);
+  promotedResult = resultsData.find((r) => r._placeholder === true);
+  if (!promotedResult) throw new Error('no placeholder result to promote');
+  delete promotedResult._placeholder;
+  writeFileSync(RESULTS, `${JSON.stringify(resultsData, null, 2)}\n`);
 
   run('npm run build');
 
@@ -353,6 +469,26 @@ try {
     assert(leaked.length === 0, `promoting one event leaked others: ${leaked.map((e) => e.name).join(', ')}`);
   });
 
+  check(`"${promotedResult.event}" reaches the feed and the graph as a completed race`, () => {
+    const feed = read('feed.xml');
+    assert(feed.includes(promotedResult.id), 'the promoted result is not in the feed');
+    assert(feed.includes('<lastBuildDate>'), 'a populated feed has no lastBuildDate');
+    /* RFC 822, which RSS requires - not the ISO dates the data files use. */
+    const pub = feed.match(/<pubDate>([^<]+)<\/pubDate>/);
+    assert(pub && !Number.isNaN(Date.parse(pub[1])), `unparseable pubDate: ${pub?.[1]}`);
+    assert(/<guid isPermaLink="false">/.test(feed), 'guid is not marked isPermaLink="false"');
+
+    const graph = graphOf(read('index.html'));
+    const race = graph.find((n) => n['@type'] === 'SportsEvent' && n.name === promotedResult.event);
+    assert(race, `no SportsEvent for the completed race ${promotedResult.event}`);
+    /* A race already run is not "scheduled". */
+    assert(race.eventStatus === 'https://schema.org/EventCompleted', `eventStatus is ${race.eventStatus}`);
+
+    const others = JSON.parse(readFileSync(RESULTS, 'utf8')).filter((r) => r._placeholder === true);
+    const leaked = others.filter((r) => feed.includes(r.id));
+    assert(leaked.length === 0, `promoting one result leaked others: ${leaked.map((r) => r.id).join(', ')}`);
+  });
+
   check('the other drivers are still placeholders and still excluded', () => {
     const sitemap = read('sitemap.xml');
     const others = JSON.parse(readFileSync(DRIVERS, 'utf8')).filter((d) => d._placeholder === true);
@@ -366,12 +502,14 @@ try {
 } finally {
   writeFileSync(DRIVERS, originalDrivers);
   writeFileSync(EVENTS, originalEvents);
-  console.log('\n  restored src/data/drivers.json and events.json');
+  writeFileSync(RESULTS, originalResults);
+  console.log('\n  restored drivers.json, events.json and results.json');
 }
 
-check('the restore put both data files back byte-for-byte', () => {
+check('the restore put all three data files back byte-for-byte', () => {
   assert(readFileSync(DRIVERS, 'utf8') === originalDrivers, 'drivers.json differs from before the run');
   assert(readFileSync(EVENTS, 'utf8') === originalEvents, 'events.json differs from before the run');
+  assert(readFileSync(RESULTS, 'utf8') === originalResults, 'results.json differs from before the run');
 });
 
 /* Leave dist/ built from the real data, not the promoted run. Best-effort:
