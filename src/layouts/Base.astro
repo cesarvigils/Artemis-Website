@@ -87,13 +87,33 @@ const structuredData = {
   sameAs: [...Object.values(site.socials).filter(Boolean), site.store],
 };
 
+/* The site as an entity, pointing at the team that publishes it. Two nodes
+   rather than one because they are different things - an organisation and
+   the site it runs - and a search engine resolving "Artemis Esports" wants
+   the organisation, while a sitelink or a site-name result wants this.
+
+   Deliberately NO `potentialAction` / SearchAction. That is what makes a
+   site eligible for the sitelinks search box, and it takes a URL template
+   pointing at a real search endpoint. This site has no search, so declaring
+   one would be a claim that resolves to a 404 - structured data has to
+   match what the page actually offers. Add it if a search route is ever
+   built, not before. */
+const website = {
+  '@type': 'WebSite',
+  '@id': new URL('/#website', Astro.site).href,
+  url: Astro.site?.href,
+  name: site.name,
+  inLanguage: 'en-GB',
+  publisher: { '@id': new URL('/#organization', Astro.site).href },
+};
+
 /* One script tag, not several. Multiple ld+json blocks are legal and
    parsers accept them, but nodes in separate blocks cannot reference each
    other by `@id`, so a breadcrumb or a person emitted alongside would be a
    second anonymous island rather than something attached to this team. A
    single `@graph` lets a page's own nodes point back at `/#organization`
    and be read as one description of one entity. */
-const graph = [structuredData, ...schema];
+const graph = [structuredData, website, ...schema];
 ---
 
 <!doctype html>
@@ -171,6 +191,14 @@ const graph = [structuredData, ...schema];
         />
       )
     }
+
+    {/* The analytics script is on a third origin, so its DNS lookup, TCP
+        handshake and TLS negotiation all happen before the browser has any
+        reason to know about it. `preconnect` starts them during head parse
+        instead. Only emitted when the tag is - a preconnect to a host this
+        build never contacts is a wasted connection, and on a site that
+        ships no third-party script by default it would be the only one. */}
+    {analyticsEnabled && <link rel="preconnect" href={new URL(umamiSrc).origin} crossorigin />}
 
     {/* Cookieless analytics, and only when this build was given a website id.
         With the variable unset nothing is requested, nothing is stored, and
