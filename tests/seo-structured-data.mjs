@@ -283,6 +283,33 @@ try {
     }
   });
 
+  check('the visible trail matches the BreadcrumbList exactly', () => {
+    const nav = html.match(/<nav class="crumbs"[\s\S]*?<\/nav>/);
+    assert(nav, 'no visible breadcrumb on the page');
+    /* Google's structured-data policy is that markup describes content on
+       the page. A BreadcrumbList with no visible trail, or one naming
+       different steps, is markup describing something the reader cannot
+       see - so these are asserted against each other, not separately. */
+    const visible = [...nav[0].matchAll(/<(?:a|span)\b[^>]*>([^<]+)<\/(?:a|span)>/g)]
+      .map((m) => m[1].trim())
+      .filter((text) => text !== '/');
+    const marked = nodeOf(graph, 'BreadcrumbList').itemListElement.map((c) => c.name);
+    assert(
+      visible.join(' > ') === marked.join(' > '),
+      `visible "${visible.join(' > ')}" != marked "${marked.join(' > ')}"`
+    );
+    /* The last step is the page itself in both: no href, no item. */
+    assert(/aria-current="page"[^>]*>[^<]+<\/span>\s*<\/li>\s*<\/ol>/.test(nav[0]), 'last crumb is not the current page');
+  });
+
+  check('the driver page links back up to the roster', () => {
+    const main = html.split('<main')[1].split('</main>')[0];
+    /* Before the breadcrumb this page linked out to the Scoreboard and the
+       Discord and offered no way back to /team. A leaf page that does not
+       link up wastes the only link equity fully under our control. */
+    assert(/href="\/team"/.test(main), 'no link back to /team anywhere in <main>');
+  });
+
   check('the Person node attaches to the organisation in the same graph', () => {
     const person = nodeOf(graph, 'Person');
     const org = nodeOf(graph, 'SportsTeam');

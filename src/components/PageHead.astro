@@ -4,9 +4,22 @@ interface Props {
   lead?: string;
   /** Short data line under the lead, e.g. a roster count. */
   meta?: string;
+  /**
+   * The page's position in the site. Pass the SAME array used to build the
+   * page's BreadcrumbList, so the trail a reader sees and the trail a
+   * crawler reads cannot drift apart - Google's structured-data policy is
+   * that markup describes content visible on the page, and a
+   * BreadcrumbList with no visible trail is markup describing nothing.
+   *
+   * The last entry is the current page and carries no `href`. It repeats
+   * the h1 directly beneath it, which is the standard shape: at 2xs and
+   * muted against a display-size heading the two read as address and
+   * title, not as a heading printed twice.
+   */
+  breadcrumb?: { name: string; href?: string }[];
 }
 
-const { title, lead, meta } = Astro.props;
+const { title, lead, meta, breadcrumb = [] } = Astro.props;
 
 /* The inner pages used to open with a heading in the left 45% and a flat void
    beside it. Each page now puts something real in the right column: an entry
@@ -23,6 +36,28 @@ const hasAction = Astro.slots.has('action');
 <section class:list={['page-head', { 'has-aside': hasAside }]}>
   <div class="container page-head-inner">
     <div class="page-head-copy">
+      {
+        breadcrumb.length > 1 && (
+          <nav class="crumbs" aria-label="Breadcrumb" data-enter>
+            <ol>
+              {breadcrumb.map((crumb, index) => (
+                <li>
+                  {crumb.href ? (
+                    <a href={crumb.href}>{crumb.name}</a>
+                  ) : (
+                    <span aria-current="page">{crumb.name}</span>
+                  )}
+                  {index < breadcrumb.length - 1 && (
+                    <span class="crumb-sep" aria-hidden="true">
+                      /
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
       <h1 class="display-xl" data-enter>{title}</h1>
       {
         lead && (
@@ -81,6 +116,60 @@ const hasAction = Astro.slots.has('action');
 
   /* Not `ch`: this line is tracked mono, and `ch` under-measures tracked text
      by roughly a fifth, which orphaned the last two words on every page. */
+  /* The address line, in the same register as `.page-meta` below: the
+     pit-wall label vocabulary, not a second navigation bar. Separators are
+     real text rather than a ::before, so the trail still reads as a trail
+     when styles fail and when it is copied out of the page. */
+  .crumbs {
+    margin-bottom: var(--space-s);
+  }
+
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5ch;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    font-size: var(--text-2xs);
+  }
+
+  .crumbs li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5ch;
+  }
+
+  .crumbs a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 160ms var(--ease), border-color 160ms var(--ease);
+  }
+
+  .crumbs a:hover {
+    color: var(--mist);
+    border-bottom-color: var(--line-strong);
+  }
+
+  .crumbs [aria-current='page'] {
+    color: var(--mist-dim);
+  }
+
+  .crumb-sep {
+    color: var(--muted-deep);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crumbs a {
+      transition: none;
+    }
+  }
+
   .page-meta {
     margin-top: var(--space-m);
     padding-top: var(--space-s);
