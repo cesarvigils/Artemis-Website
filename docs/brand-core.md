@@ -92,14 +92,29 @@ team, and it doesn't change when the team grows.
 
 ### Colors
 
+The NOCTURNE ramp. It replaced the original green-black palette: same Signal,
+neutral charcoal ground instead of `#000A08`, and a data layer the first
+palette did not have.
+
 | Hex | Name | Job | Budget |
 |---|---|---|---|
-| `#000A08` | Night | The field. | ~80% |
-| `#0A1714` `#12211D` `#1E322C` | Surface ramp | Panels and dividers so the black has depth. | as needed |
-| `#486B62` `#8FA8A1` | Muted text | Captions, metadata. | as needed |
-| `#EBFFFB` | Mist | Type and UI on dark. | most text |
-| `#0E7F6B` | Deep Teal | Brand color when it needs area — livery panels, gradients. | when needed |
+| `#0A0E0D` | Night | The field. | ~80% |
+| `#131A19` `#1B2422` | Surface ramp | Panels and bands so the black has depth. | as needed |
+| `#26333B` `#34443F` | Hairlines | Rules and edges. Opaque. | as needed |
+| `#687C78` `#93A5A1` | Muted text | Captions, metadata. | as needed |
+| `#E8F0EE` | Mist | Type and UI on dark. | most text |
 | `#0FFFCF` | **Signal** | The one thing the eye lands on. The A, the Arc, one accent per layout. | **5–10%** |
+
+Signal fills take Night as their text colour, never white. Hover lightens to
+`#7DFFE3` — the one place this site departs from NOCTURNE, which darkens
+instead; see `DESIGN.md` section 0.
+
+**Data colours — not brand colours.** `#5BD98A` gain, `#F2766B` loss,
+`#E8B84B` caution, `#6FB6E8` info. They carry meaning inside data (a position
+gained, a position lost) and sit outside the Signal budget because they are not
+directing the eye, they are labelling a value. Never decorative, and never used
+alone: every use pairs with a glyph or a rule so the meaning survives forced
+colours and reads for a colour-blind visitor.
 
 Signal is dark-mode only; it fails contrast on Mist and passes on Night. Never
 fills a shape bigger than a line or a small block. No graffiti, no splash, no
@@ -261,12 +276,13 @@ with no row here is a rule the website does not express.
 | No exclamation marks, no emoji | Verified per page in `docs/pass6-report.md` |
 | The team is "Artemis" | `src/data/site.json` → `team`; body copy says Artemis, `name` stays "Artemis Esports" for the org |
 | The Scoreboard | `src/pages/index.astro` → `#scoreboard`; nav label in `src/data/nav.json`; the `/results` redirect in `vercel.json` |
-| Night `#000A08` | `--night` in `src/styles/global.css` |
-| Surface ramp `#0A1714` `#12211D` `#1E322C` | `--surface-1` / `--surface-2` / `--surface-3` |
-| Muted text `#8FA8A1` | `--muted` — captions, metadata, field labels, dates |
-| Muted deep `#486B62` | `--muted-deep` — large decorative type, disabled states, the 404 mark. Never body-size text (3.4:1) |
-| Mist `#EBFFFB` | `--mist`, plus `--mist-dim` for secondary prose |
-| Deep Teal `#0E7F6B` | `--teal-deep` — declared for any teal that needs area; no such area exists on the site today |
+| Night `#0A0E0D` | `--night` in `src/styles/global.css`, plus `--night-rgb` for the hero scrims, which must be updated by hand alongside it |
+| Surface ramp `#131A19` `#1B2422` | `--surface-1` / `--surface-2` |
+| Hairlines `#26333B` `#34443F` | `--line` / `--line-strong`. Opaque since the NOCTURNE migration; they were alpha so one value held its weight on three grounds |
+| Muted text `#93A5A1` | `--muted` — captions, metadata, field labels, dates |
+| Muted deep `#687C78` | `--muted-deep` — large decorative type, disabled states, the 404 mark. Never body-size text (4.4:1) |
+| Mist `#E8F0EE` | `--mist`, plus `--mist-dim` for secondary prose |
+| Data colours | `--gain` / `--loss` / `--caution` / `--info`. Outside the Signal budget; never used without a glyph or rule beside them |
 | Signal `#0FFFCF`, 5–10% | `--signal`. Allowed uses only: `.btn-solid` (one primary CTA per page), `.hero-pos` and `.hero-pos-rule`, `.nav-link[aria-current]::after`, `:focus-visible`, and every `:hover` colour step. Measured per screen in `docs/pass6-report.md` |
 | No graffiti, no splash; texture is material at 3–5% | `--grain` and `.grain::before` in `src/styles/global.css` (an inline `feTurbulence` tile at 4%), used on the join band and the 404. `src/assets/hunt-texture.jpg` is deleted |
 | Wordmark, the workhorse, holds to 100px | `src/components/Mark.astro` `variant="wordmark"`, sized by `--mark-w` with a `max(100px, …)` floor; used in `src/components/Nav.astro` and `src/components/Footer.astro`, and on `public/og.png` |
