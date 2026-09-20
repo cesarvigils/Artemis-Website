@@ -18,6 +18,7 @@ import drivers from '../data/drivers.json';
 import {
   driverStats,
   featuredDrivers,
+  hasOwnPage,
   heroProof,
   lastCompletedEvent,
   recentResults,
@@ -124,6 +125,7 @@ const driverCount = (drivers as Driver[]).filter(
               <DriverCard
                 driver={driver}
                 variant="compact"
+                href={hasOwnPage(driver) ? `/team/${driver.id}` : undefined}
                 stats={driverStats(stats, driver)}
               />
             ))}

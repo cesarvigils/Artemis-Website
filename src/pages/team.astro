@@ -9,6 +9,7 @@ import {
   activeDrivers,
   driverStats,
   driversInGroup,
+  hasOwnPage,
   latestFinish,
   type Driver,
   type RaceResult,
@@ -115,6 +116,7 @@ const crewCount = roster.length - racingDrivers.length;
               <DriverCard
                 driver={driver}
                 variant="row"
+                href={hasOwnPage(driver) ? `/team/${driver.id}` : undefined}
                 lastResult={latestFinish(races, driver.name)}
                 stats={driverStats(stats, driver)}
                 class="reveal"
