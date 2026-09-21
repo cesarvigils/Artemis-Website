@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { REAL_PAGES } from './routes';
+import { ALL_PAGES } from './routes';
 
 /**
  * `DESIGN.md` section 1, enforced.
@@ -60,7 +60,7 @@ async function equalGridFamilies(page: import('@playwright/test').Page) {
   });
 }
 
-for (const route of REAL_PAGES) {
+for (const route of ALL_PAGES) {
   test(`${route.name}: no layout family repeats on the page`, async ({ page }) => {
     await page.goto(route.path);
 
