@@ -10,6 +10,20 @@
    - Motion is opt-out aware via prefers-reduced-motion.
 ------------------------------------------------------------------- */
 
+/* The motion tokens live in `global.css` and a couple of animations can only
+   be expressed in JS. Read them at call time rather than copying the values,
+   so the stylesheet stays the single source. Both fall back to the committed
+   value if the property is missing (a very old browser, or a test harness
+   that mounts the script without the stylesheet). */
+const cssVar = (name: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+const motionToken = (name: string, fallback: number) => {
+  const raw = cssVar(name);
+  const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : NaN;
+  return Number.isFinite(ms) ? ms : fallback;
+};
+
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 /* Reveal on scroll --------------------------------------------------
@@ -247,9 +261,15 @@ function initCountdown() {
     if (reduceMotion.matches || typeof el.animate !== 'function') return;
     // Never from 0: an element that starts fully transparent is not a paint
     // candidate, and the site's rule is that nothing animates out of nothing.
+    //
+    // Duration and curve are READ from the tokens rather than retyped. They
+    // used to be a literal 200 and a literal cubic-bezier(0.16, 1, 0.3, 1),
+    // which were the right values and would have stayed right only until
+    // someone changed --dur-2 or --ease-out-expo: this is the one animation
+    // on the site that CSS cannot reach, so nothing would have caught it.
     el.animate([{ opacity: from }, { opacity: 1 }], {
-      duration: 200,
-      easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      duration: motionToken('--dur-2', 200),
+      easing: cssVar('--ease-out-expo') || 'cubic-bezier(0.16, 1, 0.3, 1)',
     });
   };
 

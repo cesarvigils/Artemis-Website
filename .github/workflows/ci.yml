@@ -76,6 +76,40 @@ jobs:
           path: tests/playwright-report/
           retention-days: 7
 
+  signal:
+    name: Signal budget
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Install test dependencies
+        working-directory: tests
+        run: npm ci
+
+      - name: Install Playwright's Chromium
+        working-directory: tests
+        run: npx playwright install --with-deps chromium
+
+      # Counts Signal-coloured pixels on every route at 1440 and 390 and
+      # fails over the brand's 10% cap. It also self-tests its detection
+      # window against the real palette tokens first, so a colour change
+      # that breaks the measurement fails loudly instead of reporting 0%.
+      - name: Measure the Signal budget
+        working-directory: tests
+        run: npm run audit:signal
+
   lighthouse:
     name: Lighthouse floors
     needs: build

@@ -112,8 +112,15 @@
      decorative type, disabled states, hairline-ish uses only. */
   --mist: #e8f0ee; /* 16.8:1 on Night */
   --mist-dim: rgba(232, 240, 238, 0.76); /*  9.8:1 on Night */
-  --muted: #97a9a5; /*  7.9:1 on Night, 7.2:1 on --surface-1 - AAA on both */
-  --muted-deep: #687c78; /*  4.4:1 on Night - large/decorative/disabled only */
+  /* Both are the NOCTURNE sheet's values verbatim. An earlier pass in this
+     repo raised --muted to #97a9a5 to clear AAA on the tinted band as well
+     as on Night (7.17 against 6.84). That bought 0.33 of contrast by
+     leaving the approved palette, which is not a trade a stylesheet gets to
+     make on the brand's behalf: the sheet is the authority, and AA is what
+     the a11y suite asserts. If AAA on --surface-1 is wanted, it is a change
+     to the palette, not to this file. */
+  --muted: #93a5a1; /*  7.5:1 on Night, 6.8:1 on --surface-1 - AA on both */
+  --muted-deep: #6b7c78; /*  4.4:1 on Night - large/decorative/disabled only */
 
   /* Signal. 5-10% of any layout, and only where the eye should land:
      the one primary CTA per page, the hero position marker and its podium
@@ -127,6 +134,18 @@
      step was kept. See DESIGN.md section 0. */
   --signal-hover: #7dffe3; /* 16.0:1 on Night */
 
+  /* The rest of the approved accent ramp, carried so the palette in this
+     file is the whole palette rather than the subset the site happens to
+     consume today. Nothing reads them yet, and that is fine: a token that
+     exists is a decision already made, and the alternative is someone
+     inventing a fourth teal the next time an area of accent is needed.
+     `--signal-deep` is for accent that needs AREA - a livery panel, a
+     filled band - where #0fffcf would be a splash. `--signal-tint` is the
+     sheet's accent-at-10%, and its note is part of the rule: large areas
+     only, never type. */
+  --signal-deep: #08a88a; /*  6.5:1 on Night - area, never type at body size */
+  --signal-tint: rgb(15 255 207 / 0.1);
+
   /* Hairlines. The pit-wall rule vocabulary, and opaque as of the NOCTURNE
      migration. They were alpha so one value could hold its weight on three
      different grounds; measured against the two grounds actually in use,
@@ -135,16 +154,14 @@
      ever paints a hairline on `--surface-2`, re-measure: that is where the
      opaque value falls off and the alpha one did not.
 
-     `--line`'s blue channel is 47, not the 59 first committed. Every other
-     token in this ramp is green-dominant - Night G-B 1, surface-1 1,
-     surface-2 2, line-strong 5 - and 59 made this the single blue-dominant
-     step, at G-B -8. Its red and green channels already sat exactly on the
-     ramp's progression, which is what a misread final hex pair looks like
-     rather than a deliberate hue shift. 47 puts G-B at 4, between
-     surface-2 and line-strong where this step belongs. Weight barely
-     moved (1.50 -> 1.48 on Night), so this is a hue correction, not a
-     lightening. */
-  --line: #26332f;
+     `--line`'s blue channel is 48, from the NOCTURNE sheet. The value first
+     committed here was 59, which made this the one blue-dominant step in a
+     green-dominant ramp (Night G-B 1, surface-1 1, surface-2 2,
+     line-strong 5, this one at G-B -8) - a misread final hex pair rather
+     than a deliberate hue shift. A later pass reasoned its way to 47 from
+     the ramp alone and landed one off the sheet; the sheet wins. Weight is
+     unchanged either way (1.48:1 on Night), so this is a hue correction. */
+  --line: #263330;
   --line-strong: #34443f;
 
   /* Data colours. NOT brand colours, and deliberately outside the Signal
@@ -446,12 +463,32 @@ p {
     max(var(--pad-x), env(safe-area-inset-right));
 }
 
+/* SECTION RHYTHM
+   Every band carries `rule-top`, so the rule is read as belonging to the
+   section BELOW it - the way a header rule on a timing tower groups the
+   rows under it, not the ones above. That makes the padding asymmetric on
+   purpose: a heading gets air above it, its last row sits closer to the
+   next rule.
+
+   Before this, every section on every route was 112px top and bottom, which
+   is the one spacing tell that survives any palette or typeface: identical
+   vertical rhythm reads as a template even when nothing else does. The three
+   sizes below are assigned by what a band DOES, never by where it falls in
+   the page, so the rhythm is a consequence of the content rather than a
+   pattern laid over it. */
 .section {
-  padding-block: var(--space-2xl);
+  padding-block: var(--space-2xl) var(--space-xl);
 }
 
+/* Dense data: the scoreboard, the garage, a roster, an entry list. Tight
+   above so the rule and the rows read as one block. */
+.section-tight {
+  padding-block: var(--space-xl) var(--space-l);
+}
+
+/* A statement rather than a table. The commitments, the closing ask. */
 .section-tall {
-  padding-block: var(--space-3xl);
+  padding-block: var(--space-3xl) var(--space-2xl);
 }
 
 .rule-top {
@@ -839,7 +876,14 @@ html.js .reveal.in-view {
      the property list is clamped here too, and `transition-duration` has to
      be clamped with it: CSS cycles the shorter of the two lists, so a
      six-property list against an element's own four-value duration list
-     landed the durations on the wrong properties. */
+     landed the durations on the wrong properties.
+
+     `visibility` and `-webkit-text-stroke-color` are on the list because
+     they were transitioned elsewhere and dropping them here did not stop
+     them, it desynchronised them: the mobile nav panel snapped hidden while
+     its opacity still eased for 200ms against nothing, and a car number's
+     stroke jumped while the `color` beside it in the same declaration
+     eased. Clamping a property is not the same as removing it. */
   *,
   *::before,
   *::after {
@@ -847,7 +891,7 @@ html.js .reveal.in-view {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-property: opacity, color, background-color, border-color, fill,
-      stroke !important;
+      stroke, visibility, -webkit-text-stroke-color !important;
     transition-duration: var(--dur-2) !important;
   }
   :where(
@@ -881,7 +925,7 @@ html.js .reveal.in-view {
   :root {
     --mist-dim: #e8f0ee;
     --muted: #c2cecb; /* 12.0:1 on Night */
-    --muted-deep: #97a9a5; /*  7.9:1 on Night - the base --muted, one rung up */
+    --muted-deep: #93a5a1; /*  7.5:1 on Night - the base --muted, one rung up */
     --line: rgba(232, 240, 238, 0.34);
     --line-strong: rgba(232, 240, 238, 0.6);
   }

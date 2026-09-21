@@ -15,7 +15,7 @@ document and a generic design rule disagree, and what was chosen:
 | **taste** and **impeccable** both treat a near-black-plus-one-saturated-accent palette as the esports category reflex | Section 6 fixes Night, the surface ramp, Mist and Signal by hex | **The brand core's palette.** The palette was never this work's to choose. What the redesign chose is the register (a timing tower, not an esports template), and pass 6 narrowed the accent from "the site's colour" to five named jobs. The hexes are NOCTURNE's as of the palette migration; the reasoning is unchanged. |
 | **colorize** `reference/colorize.md`: "alpha is a design smell; define explicit overlay colours" | Section 6 gives two muted values and one Mist, not a nine-step ramp | **One alpha step kept** (`--mist-dim`). The two hairlines were alpha for the same reason until the NOCTURNE migration made them opaque; see below. |
 | NOCTURNE darkens the accent on hover (`#0BD4AB`, 10.5:1) | - | **The lighter step (`#7DFFE3`, 16.0:1) was kept.** On a near-black ground, darkening on hover reads as the control dimming as the pointer arrives. Brightening is the direction every other state change on this site already moves in, and it holds more contrast. This is the one place the site departs from NOCTURNE. |
-| **colorize** again, and the reasoning that kept the hairlines alpha | NOCTURNE specifies opaque borders | **Opaque, with a condition.** Measured against the two grounds actually in use, the opaque steps land in the same perceptual band as the alpha ones they replaced: `--line` is 1.50 on Night and 1.36 on `--surface-1`, against alpha's 1.32 and 1.39. The alpha argument only bites on `--surface-2`, which nothing currently paints a hairline on. **If something ever does, re-measure** - that is where an opaque value falls off (1.22) and the alpha one did not (1.40). |
+| **colorize** again, and the reasoning that kept the hairlines alpha | NOCTURNE specifies opaque borders | **Opaque, with a condition.** Measured against the two grounds actually in use, the opaque steps land in the same perceptual band as the alpha ones they replaced: `--line` is 1.48 on Night and 1.34 on `--surface-1`, against alpha's 1.32 and 1.39. The alpha argument only bites on `--surface-2`, which nothing currently paints a hairline on. **If something ever does, re-measure** - that is where an opaque value falls off (1.21) and the alpha one did not (1.40). |
 
 ## 1. Direction
 
@@ -72,12 +72,14 @@ exactly five jobs and everything else is Mist or muted.
 | `--surface-2` | `#1b2422` | Panels sitting on a tinted band | - |
 | `--mist` | `#e8f0ee` | Most text and UI | 16.8:1 |
 | `--mist-dim` | `rgba(232,240,238,.76)` | Secondary prose: leads, blurbs, bios | 9.8:1 |
-| `--muted` | `#97a9a5` | Captions, metadata, field labels, dates | 7.9:1 |
-| `--muted-deep` | `#687c78` | Large decorative type, disabled states. **Never body-size text** | 4.4:1 |
+| `--muted` | `#93a5a1` | Captions, metadata, field labels, dates | 7.5:1 |
+| `--muted-deep` | `#6b7c78` | Large decorative type, disabled states. **Never body-size text** | 4.4:1 |
 | `--signal` | `#0fffcf` | The one thing the eye lands on | 15.0:1 |
 | `--signal-ink` | `#0a0e0d` | Text on a Signal fill. The ground, never white | 15.0:1 on `--signal` |
 | `--signal-hover` | `#7dffe3` | Solid-button hover, every link hover step | 16.0:1 |
-| `--line` | `#26332f` | Hairline rules | - |
+| `--signal-deep` | `#08a88a` | Accent that needs area rather than a line. Unused so far | 6.5:1 |
+| `--signal-tint` | `#0fffcf` @ 10% | Accent wash over large areas only, never type | - |
+| `--line` | `#263330` | Hairline rules | - |
 | `--line-strong` | `#34443f` | Table head, ghost button border, first row of a data block | - |
 | `--night-rgb` | `10 14 13` | `--night` as channels, for the hero scrims | - |
 | `--gain` | `#5bd98a` | Data: a position gained | 10.9:1 |
@@ -125,9 +127,28 @@ Signal is allowed in exactly five places. Anywhere else on the site is a bug.
 **Measured, not asserted.** `audit-tool/signal6.mjs` counts Signal-coloured
 pixels on the full-page and hero captures of every route at 1440 and 390, with
 the photographs hidden (`visibility: hidden` preserves layout exactly) so the
-number describes the design rather than the teal liveries in the renders. The
-worst screen on the site is **5.4%**, against a 10% cap. The table is in
-`docs/pass6-report.md`.
+number describes the design rather than the teal liveries in the renders. Run
+it with `npm run audit:signal --prefix tests`; it exits non-zero over the cap.
+
+The worst screen is **5.29%** against a 10% cap. It was asserted rather than
+measured for a while: the tool this paragraph named did not exist, so the
+published 5.4% could not be reproduced by anyone who tried.
+
+**Is 5-10% a floor as well as a cap?** Measured, eleven of fourteen routes
+carry **0.00%** Signal on the 1440 first screen: every page that opens with
+`PageHead` rather than `Hero`, plus `/privacy` and `/terms`. That reads like a
+violation if the range is a band, and like nothing at all if it is a ceiling.
+
+It is a ceiling. The NOCTURNE sheet states the rule in its own words - *"Teal
+holds under 10% of any screen"* - and a page with nothing to point at should
+not manufacture something to point at. A mark was briefly added to `PageHead`
+to "fix" the floor and has been removed; the number stands as a measurement,
+not as a defect. `signal6.mjs` fails the build on the cap only, and prints the
+floor as a note.
+
+The finding worth keeping from it: those eleven routes have no primary action
+in the first screen either. That is a content question for whoever decides
+what each page is asking a reader to do, not a colour one.
 
 What moved off Signal in pass 6: the "Next race" heading, the countdown, the
 hero name's second line, the outlined car numbers in three places, the driver
@@ -481,7 +502,7 @@ one hover running on three clocks.
 | Token | Value | Used for |
 |---|---|---|
 | `--dur-1` | `120ms` | Press: `scale(0.97)` on a control, an opacity step on a text link, the menu-icon cross-fade |
-| `--dur-2` | `200ms` | State: hover and focus colours, the nav underline, the sticky-bar cross-fade, the mobile panel, the podium rule |
+| `--dur-2` | `200ms` | State: hover and focus colours, the nav underline, the sticky bar's slide, the mobile panel, the podium rule |
 | `--dur-3` | `320ms` | Travel: the scroll reveal, the entrance rise, the hero photo's scale settle |
 | `--ease-out-expo` | `cubic-bezier(.16, 1, .3, 1)` | Anything arriving or leaving: entrances, reveals, the bar, the panel |
 | `--ease-out-quart` | `cubic-bezier(.25, 1, .5, 1)` | Hovers and presses, where the travel is a few pixels and a long tail reads as lag |
@@ -538,6 +559,16 @@ No bounce, no elastic, no `ease-in`, no `transition: all`. Only `transform`,
   **and duration** lists are clamped together so no transform-based hover survives
   and no duration lands on the wrong property. Reduced motion is gentler, not
   zero: colour and opacity still ease.
+- **Two things the reduce block cannot reach, handled where they live.** The
+  garage's `scroll-snap-type` is browser-driven and is neither a transition nor
+  an animation, so clamping those left the snap-back yanking a touch drag at
+  full travel; it drops to `x proximity` under reduce, which keeps the
+  alignment and stops the yank. And the countdown's fade is a WAAPI call,
+  which no stylesheet can clamp, so it reads `--dur-2` and `--ease-out-expo`
+  off the root at call time and bails entirely on reduce. Clamping a property
+  is not the same as removing it: `visibility` and `-webkit-text-stroke-color`
+  are on the clamp list precisely because leaving them off desynchronised them
+  from the `opacity` and `color` they shared a declaration with.
 - **Nothing on a keyboard-initiated path animates.** The skip link has no
   transition; it arrives on the first frame of the first Tab.
 - **Hover, press and focus are one table, not one state.** Every interactive
@@ -678,7 +709,7 @@ exclamation marks. No em dashes. No "elevate", "seamless", "unleash", "next-gen"
   external link.
 - **`.driver-number` will keep failing automated contrast checks, and it is
   fine.** It is `color: transparent` with `-webkit-text-stroke`, so every tool
-  reads 1:1 and defers. As rendered it is a 7.9:1 `--muted` hairline at 36-64px,
+  reads 1:1 and defers. As rendered it is a 7.5:1 `--muted` hairline at 36-64px,
   the element is `aria-hidden`, and the number is printed again as plain text in
   `.driver-meta`. Do not "fix" it.
 - **axe reports `color-contrast` as *incomplete* on the grained sections and
@@ -1069,8 +1100,9 @@ wrappers and kept only on genuine sibling lists.
 
 **The hero image is a paint candidate from its first frame.** The entrance
 animated `opacity` from 0 over 1100ms, which cost 2.26s of measured LCP because
-a transparent image is not a candidate at all. The keyframe is a 640ms scale
-settle now, and the width ladder gained 828 and 1536 steps so a phone stops
+a transparent image is not a candidate at all. The keyframe is a `--dur-3`
+(320ms) scale settle now - it was 640ms when this was written, and moved when
+the durations were consolidated onto three tokens, and the width ladder gained 828 and 1536 steps so a phone stops
 pulling the 1280 file and a retina laptop stops pulling the 1920 one.
 
 **The stuck nav is fully opaque and has no blur.** At 94% opacity display type

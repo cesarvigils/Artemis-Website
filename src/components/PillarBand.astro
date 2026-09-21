@@ -43,7 +43,9 @@ const { heading, lead, variant = 'row' } = Astro.props;
 <style>
   .pillars {
     background: var(--surface-1);
-    padding-block: var(--space-2xl);
+    /* A statement, not a table: the most open band on the page.
+       Matches `.section-tall`. */
+    padding-block: var(--space-3xl) var(--space-2xl);
   }
 
   .pillars-head .lead {
