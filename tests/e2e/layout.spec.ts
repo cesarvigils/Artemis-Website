@@ -60,7 +60,44 @@ async function equalGridFamilies(page: import('@playwright/test').Page) {
   });
 }
 
+/**
+ * Equal card grids are on `DESIGN.md` section 1's deliberately-absent list
+ * outright, not merely banned from repeating - and the repeat check above
+ * cannot see that, which is how `/partners` kept a three-up "what a partner
+ * gets" row of title-plus-a-line cards long after the home page's were gone:
+ * it was the only one on its page, so nothing failed.
+ *
+ * Two three-ups are allowed by name, and both are named rather than pattern-
+ * matched so that adding a third is a decision someone has to write down:
+ *
+ *   `.join-steps`   DESIGN.md carves this out: it is genuinely a sequence,
+ *                   and it is the one place numbers may label one.
+ *   `.entry-strip`  Car numbers and names, ruled like a grid sheet. It is a
+ *                   data table that happens to use `display: grid`, not a
+ *                   row of cards: the cells are 186px and hold a number and
+ *                   a name, with no heading and no prose.
+ */
+const CARD_GRID_EXEMPT = ['join-steps', 'entry-strip'];
+
 for (const route of ALL_PAGES) {
+  test(`${route.name}: holds no equal card grid`, async ({ page }) => {
+    await page.goto(route.path);
+
+    const offenders = (await equalGridFamilies(page)).filter(
+      (g) => Number(g.family.split('-')[0]) >= 3 && !CARD_GRID_EXEMPT.includes(g.label)
+    );
+
+    expect(
+      offenders,
+      offenders.length
+        ? `${route.path} renders an equal card grid, which DESIGN.md section 1 ` +
+          `lists as deliberately absent:\n` +
+          offenders.map((g) => `  ${g.family} .${g.label}`).join('\n') +
+          `\nIf it is data rather than cards, add it to CARD_GRID_EXEMPT with a reason.`
+        : ''
+    ).toEqual([]);
+  });
+
   test(`${route.name}: no layout family repeats on the page`, async ({ page }) => {
     await page.goto(route.path);
 

@@ -7,7 +7,8 @@
     "test": "playwright test",
     "test:lh": "node lighthouse.mjs",
     "test:empty": "node empty-data-build.mjs",
-    "test:seo": "node seo-structured-data.mjs"
+    "test:seo": "node seo-structured-data.mjs",
+    "audit:signal": "node ../audit-tool/signal6.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

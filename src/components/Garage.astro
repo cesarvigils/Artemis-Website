@@ -104,7 +104,9 @@ const altFor = (i: number) => {
 
 <style>
   .garage {
-    padding-block: var(--space-2xl);
+    /* Dense data (a car list read like a stint sheet): tight above so
+       the rule and the rows group. Matches `.section-tight`. */
+    padding-block: var(--space-xl) var(--space-l);
     overflow: clip;
   }
 
@@ -171,6 +173,9 @@ const altFor = (i: number) => {
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
+    /* Snap is browser-driven motion the reduce block cannot reach: it is
+       neither a transition nor an animation, so clamping those leaves the
+       snap-back on a touch drag animating at full travel. Released below. */
     /* Line the first slide up with the container gutter, not the viewport. */
     scroll-padding-inline: max(var(--pad-x), calc((100% - var(--shell)) / 2 + var(--pad-x)));
     -webkit-overflow-scrolling: touch;
@@ -206,6 +211,13 @@ const altFor = (i: number) => {
   }
 
   @media (prefers-reduced-motion: reduce) {
+    /* `proximity` still lines slides up when the finger stops near an edge,
+       but it stops yanking the track. `none` was the other option and it
+       loses the alignment the layout depends on. */
+    .garage-viewport {
+      scroll-snap-type: x proximity;
+    }
+
     .garage-btn:active:not(:disabled) {
       transform: none;
     }

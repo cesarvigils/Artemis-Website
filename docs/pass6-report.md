@@ -5,10 +5,23 @@
 > palette (`--night: #000a08`). The site has since migrated to the NOCTURNE
 > ramp; `DESIGN.md` section 2 and `docs/brand-core.md` section 6 carry the
 > current values. The *reasoning* in this report - the Signal budget, its five
-> allowed uses, which hairline goes where - still holds. The numbers do not.
-> The Signal percentages have not been re-measured because the tool that
-> produced them (`audit-tool/signal6.mjs`) is referenced here but is not
-> checked into this repository.
+> allowed uses, which hairline goes where - still holds. The numbers below
+> were measured against the pass-6 ground and the pass-6 layouts, so read
+> them as history.
+>
+> `audit-tool/signal6.mjs` has since been written to the method in section
+> 1.3 and checked in, so the figures are reproducible again: run
+> `npm run audit:signal --prefix tests`. It carries one condition this
+> section does not, `g - b <= 60`, because the NOCTURNE data colours arrived
+> after pass 6 and `--gain #5BD98A` satisfies all four rules here. Without
+> the ceiling every position-gained marker counts as accent, which the brand
+> core explicitly says it is not.
+>
+> The measurement also found what a worst-case number hides: eleven of
+> fourteen routes carry **0.00%** Signal on the 1440 first screen. That is
+> recorded, not acted on: the NOCTURNE sheet states the rule as "teal holds
+> under 10% of any screen", so the budget is a ceiling and an empty first
+> screen is not a defect. See `DESIGN.md` section 2.
 
 Brand-core alignment, then the retention features. Target:
 `D:\Artemis\Website\Website` (Astro 7, static, branch `preview`).

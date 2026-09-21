@@ -20,9 +20,11 @@ import {
 } from '../lib/data';
 import { channelLinks, partnershipMailto } from '../lib/links';
 
-/* The first item is the headline of the offer, so it takes the full width and
-   the other three sit under it. Four equal cells made livery placement look
-   like an afterthought next to "the Discord". */
+/* Four peers, and the lead sentence under the heading calls them one package,
+   so none of them is the headline. An earlier version promoted the first to
+   full width above a row of three, which is a feature-card grid however it is
+   labelled; these now read as a spec list. Order is the order a sponsor asks
+   about them in, not a ranking. */
 const OFFER = [
   {
     title: 'Livery placement',
@@ -143,7 +145,7 @@ const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta
           Discord.
         </p>
       </div>
-      <ul class="offer-grid">
+      <ul class="offer-list">
         {
           OFFER.map((item, i) => (
             <li class="offer-item reveal" style={`--reveal-delay: ${i * 60}ms`}>
@@ -156,7 +158,7 @@ const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta
     </div>
   </section>
 
-  <section class="section rule-top" aria-labelledby="snapshot-heading">
+  <section class="section section-tight rule-top" aria-labelledby="snapshot-heading">
     <div class="container">
       <div class="section-head">
         {/* Named for what it is - three rows out of the season - with the
@@ -247,7 +249,7 @@ const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta
     variant="stack"
   />
 
-  <section class="section contact rule-top" id="contact" aria-labelledby="contact-heading">
+  <section class="section section-tall contact rule-top" id="contact" aria-labelledby="contact-heading">
     <div class="container contact-inner">
       <div>
         <h2 class="display-lg" id="contact-heading">Talk to us.</h2>
@@ -305,43 +307,51 @@ const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta
     max-width: var(--measure-lead);
   }
 
-  /* One headline item, then three. */
-  .offer-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-m) var(--space-xl);
+  /* WHAT IS IN THE PACKAGE, AS A SPEC LIST
+     This was one full-width item over a row of three, each a title with a
+     line of prose under it: a feature-card grid by any other name, and the
+     shape `DESIGN.md` section 1 lists as deliberately absent. It also made
+     one of four peers arbitrarily the headline, when the copy directly
+     above calls them "one package".
+
+     A run-in list instead - the label on the same line as the thing it
+     labels, the way a spec sheet sets it. Not the label/value split the
+     dossier already uses further up this page, and not a grid at all, so
+     the page loses a composition rather than trading one for another. */
+  .offer-list {
+    max-width: var(--measure);
+    border-top: 1px solid var(--line-strong);
   }
 
   .offer-item {
-    padding-top: var(--space-m);
-    border-top: 1px solid var(--line);
+    padding-block: var(--space-s);
+    border-bottom: 1px solid var(--line);
   }
 
-  .offer-item:first-child {
-    grid-column: 1 / -1;
-    border-top-color: var(--line-strong);
-  }
-
+  /* Run-in: the title sets the line, the sentence continues it. Uppercase
+     Archivo here is the site's register for labelling a value, which is
+     exactly this title's job. */
   .offer-title {
-    font-size: var(--text-xl);
-    letter-spacing: var(--track-title);
+    display: inline;
+    font-family: var(--font-display);
+    font-weight: var(--weight-small);
+    font-size: var(--text-sm);
+    letter-spacing: var(--track-link);
+    text-transform: uppercase;
+    color: var(--mist);
   }
 
-  .offer-item:first-child .offer-title {
-    font-size: var(--text-2xl);
+  .offer-title::after {
+    content: '.';
+    color: var(--muted);
   }
 
   .offer-line {
-    margin-top: var(--space-2xs);
+    display: inline;
+    margin-left: 0.5ch;
     color: var(--mist-dim);
     font-size: var(--text-sm);
     line-height: var(--leading-body);
-    max-width: 40ch;
-  }
-
-  .offer-item:first-child .offer-line {
-    font-size: var(--text-base);
-    max-width: 52ch;
   }
 
   .roster-line {
@@ -397,9 +407,15 @@ const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta
     opacity: 0.65;
   }
 
+  /* Ratio'd, not halved. This was `1fr 1fr` - 573px each at 1440 - which put
+     a heading with a paragraph under it in the same measure as a list of
+     one-line channel rows, two things that are not the same size of idea.
+     Every other split on this page is already ratio'd for that reason
+     (`.dossier` 0.7/1.6, `.contact-inner` 1.15/1), and a lone 50/50 between
+     them read as the one band nobody had decided about. */
   .reach-inner {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: var(--space-xl);
     align-items: start;
   }
@@ -524,19 +540,7 @@ const hasMediaKit = existsSync(new URL('../../public/media-kit.pdf', import.meta
     opacity: 0.65;
   }
 
-  /* Two columns rather than three between 901 and 1100: at 1024 the three
-     cells measured 32ch under a 52ch full-row item, so the headline item and
-     the three under it did not read as the same kind of text. */
-  @media (min-width: 901px) and (max-width: 1100px) {
-    .offer-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
   @media (max-width: 900px) {
-    .offer-grid {
-      grid-template-columns: 1fr;
-    }
     .dossier > div {
       grid-template-columns: 1fr;
       gap: 0.2rem;
