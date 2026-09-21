@@ -26,6 +26,15 @@ export const ROUTES = [
 ] as const;
 
 /**
+ * Every page that renders, driver page and all. Use this for checks that
+ * are about the page itself - its layout, its copy, its markup - rather
+ * than about navigation. `REAL_PAGES` below is a NAV subset and excludes
+ * /standings, /privacy, /terms and the driver pages; reaching for it by
+ * name cost two guards their coverage before this constant existed.
+ */
+export const ALL_PAGES = ROUTES.filter((r) => r.status === 200);
+
+/**
  * The pages that carry a nav entry, where "one page, one nav entry" checks
  * apply. Driver pages are deliberately not here: they are reached from the
  * roster, not from the header, and `nav.json` has no line for them.

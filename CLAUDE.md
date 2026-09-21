@@ -34,10 +34,13 @@ does not get to overrule a document written about this team.
   adding one.
 - Numbers labelling a sequence are allowed in exactly one place, the three
   step Join explainer, because it genuinely is a sequence. Not elsewhere.
-- Uppercase + tracked + `--text-2xs` is the vocabulary for **labelling a
-  value**: a column head, a data cell's name. It is not a decoration and not
-  a navigation style. Nineteen files under `src/components` and `src/pages`
-  already carry it; do not add the twentieth without a value to label.
+- Uppercase + tracked small type is two legitimate things here: **labelling
+  a value** (a column head, a data cell's name) and the Archivo link/button
+  style the brand core specifies. Measured across eight routes, 40 uses are
+  data labels and **zero** sit above a heading as an eyebrow, which is the
+  pattern `DESIGN.md` bans. So the register is healthy; what it must not
+  become is decoration or a navigation trail. Do not count files to judge
+  this, count eyebrows.
 
 ## Before you write copy
 
